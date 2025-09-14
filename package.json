@@ -3,26 +3,26 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "lucide-react": "^0.263.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "lucide-react": "^0.263.1"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
-    "typescript": "^5.0.2",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.24",
     "react-scripts": "5.0.1",
     "tailwindcss": "^3.3.0",
-    "postcss": "^8.4.24",
-    "autoprefixer": "^10.4.14"
+    "typescript": "^4.9.5"
   },
   "scripts": {
     "start": "react-scripts start",
     "dev": "react-scripts start",
     "build": "react-scripts build",
-    "build:portfolio": "REACT_APP_MODE=portfolio react-scripts build",
+    "build:portfolio": "set \"REACT_APP_MODE=portfolio\" && react-scripts build",
     "build:editor": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
@@ -47,5 +47,8 @@
       "last 1 safari version"
     ]
   },
-  "homepage": "."
+  "homepage": ".",
+  "engines": {
+    "node": "18.x"
+  }
 }
