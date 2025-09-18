@@ -1,9 +1,8 @@
-// ProjectForm.tsx
-import React from 'react';
+// ProjectForm.tsx - Versión corregida con solo URLs manuales
+import React, { useState } from 'react';
 import { Project } from '../types/portfolio-types';
 import { Icons } from './portfolio-icons';
 import { Section } from './Section';
-import { useImageUpload } from './portfolio-hooks';
 import { generateSlug } from './portfolio-export';
 
 interface ProjectFormProps {
@@ -19,23 +18,33 @@ interface ImageUploaderProps {
   onUpdate: (index: number, field: keyof Project, value: string) => void;
 }
 
-// Componente para subir imágenes con preview
+// Componente para imagen principal - solo URLs manuales
 const ImageUploader: React.FC<ImageUploaderProps> = ({ 
   project, 
   index, 
   onUpdate 
 }) => {
-  const { uploadImage, isUploading, error, clearError } = useImageUpload(
-    (base64) => onUpdate(index, 'image', base64),
-    { maxSize: 5 * 1024 * 1024 }
-  );
+  const [error, setError] = useState<string>('');
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      uploadImage(file);
-      e.target.value = '';
+  const validateImageUrl = (url: string): boolean => {
+    if (!url.trim()) return true; // Permitir vacío
+    
+    try {
+      new URL(url);
+      return url.startsWith('http://') || url.startsWith('https://');
+    } catch {
+      return false;
     }
+  };
+
+  const handleUrlChange = (url: string) => {
+    setError('');
+    
+    if (url && !validateImageUrl(url)) {
+      setError('URL inválida. Debe empezar con http:// o https://');
+    }
+    
+    onUpdate(index, "image", url);
   };
 
   return (
@@ -44,62 +53,27 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         Imagen principal del proyecto
       </label>
 
-      {/* Input URL */}
       <input
         type="url"
         placeholder="https://ejemplo.com/imagen.png"
-        value={project.image && !project.image.startsWith("data:") ? project.image : ""}
-        onChange={(e) => onUpdate(index, "image", e.target.value)}
-        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-2"
+        value={project.image || ""}
+        onChange={(e) => handleUrlChange(e.target.value)}
+        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
 
-      {/* Separador */}
-      <div className="flex items-center my-3">
-        <div className="flex-1 border-t border-gray-300"></div>
-        <span className="px-3 text-sm text-gray-500">o</span>
-        <div className="flex-1 border-t border-gray-300"></div>
-      </div>
-
-      {/* Zona de subida */}
-      <div className={`border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors ${isUploading ? 'opacity-50' : ''}`}>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-          id={`image-upload-${index}`}
-          disabled={isUploading}
-        />
-        <label
-          htmlFor={`image-upload-${index}`}
-          className="cursor-pointer block"
-        >
-          <Icons.Image size={32} className="mx-auto text-gray-400 mb-2" />
-          <div className="text-sm text-gray-600 font-medium">
-            {isUploading ? 'Cargando imagen...' : 'Haz clic para seleccionar una imagen'}
-          </div>
-          <div className="text-xs text-gray-400 mt-1">
-            PNG, JPG, GIF hasta 5MB
-          </div>
-        </label>
-      </div>
-
-      {/* Mensaje de error */}
       {error && (
         <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center gap-2">
           <Icons.AlertCircle size={16} />
           {error}
           <button 
-            onClick={clearError} 
+            onClick={() => setError('')} 
             className="ml-auto hover:text-red-800"
-            title="Cerrar error"
           >
             <Icons.X size={16} />
           </button>
         </div>
       )}
 
-      {/* Preview de imagen */}
       {project.image && project.image.trim() && !error && (
         <div className="mt-3">
           <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
@@ -107,22 +81,20 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
               src={project.image}
               alt="Preview"
               className="w-24 h-16 object-cover rounded border"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = "none";
+              onError={() => {
+                setError('No se pudo cargar la imagen desde esta URL');
               }}
+              onLoad={() => setError('')}
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <Icons.Check size={14} className="text-green-600 flex-shrink-0" />
                 <span className="text-xs text-green-600 font-medium">
-                  Imagen cargada exitosamente
+                  Imagen cargada correctamente
                 </span>
               </div>
               <div className="text-xs text-gray-500 mb-2">
-                {project.image.startsWith("data:")
-                  ? "Archivo local (Base64)"
-                  : "URL externa"}
+                URL externa válida
               </div>
               <button
                 onClick={() => onUpdate(index, "image", "")}
@@ -135,6 +107,165 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           </div>
         </div>
       )}
+
+      <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="text-sm text-blue-800">
+          <strong>¿Dónde subir imágenes?</strong>
+          <div className="mt-2 space-y-1 text-xs">
+            <div>• <strong>Tu MinIO:</strong> <a href="https://minio.lmsc.es" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">minio.lmsc.es</a> (sube y copia la URL)</div>
+            <div>• <strong>Imgur:</strong> <a href="https://imgur.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">imgur.com</a> (arrastra imagen y copia enlace)</div>
+            <div>• <strong>ImgBB:</strong> <a href="https://imgbb.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">imgbb.com</a> (gratis sin registro)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Componente para múltiples imágenes
+const MultiImageUploader: React.FC<{
+  project: Project;
+  index: number;
+  onUpdate: (index: number, field: keyof Project, value: string) => void;
+}> = ({ project, index, onUpdate }) => {
+  const [error, setError] = useState<string>('');
+  const [urlInput, setUrlInput] = useState<string>('');
+
+  const getImagesArray = (): string[] => {
+    if (!project.images || project.images.trim() === '') return [];
+    
+    return project.images
+      .split(',')
+      .map(img => img.trim())
+      .filter(img => img.length > 0 && (img.startsWith('http') || img.startsWith('https')));
+  };
+
+  const validateImageUrl = (url: string): boolean => {
+    if (!url.trim()) return false;
+    
+    try {
+      new URL(url);
+      return url.startsWith('http://') || url.startsWith('https://');
+    } catch {
+      return false;
+    }
+  };
+
+  const addImageByUrl = () => {
+    if (!urlInput.trim()) {
+      setError('Introduce una URL válida');
+      return;
+    }
+    
+    if (!validateImageUrl(urlInput)) {
+      setError('URL inválida. Debe empezar con http:// o https://');
+      return;
+    }
+    
+    const currentImages = getImagesArray();
+    if (currentImages.includes(urlInput.trim())) {
+      setError('Esta imagen ya está agregada');
+      return;
+    }
+    
+    const newImages = [...currentImages, urlInput.trim()];
+    onUpdate(index, 'images', newImages.join(','));
+    setUrlInput('');
+    setError('');
+  };
+
+  const removeImage = (imageIndex: number) => {
+    const currentImages = getImagesArray();
+    const newImages = currentImages.filter((_, i) => i !== imageIndex);
+    onUpdate(index, 'images', newImages.join(','));
+  };
+
+  const images = getImagesArray();
+
+  return (
+    <div className="space-y-4">
+      <label className="block text-sm font-medium text-gray-700">
+        Galería de imágenes adicionales
+      </label>
+
+      <div className="flex gap-2">
+        <input
+          type="url"
+          placeholder="https://ejemplo.com/imagen.png"
+          value={urlInput}
+          onChange={(e) => setUrlInput(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addImageByUrl();
+            }
+          }}
+          className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          type="button"
+          onClick={addImageByUrl}
+          className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1"
+        >
+          <Icons.Plus size={16} />
+          Agregar
+        </button>
+      </div>
+
+      {error && (
+        <div className="text-red-600 text-sm flex items-center gap-2 bg-red-50 p-2 rounded">
+          <Icons.AlertCircle size={16} />
+          {error}
+          <button onClick={() => setError('')} className="ml-auto">
+            <Icons.X size={14} />
+          </button>
+        </div>
+      )}
+
+      {images.length > 0 && (
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-gray-700">
+            Galería ({images.length} imágenes)
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {images.map((img, imgIndex) => (
+              <div key={imgIndex} className="relative group">
+                <img
+                  src={img}
+                  alt={`Imagen ${imgIndex + 1}`}
+                  className="w-full h-24 object-cover rounded border shadow-sm"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OWFhYSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yPC90ZXh0Pjwvc3ZnPg==';
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeImage(imgIndex)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                  title="Eliminar imagen"
+                >
+                  <Icons.X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
+        <div className="flex items-start gap-2">
+          <Icons.Info size={16} className="text-blue-500 mt-0.5" />
+          <div>
+            <p><strong>Sube tus imágenes a:</strong></p>
+            <div className="mt-1 space-y-1 text-xs">
+              <div>• <a href="https://minio.lmsc.es" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Tu MinIO</a> - Sube y copia la URL</div>
+              <div>• <a href="https://imgur.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Imgur</a> - Arrastra imagen y copia enlace</div>
+              <div>• <a href="https://imgbb.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">ImgBB</a> - Gratis sin registro</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -147,7 +278,6 @@ interface EditableProjectItemProps {
   showRemoveButton: boolean;
 }
 
-// Componente individual para cada proyecto
 const EditableProjectItem: React.FC<EditableProjectItemProps> = ({
   project,
   index,
@@ -177,7 +307,6 @@ const EditableProjectItem: React.FC<EditableProjectItemProps> = ({
         )}
       </div>
 
-      {/* Título y Tecnologías */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -186,7 +315,7 @@ const EditableProjectItem: React.FC<EditableProjectItemProps> = ({
           <input
             type="text"
             placeholder="Mi Proyecto Awesome"
-            value={project.title}
+            value={project.title || ""}
             onChange={(e) => onUpdate(index, "title", e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
@@ -198,32 +327,30 @@ const EditableProjectItem: React.FC<EditableProjectItemProps> = ({
           <input
             type="text"
             placeholder="React, TypeScript, Node.js, MongoDB"
-            value={project.technologies}
+            value={project.technologies || ""}
             onChange={(e) => onUpdate(index, "technologies", e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>
 
-      {/* Descripción básica */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Descripción breve *
         </label>
         <textarea
           placeholder="Descripción concisa que aparecerá en la tarjeta del proyecto en el portfolio"
-          value={project.description}
+          value={project.description || ""}
           onChange={(e) => onUpdate(index, "description", e.target.value)}
           rows={3}
           className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           maxLength={200}
         />
         <div className="text-xs text-gray-500 mt-1">
-          {project.description.length}/200 caracteres
+          {(project.description || "").length}/200 caracteres
         </div>
       </div>
 
-      {/* Descripción detallada */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Descripción detallada
@@ -237,10 +364,10 @@ const EditableProjectItem: React.FC<EditableProjectItemProps> = ({
         />
       </div>
 
-      {/* Imagen del proyecto */}
       <ImageUploader project={project} index={index} onUpdate={onUpdate} />
 
-      {/* Características y funcionalidades */}
+      <MultiImageUploader project={project} index={index} onUpdate={onUpdate} />
+
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Características principales
@@ -257,7 +384,6 @@ const EditableProjectItem: React.FC<EditableProjectItemProps> = ({
         </div>
       </div>
 
-      {/* Instrucciones de uso */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Instrucciones de uso/instalación
@@ -271,7 +397,6 @@ const EditableProjectItem: React.FC<EditableProjectItemProps> = ({
         />
       </div>
 
-      {/* Desafíos técnicos */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Desafíos técnicos y aprendizajes
@@ -285,7 +410,6 @@ const EditableProjectItem: React.FC<EditableProjectItemProps> = ({
         />
       </div>
 
-      {/* Enlaces del proyecto */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -294,7 +418,7 @@ const EditableProjectItem: React.FC<EditableProjectItemProps> = ({
           <input
             type="url"
             placeholder="https://mi-proyecto.com"
-            value={project.link}
+            value={project.link || ""}
             onChange={(e) => onUpdate(index, "link", e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
@@ -306,14 +430,13 @@ const EditableProjectItem: React.FC<EditableProjectItemProps> = ({
           <input
             type="url"
             placeholder="https://github.com/usuario/proyecto"
-            value={project.github}
+            value={project.github || ""}
             onChange={(e) => onUpdate(index, "github", e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>
 
-      {/* Preview del slug */}
       {project.title && (
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center gap-2 text-sm">
@@ -328,7 +451,6 @@ const EditableProjectItem: React.FC<EditableProjectItemProps> = ({
   );
 };
 
-// Componente principal del formulario de proyectos
 export const ProjectForm: React.FC<ProjectFormProps> = ({
   projects,
   onUpdate,
@@ -356,7 +478,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           />
         ))}
 
-        {/* Mensaje si no hay proyectos */}
         {projects.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             <Icons.Code size={48} className="mx-auto text-gray-300 mb-4" />
@@ -365,18 +486,17 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           </div>
         )}
 
-        {/* Ayuda contextual */}
         <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-start gap-2">
             <Icons.Info size={16} className="text-green-600 mt-0.5 flex-shrink-0" />
             <div className="text-sm text-green-800">
-              <strong>Consejos para proyectos efectivos:</strong>
+              <strong>Sistema de imágenes mejorado:</strong>
               <ul className="mt-1 space-y-1 list-disc list-inside">
-                <li>Incluye el nombre y descripción breve (obligatorios)</li>
-                <li>Agrega una imagen representativa del proyecto</li>
-                <li>Menciona las tecnologías clave utilizadas</li>
-                <li>Explica el problema que resuelve y cómo lo abordaste</li>
-                <li>Incluye enlaces al proyecto en vivo y código fuente</li>
+                <li>Solo URLs manuales - no hay problemas de subida</li>
+                <li>Enlaces directos a servicios recomendados</li>
+                <li>Validación automática de URLs</li>
+                <li>Preview inmediato de las imágenes</li>
+                <li>Compatible con cualquier servicio de imágenes</li>
               </ul>
             </div>
           </div>

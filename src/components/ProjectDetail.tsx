@@ -98,13 +98,25 @@ const ProjectDetail: React.FC<{
 }> = ({ projectSlug, onBack, portfolioData }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
-  const project = portfolioData.projects.find(p => p.slug === projectSlug);
+  // Función para generar slug (debe coincidir con la del PortfolioGenerator)
+  const generateSlug = (title: string): string => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+  };
+
+  // Buscar proyecto por slug o por slug generado del título
+  const project = portfolioData.projects.find(p => 
+    p.slug === projectSlug || generateSlug(p.title) === projectSlug
+  );
   
   if (!project) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Proyecto no encontrado</h1>
+          <p className="text-gray-600 mb-4">El proyecto "{projectSlug}" no existe o fue eliminado.</p>
           <button
             onClick={onBack}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"

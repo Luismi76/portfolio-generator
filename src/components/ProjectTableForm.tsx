@@ -1,9 +1,8 @@
-// ProjectTableForm.tsx
+// ProjectTableForm.tsx - Versión corregida con solo URLs manuales
 import React, { useState, useEffect } from "react";
 import { Project } from "../types/portfolio-types";
 import { Icons } from "./portfolio-icons";
 import { Section } from "./Section";
-import { useImageUpload } from "./portfolio-hooks";
 import { generateSlug } from "./portfolio-export";
 
 interface ProjectTableFormProps {
@@ -21,7 +20,6 @@ interface ProjectModalProps {
   onSave: (index: number | undefined, projectData: Project) => void;
 }
 
-// Modal para crear/editar proyectos
 const ProjectModal: React.FC<ProjectModalProps> = ({
   project,
   index,
@@ -46,7 +44,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     mainImageIndex: 0,
   });
 
-  // Actualizar formData cuando cambie el project prop
   useEffect(() => {
     if (isOpen) {
       if (project) {
@@ -92,404 +89,218 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     setFormData((prev: Project) => ({ ...prev, [field]: value }));
   };
 
-  // Componente interno para gestionar múltiples imágenes
-  const MultiImageUploader = () => {
-    // Función para reparar URLs base64 malformadas
-    const repairDataUrl = (url: string): string | null => {
-      if (!url || url.trim().length === 0) return null;
+  // Componente para imagen principal
+  const MainImageUploader = () => {
+    const [error, setError] = useState<string>('');
 
-      const trimmedUrl = url.trim();
-
-      // Si ya es una URL data válida, devolverla
-      if (
-        trimmedUrl.startsWith("data:image/") &&
-        trimmedUrl.includes("base64,")
-      ) {
-        return trimmedUrl;
-      }
-
-      // Si es solo base64 sin prefijo, intentar repararlo
-      if (!trimmedUrl.startsWith("data:") && !trimmedUrl.startsWith("http")) {
-        // Verificar si parece base64
-        const base64Regex = /^[A-Za-z0-9+/]+=*$/;
-        if (
-          base64Regex.test(trimmedUrl.substring(0, 100)) &&
-          trimmedUrl.length > 100
-        ) {
-          // Detectar tipo de imagen por los primeros caracteres
-          let mimeType = "image/jpeg"; // Por defecto JPEG
-
-          if (trimmedUrl.startsWith("iVBOR")) {
-            mimeType = "image/png";
-          } else if (trimmedUrl.startsWith("R0lGOD")) {
-            mimeType = "image/gif";
-          } else if (trimmedUrl.startsWith("/9j/")) {
-            mimeType = "image/jpeg";
-          }
-
-          return `data:${mimeType};base64,${trimmedUrl}`;
-        }
-      }
-
-      return null;
-    };
-
-    // Función mejorada para validar URLs data
-    const isValidDataUrl = (url: string): boolean => {
-      if (!url.startsWith("data:")) return false;
-
-      // Verificar formato básico: data:[mediatype][;base64],data
-      const parts = url.split(",");
-      if (parts.length !== 2) return false;
-
-      const header = parts[0];
-      const data = parts[1];
-
-      // Verificar que tiene el header correcto
-      if (!header.includes("base64") || !header.includes("image/"))
-        return false;
-
-      // Verificar que tiene datos base64 válidos (al menos 100 caracteres para una imagen mínima)
-      if (data.length < 100) return false;
-
-      // Verificar caracteres base64 válidos
-      const base64Regex = /^[A-Za-z0-9+/]+=*$/;
-      return base64Regex.test(data);
-    };
-
-    // Función mejorada para validar URLs HTTP
-    const isValidHttpUrl = (url: string): boolean => {
+    const validateImageUrl = (url: string): boolean => {
+      if (!url.trim()) return true;
+      
       try {
-        const urlObj = new URL(url);
-        return urlObj.protocol === "http:" || urlObj.protocol === "https:";
+        new URL(url);
+        return url.startsWith('http://') || url.startsWith('https://');
       } catch {
         return false;
       }
     };
 
-    // Obtener array de imágenes - VERSION MEJORADA CON REPARACIÓN
-    const getImagesArray = (): string[] => {
-      // Si no hay campo images o está vacío, devolver array vacío
-      if (
-        !formData.images ||
-        formData.images.trim() === "" ||
-        formData.images === "undefined" ||
-        formData.images === "null"
-      ) {
-        return [];
+    const handleUrlChange = (url: string) => {
+      setError('');
+      
+      if (url && !validateImageUrl(url)) {
+        setError('URL inválida. Debe empezar con http:// o https://');
       }
-
-      // Procesar el string
-      const processed = formData.images
-        .split(",")
-        .map((img: string) => img.trim())
-        .map((img: string) => {
-          // Intentar reparar URLs malformadas
-          if (
-            !img.startsWith("data:") &&
-            !img.startsWith("http") &&
-            img.length > 50
-          ) {
-            const repaired = repairDataUrl(img);
-            if (repaired) {
-              console.log("URL reparada:", img.substring(0, 30) + "...");
-              return repaired;
-            }
-          }
-          return img;
-        })
-        .filter((img: string) => {
-          // Filtrar strings vacíos o inválidos
-          if (
-            img.length === 0 ||
-            img === "" ||
-            img === "undefined" ||
-            img === "null"
-          ) {
-            return false;
-          }
-
-          // Validar URLs data
-          if (img.startsWith("data:")) {
-            const isValid = isValidDataUrl(img);
-            if (!isValid) {
-              console.warn(
-                "URL data inválida después de reparación:",
-                img.substring(0, 50) + "..."
-              );
-            }
-            return isValid;
-          }
-
-          // Validar URLs HTTP
-          if (img.startsWith("http")) {
-            const isValid = isValidHttpUrl(img);
-            if (!isValid) {
-              console.warn("URL HTTP inválida:", img);
-            }
-            return isValid;
-          }
-
-          // Rechazar cualquier otro tipo de URL
-          console.warn("Tipo de URL no soportado:", img.substring(0, 50));
-          return false;
-        });
-
-      console.log(
-        "Imágenes procesadas:",
-        processed.length,
-        processed.map((img) =>
-          img.startsWith("data:") ? `DATA_URL (${img.length} chars)` : img
-        )
-      );
-
-      return processed;
+      
+      updateField('image', url);
     };
-
-    // Agregar nueva imagen con validación y reparación mejorada
-    const addImage = (imageUrl: string) => {
-      if (!imageUrl || imageUrl.trim() === "") {
-        console.warn("URL de imagen vacía");
-        return;
-      }
-
-      const trimmedUrl = imageUrl.trim();
-      let finalUrl = trimmedUrl;
-
-      // Intentar reparar la URL si es necesario
-      if (!trimmedUrl.startsWith("data:") && !trimmedUrl.startsWith("http")) {
-        const repaired = repairDataUrl(trimmedUrl);
-        if (repaired) {
-          finalUrl = repaired;
-          console.log("URL reparada automáticamente");
-        } else {
-          console.error(
-            "No se pudo reparar la URL:",
-            trimmedUrl.substring(0, 50)
-          );
-          alert(
-            "La URL de la imagen no es válida y no se pudo reparar automáticamente."
-          );
-          return;
-        }
-      }
-
-      // Validar la URL final
-      let isValid = false;
-      if (finalUrl.startsWith("data:")) {
-        isValid = isValidDataUrl(finalUrl);
-      } else if (finalUrl.startsWith("http")) {
-        isValid = isValidHttpUrl(finalUrl);
-      }
-
-      if (!isValid) {
-        console.error(
-          "URL de imagen inválida después de validación:",
-          finalUrl.substring(0, 100)
-        );
-        alert("La URL de la imagen no es válida. Verifica el formato.");
-        return;
-      }
-
-      const currentImages = getImagesArray();
-
-      // Verificar duplicados
-      if (currentImages.includes(finalUrl)) {
-        alert("Esta imagen ya está agregada.");
-        return;
-      }
-
-      const newImages = [...currentImages, finalUrl];
-      updateField("images", newImages.join(","));
-
-      // Si es la primera imagen, establecerla como principal
-      if (currentImages.length === 0) {
-        updateField("mainImageIndex", "0");
-        updateField("image", finalUrl);
-      }
-
-      console.log("Imagen agregada exitosamente");
-    };
-
-    // Eliminar imagen (sin cambios significativos)
-    const removeImage = (imgIndex: number) => {
-      const currentImages = getImagesArray();
-      if (imgIndex < 0 || imgIndex >= currentImages.length) return;
-
-      const newImages = currentImages.filter((_, i) => i !== imgIndex);
-      updateField("images", newImages.join(","));
-
-      // Ajustar índice principal
-      const currentMainIndex = Number(formData.mainImageIndex) || 0;
-
-      if (newImages.length === 0) {
-        // No quedan imágenes
-        updateField("mainImageIndex", "0");
-        updateField("image", "");
-      } else if (imgIndex === currentMainIndex) {
-        // Eliminamos la imagen principal, usar la primera
-        updateField("mainImageIndex", "0");
-        updateField("image", newImages[0]);
-      } else if (imgIndex < currentMainIndex) {
-        // Eliminamos una imagen antes de la principal
-        const newMainIndex = currentMainIndex - 1;
-        updateField("mainImageIndex", newMainIndex.toString());
-      }
-    };
-
-    // Establecer imagen principal (sin cambios)
-    const setMainImage = (imgIndex: number) => {
-      const images = getImagesArray();
-      if (imgIndex < 0 || imgIndex >= images.length) return;
-
-      updateField("mainImageIndex", imgIndex.toString());
-      updateField("image", images[imgIndex]);
-    };
-
-    // Upload de archivo con validación mejorada
-    const { uploadImage, error, clearError } = useImageUpload(
-      (base64) => {
-        // Validar el base64 antes de agregarlo
-        if (isValidDataUrl(base64)) {
-          addImage(base64);
-        } else {
-          console.error("Base64 generado inválido");
-          alert("Error al procesar la imagen. Intenta con otro archivo.");
-        }
-      },
-      { maxSize: 5 * 1024 * 1024 }
-    );
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        // Validar tipo de archivo
-        if (!file.type.startsWith("image/")) {
-          alert("Por favor selecciona un archivo de imagen válido.");
-          e.target.value = "";
-          return;
-        }
-
-        // Validar tamaño (5MB máximo)
-        if (file.size > 5 * 1024 * 1024) {
-          alert("La imagen es muy grande. Máximo 5MB.");
-          e.target.value = "";
-          return;
-        }
-
-        uploadImage(file);
-        e.target.value = "";
-      }
-    };
-
-    const handleUrlAdd = (url: string) => {
-      if (url.trim()) {
-        addImage(url.trim());
-      }
-    };
-
-    const images = getImagesArray();
-    const mainIndex =
-      images.length > 0
-        ? Math.min(Number(formData.mainImageIndex) || 0, images.length - 1)
-        : 0;
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <label className="block text-sm font-medium text-gray-700">
-          Imágenes del proyecto
+          Imagen principal
         </label>
-
-        {/* Controles para agregar imágenes */}
-        <div className="space-y-3">
-          {/* Agregar por URL */}
-          <div className="flex gap-2">
-            <input
-              type="url"
-              placeholder="https://ejemplo.com/imagen.png"
-              className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  const target = e.target as HTMLInputElement;
-                  if (target.value.trim()) {
-                    handleUrlAdd(target.value.trim());
-                    target.value = "";
-                  }
-                }
-              }}
-            />
-            <button
-              type="button"
-              onClick={(e) => {
-                const input = (
-                  e.target as HTMLElement
-                ).parentElement?.querySelector("input") as HTMLInputElement;
-                if (input && input.value.trim()) {
-                  handleUrlAdd(input.value.trim());
-                  input.value = "";
-                }
-              }}
-              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              <Icons.Plus size={16} />
-            </button>
-          </div>
-
-          {/* Upload de archivo */}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-              id="multi-image-upload"
-            />
-            <label htmlFor="multi-image-upload" className="cursor-pointer">
-              <Icons.Image size={24} className="mx-auto text-gray-400 mb-2" />
-              <div className="text-sm text-gray-600">
-                Subir imagen desde archivo (máx. 5MB)
-              </div>
-            </label>
-          </div>
-        </div>
+        
+        <input
+          type="url"
+          placeholder="https://ejemplo.com/imagen.png"
+          value={formData.image || ""}
+          onChange={(e) => handleUrlChange(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+        />
 
         {error && (
-          <div className="text-red-600 text-sm flex items-center gap-2">
+          <div className="text-red-600 text-sm bg-red-50 p-2 rounded flex items-center gap-2">
             <Icons.AlertCircle size={16} />
             {error}
-            <button onClick={clearError} className="ml-auto">
+            <button onClick={() => setError('')} className="ml-auto">
               <Icons.X size={14} />
             </button>
           </div>
         )}
 
-        {/* DEBUG - Información mejorada del estado */}
-        <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
-          <strong>DEBUG:</strong>
-          <div>Raw images: "{formData.images || "VACÍO"}"</div>
-          <div>Valid images: {getImagesArray().length}</div>
-          <div>Main index: {formData.mainImageIndex || 0}</div>
-          <div>
-            Main image URL:{" "}
-            {formData.image
-              ? formData.image.startsWith("data:")
-                ? "DATA_URL"
-                : formData.image
-              : "NONE"}
+        {formData.image && (
+          <div className="flex items-center gap-3 p-2 bg-gray-50 rounded">
+            <img
+              src={formData.image}
+              alt="Preview"
+              className="w-16 h-12 object-cover rounded"
+              onError={() => {
+                setError('No se pudo cargar la imagen desde esta URL');
+              }}
+              onLoad={() => setError('')}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="text-xs text-green-600 mb-1">Imagen cargada</div>
+              <button
+                type="button"
+                onClick={() => updateField("image", "")}
+                className="text-xs text-red-600 hover:text-red-800"
+              >
+                Eliminar
+              </button>
+            </div>
           </div>
+        )}
+
+        <div className="text-xs text-gray-500 bg-blue-50 p-2 rounded">
+          <strong>Subir a:</strong> <a href="https://minio.lmsc.es" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Tu MinIO</a>, <a href="https://imgur.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Imgur</a>, o <a href="https://imgbb.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">ImgBB</a>
+        </div>
+      </div>
+    );
+  };
+
+  // Componente para múltiples imágenes
+  const MultiImageUploader = () => {
+    const [error, setError] = useState<string>('');
+    const [urlInput, setUrlInput] = useState<string>('');
+
+    const getImagesArray = (): string[] => {
+      if (!formData.images || formData.images.trim() === '') return [];
+      
+      return formData.images
+        .split(',')
+        .map(img => img.trim())
+        .filter(img => img.length > 0 && (img.startsWith('http') || img.startsWith('https')));
+    };
+
+    const validateImageUrl = (url: string): boolean => {
+      if (!url.trim()) return false;
+      
+      try {
+        new URL(url);
+        return url.startsWith('http://') || url.startsWith('https://');
+      } catch {
+        return false;
+      }
+    };
+
+    const addImageByUrl = () => {
+      if (!urlInput.trim()) {
+        setError('Introduce una URL válida');
+        return;
+      }
+      
+      if (!validateImageUrl(urlInput)) {
+        setError('URL inválida. Debe empezar con http:// o https://');
+        return;
+      }
+      
+      const currentImages = getImagesArray();
+      if (currentImages.includes(urlInput.trim())) {
+        setError('Esta imagen ya está agregada');
+        return;
+      }
+      
+      const newImages = [...currentImages, urlInput.trim()];
+      updateField('images', newImages.join(','));
+      setUrlInput('');
+      setError('');
+
+      // Si es la primera imagen, establecerla como principal
+      if (currentImages.length === 0) {
+        updateField('mainImageIndex', '0');
+        updateField('image', urlInput.trim());
+      }
+    };
+
+    const removeImage = (imageIndex: number) => {
+      const currentImages = getImagesArray();
+      const newImages = currentImages.filter((_, i) => i !== imageIndex);
+      updateField('images', newImages.join(','));
+
+      // Ajustar índice principal
+      const currentMainIndex = Number(formData.mainImageIndex) || 0;
+      
+      if (newImages.length === 0) {
+        updateField('mainImageIndex', '0');
+        updateField('image', '');
+      } else if (imageIndex === currentMainIndex) {
+        updateField('mainImageIndex', '0');
+        updateField('image', newImages[0]);
+      } else if (imageIndex < currentMainIndex) {
+        const newMainIndex = currentMainIndex - 1;
+        updateField('mainImageIndex', newMainIndex.toString());
+      }
+    };
+
+    const setMainImage = (imageIndex: number) => {
+      const images = getImagesArray();
+      if (imageIndex < 0 || imageIndex >= images.length) return;
+
+      updateField('mainImageIndex', imageIndex.toString());
+      updateField('image', images[imageIndex]);
+    };
+
+    const images = getImagesArray();
+    const mainIndex = images.length > 0 ? Math.min(Number(formData.mainImageIndex) || 0, images.length - 1) : 0;
+
+    return (
+      <div className="space-y-4">
+        <label className="block text-sm font-medium text-gray-700">
+          Galería de imágenes adicionales
+        </label>
+
+        <div className="flex gap-2">
+          <input
+            type="url"
+            placeholder="https://ejemplo.com/imagen.png"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addImageByUrl();
+              }
+            }}
+            className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="button"
+            onClick={addImageByUrl}
+            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            <Icons.Plus size={16} />
+          </button>
         </div>
 
-        {/* Galería de imágenes - Solo mostrar si hay imágenes válidas */}
+        {error && (
+          <div className="text-red-600 text-sm bg-red-50 p-2 rounded flex items-center gap-2">
+            <Icons.AlertCircle size={16} />
+            {error}
+            <button onClick={() => setError('')} className="ml-auto">
+              <Icons.X size={14} />
+            </button>
+          </div>
+        )}
+
         {images.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium text-gray-700">
                 Galería ({images.length} imágenes)
               </h4>
-              <div className="text-xs text-gray-500 flex items-center gap-1">
-                <Icons.Info size={12} />
-                Click en una imagen para marcarla como principal
+              <div className="text-xs text-gray-500">
+                Click para marcar como principal
               </div>
             </div>
 
@@ -499,7 +310,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                   key={imgIndex}
                   className={`relative group border-2 rounded-lg overflow-hidden cursor-pointer ${
                     imgIndex === mainIndex
-                      ? "border-blue-500 ring-2 ring-blue-200 bg-blue-50"
+                      ? "border-blue-500 ring-2 ring-blue-200"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                   onClick={() => setMainImage(imgIndex)}
@@ -507,69 +318,37 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                   <img
                     src={img}
                     alt={`Imagen ${imgIndex + 1}`}
-                    className="w-full h-24 object-cover"
+                    className="w-full h-20 object-cover"
                     onError={(e) => {
-                      console.error(
-                        "Error cargando imagen:",
-                        img.substring(0, 100)
-                      );
-                      // Marcar la imagen como inválida visualmente
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = "none";
-
-                      // Mostrar mensaje de error en lugar de la imagen
-                      const container = target.parentElement;
-                      if (
-                        container &&
-                        !container.querySelector(".error-message")
-                      ) {
-                        const errorDiv = document.createElement("div");
-                        errorDiv.className =
-                          "error-message flex items-center justify-center h-24 text-red-500 text-xs";
-                        errorDiv.textContent = "Error al cargar imagen";
-                        container.appendChild(errorDiv);
-                      }
-                    }}
-                    onLoad={() => {
-                      console.log("Imagen cargada correctamente:", imgIndex);
+                      (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OWFhYSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkVycm9yPC90ZXh0Pjwvc3ZnPg==';
                     }}
                   />
 
-                  {/* Badge de imagen principal */}
                   {imgIndex === mainIndex && (
-                    <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-md font-medium shadow-sm">
+                    <div className="absolute top-1 left-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded">
                       Principal
                     </div>
                   )}
 
-                  {/* Botón eliminar */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       removeImage(imgIndex);
                     }}
-                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm"
-                    title="Eliminar imagen"
+                    className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all"
                   >
-                    <Icons.X size={14} />
+                    <Icons.X size={12} />
                   </button>
-
-                  {/* Overlay de información */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <div className="absolute bottom-2 left-2 right-2">
-                      <div className="text-white text-xs font-medium">
-                        {imgIndex === mainIndex
-                          ? "Imagen Principal"
-                          : "Click para hacer principal"}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
+
+        <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+          <strong>Subir a:</strong> <a href="https://minio.lmsc.es" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Tu MinIO</a>, <a href="https://imgur.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Imgur</a>, o <a href="https://imgbb.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">ImgBB</a> y copia la URL
+        </div>
       </div>
     );
   };
@@ -580,7 +359,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
-          {/* Header del modal */}
           <div className="flex items-center justify-between p-6 border-b">
             <h2 className="text-xl font-semibold">
               {index !== undefined ? "Editar Proyecto" : "Nuevo Proyecto"}
@@ -595,7 +373,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
           </div>
 
           <div className="p-6 space-y-6">
-            {/* Información básica */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -623,7 +400,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
               </div>
             </div>
 
-            {/* Descripción breve */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Descripción breve *
@@ -637,25 +413,22 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
               />
             </div>
 
-            {/* Descripción detallada */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Descripción detallada
               </label>
               <textarea
                 value={formData.detailedDescription || ""}
-                onChange={(e) =>
-                  updateField("detailedDescription", e.target.value)
-                }
+                onChange={(e) => updateField("detailedDescription", e.target.value)}
                 rows={5}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            {/* Múltiples imágenes */}
+            <MainImageUploader />
+
             <MultiImageUploader />
 
-            {/* Características */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Características principales
@@ -669,7 +442,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
               />
             </div>
 
-            {/* Enlaces */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -695,7 +467,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
               </div>
             </div>
 
-            {/* Campos avanzados en acordeón */}
             <details className="border border-gray-200 rounded-lg">
               <summary className="p-3 cursor-pointer font-medium text-gray-700 hover:bg-gray-50">
                 Campos avanzados (instrucciones, desafíos, etc.)
@@ -707,9 +478,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                   </label>
                   <textarea
                     value={formData.instructions || ""}
-                    onChange={(e) =>
-                      updateField("instructions", e.target.value)
-                    }
+                    onChange={(e) => updateField("instructions", e.target.value)}
                     rows={4}
                     className="w-full p-3 border border-gray-300 rounded-lg"
                   />
@@ -729,7 +498,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
             </details>
           </div>
 
-          {/* Footer del modal */}
           <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
             <button
               type="button"
@@ -751,7 +519,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   );
 };
 
-// Componente principal de tabla
 export const ProjectTableForm: React.FC<ProjectTableFormProps> = ({
   projects,
   onUpdate,
@@ -798,11 +565,23 @@ export const ProjectTableForm: React.FC<ProjectTableFormProps> = ({
     setModalState({ isOpen: false });
   };
 
+  const getValidImageCount = (imagesString: string): number => {
+    if (!imagesString || imagesString.trim() === '') return 0;
+    
+    return imagesString
+      .split(',')
+      .map(img => img.trim())
+      .filter(img => 
+        img.length > 0 && 
+        (img.startsWith('http') || img.startsWith('https'))
+      ).length;
+  };
+
   return (
     <>
       <Section
         title="Proyectos"
-        description="Gestiona tus proyectos de forma compacta"
+        description="Gestiona tus proyectos con el sistema de URLs manuales"
         icon={Icons.Code}
         showAddButton={true}
         onAdd={handleCreateNew}
@@ -833,10 +612,7 @@ export const ProjectTableForm: React.FC<ProjectTableFormProps> = ({
                     colSpan={4}
                     className="border border-gray-200 p-8 text-center text-gray-500"
                   >
-                    <Icons.Code
-                      size={32}
-                      className="mx-auto mb-2 text-gray-300"
-                    />
+                    <Icons.Code size={32} className="mx-auto mb-2 text-gray-300" />
                     <p>No hay proyectos aún</p>
                     <button
                       onClick={handleCreateNew}
@@ -889,40 +665,33 @@ export const ProjectTableForm: React.FC<ProjectTableFormProps> = ({
                     <td className="border border-gray-200 p-3">
                       <div className="flex items-center gap-2">
                         {(() => {
-                          const images = project.images
-                            ? project.images
-                                .split(",")
-                                .filter((img: string) => img.trim())
-                            : [];
-                          const imageCount = images.length;
+                          const validImageCount = getValidImageCount(project.images || '');
+                          const hasMainImage = project.image && 
+                            (project.image.startsWith('http') || project.image.startsWith('https'));
 
                           return (
                             <>
-                              {imageCount > 0 && (
+                              {(validImageCount > 0 || hasMainImage) && (
                                 <div className="flex items-center gap-1">
-                                  <Icons.Image
-                                    size={16}
-                                    className="text-green-600"
-                                  />
+                                  <Icons.Image size={16} className="text-green-600" />
                                   <span className="text-xs text-gray-600">
-                                    {imageCount} img
-                                    {imageCount !== 1 ? "s" : ""}
+                                    {hasMainImage ? validImageCount + 1 : validImageCount} img
+                                    {(hasMainImage ? validImageCount + 1 : validImageCount) !== 1 ? 's' : ''}
                                   </span>
                                 </div>
                               )}
                               {project.link && (
-                                <Icons.Link
-                                  size={16}
-                                  className="text-blue-600"
-                                />
+                                <div title="Tiene enlace del proyecto">
+                                  <Icons.Link size={16} className="text-blue-600" />
+                                </div>
                               )}
                               {project.github && (
-                                <Icons.Github
-                                  size={16}
-                                  className="text-gray-700"
-                                />
+                                <div title="Tiene repositorio GitHub">
+                                  <Icons.Github size={16} className="text-gray-700" />
+                                </div>
                               )}
-                              {imageCount === 0 &&
+                              {validImageCount === 0 &&
+                                !hasMainImage &&
                                 !project.link &&
                                 !project.github && (
                                   <span className="text-gray-400 text-sm">
@@ -963,6 +732,21 @@ export const ProjectTableForm: React.FC<ProjectTableFormProps> = ({
               )}
             </tbody>
           </table>
+        </div>
+
+        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start gap-2">
+            <Icons.Info size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-blue-800">
+              <strong>Sistema simplificado:</strong>
+              <ul className="mt-1 space-y-1 list-disc list-inside">
+                <li>Solo URLs manuales - funciona siempre</li>
+                <li>Enlaces directos a servicios de imágenes recomendados</li>
+                <li>Sin problemas de CORS ni APIs bloqueadas</li>
+                <li>Compatible con cualquier servicio de hosting</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </Section>
 

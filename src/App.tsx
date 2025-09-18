@@ -24,7 +24,7 @@ function App(): React.ReactElement {
     }
     
     // 4. Default: editor para desarrollo
-    return 'editor';
+    return 'portfolio';
   };
 
   const mode = getMode();

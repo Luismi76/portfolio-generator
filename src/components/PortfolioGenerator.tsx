@@ -17,6 +17,7 @@ import ProjectTableForm from './ProjectTableForm';
 import SkillTableForm from './SkillTableForm';
 import { TemplateSelector } from './TemplateSelector';
 
+
 // Tipo para los modos de la aplicación
 type AppMode = 'editor' | 'templates' | 'preview' | 'portfolio';
 
@@ -283,6 +284,44 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
 
   // Auto-guardar
   useBeforeUnload(portfolioHook.data);
+
+  // Función para validar URLs de imágenes
+  const isValidImageUrl = (url: string): boolean => {
+    if (!url || url.trim() === '') return false;
+    
+    // Verificar si es una URL base64 válida
+    if (url.startsWith('data:image/')) {
+      // Debe tener formato: data:image/tipo;base64,datos
+      const parts = url.split(',');
+      if (parts.length !== 2) return false; // Falta la coma o los datos
+      if (parts[1].length < 20) return false; // Base64 muy corta
+      return true;
+    }
+    
+    // Verificar si es una URL HTTP válida
+    try {
+      const urlObj = new URL(url);
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  // Función para limpiar URLs de imágenes
+  const cleanImageUrl = (url: string): string | null => {
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+    
+    // Si es base64 incompleta o corrupta, rechazar
+    if (trimmed.startsWith('data:image/')) {
+      if (!isValidImageUrl(trimmed)) {
+        console.warn('Imagen base64 corrupta o incompleta:', trimmed.substring(0, 50) + '...');
+        return null;
+      }
+    }
+    
+    return trimmed;
+  };
 
   // Función para generar slug
   const generateSlug = (title: string): string => {
@@ -563,6 +602,10 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
                     src={project.image} 
                     alt={project.title}
                     className="w-full h-64 md:h-80 object-cover rounded-lg mb-8 shadow-lg"
+                    onError={(e) => {
+                      console.error('Error loading main image:', project.image);
+                      e.currentTarget.style.border = '3px solid red';
+                    }}
                   />
                 )}
 
@@ -620,17 +663,33 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
                   <div className="mb-8">
                     <h2 className="text-2xl font-bold mb-4 text-gray-800">Galería</h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {project.images.split(',').map((img, index) => (
-                        img.trim() && (
-                          <img 
-                            key={index} 
-                            src={img.trim()} 
-                            alt={`${project.title} - Imagen ${index + 1}`}
-                            className="w-full h-32 object-cover rounded-lg shadow-md"
-                          />
-                        )
-                      ))}
+                      {project.images.split(',').map((img, index) => {
+                        const cleanUrl = cleanImageUrl(img);
+                        return (
+                          cleanUrl && (
+                            <img 
+                              key={index} 
+                              src={cleanUrl} 
+                              alt={`${project.title} - Imagen ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg shadow-md cursor-pointer hover:opacity-80 transition-opacity"
+                              onError={(e) => {
+                                console.error(`Error cargando imagen ${index + 1}:`, cleanUrl.substring(0, 100) + '...');
+                                // Ocultar imagen que falla
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          )
+                        );
+                      })}
                     </div>
+                    
+                    {/* Mensaje si no hay imágenes válidas */}
+                    {!project.images.split(',').some(img => cleanImageUrl(img)) && (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>Las imágenes guardadas están corruptas o incompletas.</p>
+                        <p className="text-sm mt-2">Ve al editor para subir nuevas imágenes.</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -810,12 +869,16 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
                       return (
                         <div key={index} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group">
                           <div className="relative h-48 overflow-hidden">
-                            {hasCustomImage ? (
+                            {hasCustomImage && isValidImageUrl(project.image!) ? (
                               <>
                                 <img 
                                   src={project.image} 
                                   alt={project.title}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                  onError={(e) => {
+                                    console.error('Error loading project image:', project.image);
+                                    e.currentTarget.style.display = 'none';
+                                  }}
                                 />
                                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300"></div>
                               </>
