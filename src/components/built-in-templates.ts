@@ -113,6 +113,7 @@ export const MODERN_TEMPLATE: Template = {
   version: '1.0.0',
   author: 'Portfolio Generator',
   tags: ['modern', 'gradient', 'clean', 'professional'],
+  pageLayout: 'standard', // header -> projects -> skills
   isBuiltIn: true
 };
 
@@ -183,6 +184,7 @@ export const CLASSIC_TEMPLATE: Template = {
   version: '1.0.0',
   author: 'Portfolio Generator',
   tags: ['classic', 'professional', 'traditional', 'serif'],
+  pageLayout: 'standard', // header -> projects -> skills
   isBuiltIn: true
 };
 
@@ -259,6 +261,7 @@ export const TECH_TEMPLATE: Template = {
   version: '1.0.0',
   author: 'Portfolio Generator',
   tags: ['tech', 'dark', 'developer', 'monospace', 'modern'],
+  pageLayout: 'standard', // header -> projects -> skills
   isBuiltIn: true
 };
 
@@ -334,6 +337,7 @@ export const CREATIVE_TEMPLATE: Template = {
   version: '1.0.0',
   author: 'Portfolio Generator',
   tags: ['creative', 'colorful', 'artistic', 'vibrant', 'designer'],
+  pageLayout: 'standard', // header -> projects -> skills
   isBuiltIn: true
 };
 
@@ -404,6 +408,7 @@ export const MINIMAL_TEMPLATE: Template = {
   version: '1.0.0',
   author: 'Portfolio Generator',
   tags: ['minimal', 'clean', 'simple', 'whitespace', 'subtle'],
+  pageLayout: 'standard', // header -> projects -> skills
   isBuiltIn: true
 };
 

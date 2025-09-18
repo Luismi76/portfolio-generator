@@ -504,3 +504,50 @@ export const useModeSwitcher = () => {
     isPortfolioMode: currentMode === 'portfolio',
   };
 };
+// Hook para manejo de plantillas
+export const useTemplates = () => {
+  const [templates] = useState([
+    {
+      id: 'creative',
+      name: 'Creative',
+      colors: {
+        primary: '#8B5CF6',
+        secondary: '#A855F7',
+        accent: '#10B981',
+        surface: '#FFFFFF'
+      }
+    },
+    {
+      id: 'professional',
+      name: 'Professional',
+      colors: {
+        primary: '#2563EB',
+        secondary: '#1D4ED8',
+        accent: '#059669',
+        surface: '#F8FAFC'
+      }
+    },
+    {
+      id: 'minimal',
+      name: 'Minimal',
+      colors: {
+        primary: '#374151',
+        secondary: '#4B5563',
+        accent: '#F59E0B',
+        surface: '#FFFFFF'
+      }
+    }
+  ]);
+
+  const [selectedTemplate, setSelectedTemplate] = useLocalStorage('selectedTemplate', null);
+
+  const selectTemplate = useCallback((template: any) => {
+    setSelectedTemplate(template);
+  }, [setSelectedTemplate]);
+
+  return {
+    templates,
+    selectedTemplate,
+    selectTemplate
+  };
+};

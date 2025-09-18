@@ -94,6 +94,7 @@ export interface Template {
   version: string;
   author?: string;
   tags: string[];
+  pageLayout: string;
   isBuiltIn: boolean;
 }
 

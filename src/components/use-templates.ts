@@ -105,14 +105,25 @@ export const useTemplates = (options: UseTemplatesOptions = {}): ExtendedUseTemp
     }
   }, [templates, storageKey, isLoaded]);
 
-  // Seleccionar plantilla
-  const selectTemplate = useCallback((template: Template) => {
-    setSelectedTemplate(template);
-    setConfig({
-      templateId: template.id,
-      customizations: {}
-    });
-  }, []);
+const selectTemplate = useCallback((template: Template) => {
+  setSelectedTemplate(template);
+  setConfig({
+    templateId: template.id,
+    customizations: {}
+  });
+  
+  // AGREGAR ESTA LÍNEA para compatibilidad con Portfolio.tsx:
+  localStorage.setItem('selectedTemplate', JSON.stringify({
+    id: template.id,
+    name: template.name,
+    colors: {
+      primary: template.colors.primary,
+      secondary: template.colors.secondary,
+      accent: template.colors.accent,
+      surface: template.colors.surface
+    }
+  }));
+}, []);
 
   // Actualizar configuración de personalización
   const updateConfig = useCallback((newConfig: Partial<TemplateConfig>) => {

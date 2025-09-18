@@ -64,14 +64,31 @@ interface PortfolioData {
   achievements: Achievement[];
 }
 
-// Componente TechList con iconos automáticos
+// Interfaces para plantillas
+interface Template {
+  id: string;
+  name: string;
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    surface: string;
+  };
+}
+
+interface PortfolioProps {
+  selectedTemplate?: Template;
+}
+
+// Componente TechList con iconos automáticos y soporte para plantillas
 interface TechListProps {
   technologies: string;
   variant?: 'default' | 'outlined';
   className?: string;
+  template?: Template | null;
 }
 
-const TechList: React.FC<TechListProps> = ({ technologies, variant = 'default', className = '' }) => {
+const TechList: React.FC<TechListProps> = ({ technologies, variant = 'default', className = '', template }) => {
   if (!technologies) return null;
   
   const techs = technologies.split(',').map(tech => tech.trim()).filter(tech => tech);
@@ -161,17 +178,43 @@ const TechList: React.FC<TechListProps> = ({ technologies, variant = 'default', 
     // Default icon
     return '⚡';
   };
+
+  // Función para obtener colores según la plantilla
+  const getColors = () => {
+    if (!template) {
+      return variant === 'outlined' 
+        ? { className: 'border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-blue-300' }
+        : { className: 'bg-blue-100 text-blue-800 hover:bg-blue-200' };
+    }
+    
+    if (variant === 'outlined') {
+      return { 
+        style: { 
+          borderColor: template.colors.primary + '40',
+          color: template.colors.primary 
+        },
+        className: 'border hover:bg-gray-50'
+      };
+    } else {
+      return { 
+        style: { 
+          backgroundColor: template.colors.primary + '20',
+          color: template.colors.primary 
+        },
+        className: 'hover:opacity-80'
+      };
+    }
+  };
+
+  const colors = getColors();
   
   return (
     <>
       {techs.map((tech, index) => (
         <span
           key={index}
-          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 ${
-            variant === 'outlined'
-              ? 'border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-blue-300'
-              : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-          } ${className}`}
+          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 ${colors.className} ${className}`}
+          style={colors.style}
         >
           <span className="text-base">{getTechIcon(tech)}</span>
           {tech}
@@ -230,7 +273,8 @@ const ProjectDetail: React.FC<{
   projectSlug: string;
   onBack: () => void;
   portfolioData: PortfolioData;
-}> = ({ projectSlug, onBack, portfolioData }) => {
+  template?: Template | null;
+}> = ({ projectSlug, onBack, portfolioData, template }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   // Generar slug localmente para comparar
@@ -255,6 +299,7 @@ const ProjectDetail: React.FC<{
           <button
             onClick={onBack}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            style={template ? { backgroundColor: template.colors.primary } : {}}
           >
             Volver al Portfolio
           </button>
@@ -300,6 +345,7 @@ const ProjectDetail: React.FC<{
           <button
             onClick={onBack}
             className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+            style={template ? { color: template.colors.primary } : {}}
           >
             ← Volver al Portfolio
           </button>
@@ -317,7 +363,10 @@ const ProjectDetail: React.FC<{
         )}
 
         {/* Título */}
-        <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
+        <h1 
+          className="text-3xl md:text-4xl font-bold mb-4"
+          style={{ color: template?.colors.primary || '#374151' }}
+        >
           {project.title}
         </h1>
         
@@ -326,7 +375,7 @@ const ProjectDetail: React.FC<{
           <div className="mb-8">
             <h3 className="text-lg font-semibold mb-3 text-gray-700">Tecnologías utilizadas</h3>
             <div className="flex flex-wrap gap-2">
-              <TechList technologies={project.technologies} />
+              <TechList technologies={project.technologies} template={template} />
             </div>
           </div>
         )}
@@ -338,7 +387,8 @@ const ProjectDetail: React.FC<{
               href={project.link} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="text-white px-6 py-3 rounded-lg hover:opacity-90 transition-colors flex items-center gap-2"
+              style={{ backgroundColor: template?.colors.primary || '#2563EB' }}
             >
               🚀 Ver Proyecto Live
             </a>
@@ -348,7 +398,11 @@ const ProjectDetail: React.FC<{
               href={project.github} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+              className="border px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+              style={{ 
+                borderColor: template?.colors.primary || '#D1D5DB',
+                color: template?.colors.primary || '#374151'
+              }}
             >
               📁 Ver Código
             </a>
@@ -357,7 +411,12 @@ const ProjectDetail: React.FC<{
 
         {/* Descripción detallada */}
         <div className="prose max-w-none mb-8">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800">Acerca del Proyecto</h2>
+          <h2 
+            className="text-2xl font-bold mb-4"
+            style={{ color: template?.colors.primary || '#374151' }}
+          >
+            Acerca del Proyecto
+          </h2>
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <p className="text-gray-700 leading-relaxed">
               {project.detailedDescription || project.description}
@@ -368,7 +427,12 @@ const ProjectDetail: React.FC<{
         {/* Videos */}
         {project.videos && project.videos.trim() && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Videos Demostrativos</h2>
+            <h2 
+              className="text-2xl font-bold mb-4"
+              style={{ color: template?.colors.primary || '#374151' }}
+            >
+              Videos Demostrativos
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {project.videos.split(',').map((videoUrl, index) => (
                 videoUrl.trim() && (
@@ -382,7 +446,12 @@ const ProjectDetail: React.FC<{
         {/* Galería de imágenes */}
         {project.images && project.images.trim() && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Galería</h2>
+            <h2 
+              className="text-2xl font-bold mb-4"
+              style={{ color: template?.colors.primary || '#374151' }}
+            >
+              Galería
+            </h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {project.images.split(',').map((img, index) => (
                 img.trim() && (
@@ -402,13 +471,23 @@ const ProjectDetail: React.FC<{
         {/* Características */}
         {project.features && project.features.trim() && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Características Principales</h2>
+            <h2 
+              className="text-2xl font-bold mb-4"
+              style={{ color: template?.colors.primary || '#374151' }}
+            >
+              Características Principales
+            </h2>
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {project.features.split(',').map((feature, index) => (
                   feature.trim() && (
                     <li key={index} className="flex items-center text-gray-700">
-                      <span className="text-green-500 mr-2">✓</span>
+                      <span 
+                        className="mr-2"
+                        style={{ color: template?.colors.accent || '#10B981' }}
+                      >
+                        ✓
+                      </span>
                       {feature.trim()}
                     </li>
                   )
@@ -421,7 +500,12 @@ const ProjectDetail: React.FC<{
         {/* Instrucciones */}
         {project.instructions && project.instructions.trim() && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Instrucciones de Uso</h2>
+            <h2 
+              className="text-2xl font-bold mb-4"
+              style={{ color: template?.colors.primary || '#374151' }}
+            >
+              Instrucciones de Uso
+            </h2>
             <div className="bg-gray-100 p-6 rounded-lg">
               <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">
                 {project.instructions}
@@ -433,7 +517,12 @@ const ProjectDetail: React.FC<{
         {/* Desafíos técnicos */}
         {project.challenges && project.challenges.trim() && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Desafíos Técnicos</h2>
+            <h2 
+              className="text-2xl font-bold mb-4"
+              style={{ color: template?.colors.primary || '#374151' }}
+            >
+              Desafíos Técnicos
+            </h2>
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <p className="text-gray-700 leading-relaxed">
                 {project.challenges}
@@ -446,7 +535,8 @@ const ProjectDetail: React.FC<{
         <div className="text-center pt-8 border-t">
           <button
             onClick={onBack}
-            className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
+            className="text-white px-6 py-3 rounded-lg hover:opacity-90 transition-colors"
+            style={{ backgroundColor: template?.colors.primary || '#4B5563' }}
           >
             ← Volver al Portfolio
           </button>
@@ -460,9 +550,10 @@ const ProjectDetail: React.FC<{
 };
 
 // Componente principal Portfolio
-const Portfolio: React.FC = () => {
+const Portfolio: React.FC<PortfolioProps> = ({ selectedTemplate }) => {
   const [portfolioData, setPortfolioData] = useState<PortfolioData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentTemplate, setCurrentTemplate] = useState<Template | null>(null);
   
   // Estados para navegación de páginas de proyecto
   const [currentView, setCurrentView] = useState<'portfolio' | 'project'>('portfolio');
@@ -527,6 +618,22 @@ const Portfolio: React.FC = () => {
     setIsAuthenticated(false);
     setShowAdminBar(false);
   };
+
+  useEffect(() => {
+    // Cargar plantilla guardada si no viene como prop
+    if (!selectedTemplate) {
+      try {
+        const savedTemplate = localStorage.getItem('selectedTemplate');
+        if (savedTemplate) {
+          setCurrentTemplate(JSON.parse(savedTemplate));
+        }
+      } catch (error) {
+        console.error('Error cargando plantilla:', error);
+      }
+    } else {
+      setCurrentTemplate(selectedTemplate);
+    }
+  }, [selectedTemplate]);
 
   useEffect(() => {
     // Función para cargar datos
@@ -649,7 +756,10 @@ const Portfolio: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <div 
+            className="animate-spin rounded-full h-32 w-32 border-b-2 mx-auto"
+            style={{ borderColor: currentTemplate?.colors.primary || '#2563EB' }}
+          ></div>
           <p className="mt-4 text-gray-600">Cargando portfolio...</p>
         </div>
       </div>
@@ -662,7 +772,8 @@ const Portfolio: React.FC = () => {
       <ProjectDetail 
         projectSlug={currentProjectSlug} 
         onBack={navigateToPortfolio}
-        portfolioData={portfolioData} 
+        portfolioData={portfolioData}
+        template={currentTemplate}
       />
     );
   }
@@ -698,7 +809,8 @@ const Portfolio: React.FC = () => {
               </button>
               <button
                 onClick={() => switchMode('portfolio')}
-                className="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-blue-600 text-white"
+                className="px-3 py-1 rounded-md text-sm font-medium transition-colors text-white"
+                style={{ backgroundColor: currentTemplate?.colors.primary || '#2563EB' }}
               >
                 Portfolio
               </button>
@@ -708,7 +820,14 @@ const Portfolio: React.FC = () => {
 
         <div className="flex items-center justify-center min-h-[80vh]">
           <div className="text-center max-w-md">
-            <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-blue-600 rounded-full mx-auto mb-6 flex items-center justify-center text-white text-3xl">
+            <div 
+              className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center text-white text-3xl"
+              style={{
+                background: currentTemplate 
+                  ? `linear-gradient(to br, ${currentTemplate.colors.primary}, ${currentTemplate.colors.secondary})`
+                  : 'linear-gradient(to br, #A855F7, #2563EB)'
+              }}
+            >
               📝
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-4">Portfolio en construcción</h1>
@@ -718,7 +837,8 @@ const Portfolio: React.FC = () => {
             <div className="space-y-3">
               <button
                 onClick={() => switchMode('editor')}
-                className="w-full bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                className="w-full text-white px-8 py-3 rounded-lg hover:opacity-90 transition-colors font-medium"
+                style={{ backgroundColor: currentTemplate?.colors.primary || '#2563EB' }}
               >
                 Ir al Editor
               </button>
@@ -756,7 +876,8 @@ const Portfolio: React.FC = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => switchMode('editor')}
-                className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                className="flex items-center gap-2 text-white px-3 py-1 rounded text-sm hover:opacity-90"
+                style={{ backgroundColor: currentTemplate?.colors.primary || '#2563EB' }}
               >
                 <Edit size={14} />
                 Editar Portfolio
@@ -784,12 +905,16 @@ const Portfolio: React.FC = () => {
               onChange={(e) => setPassword(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAuth()}
               className="w-full p-3 border border-gray-300 rounded mb-4 focus:ring-2 focus:ring-blue-500"
+              style={{ 
+                borderColor: currentTemplate?.colors.primary ? currentTemplate.colors.primary + '40' : undefined
+              }}
               autoFocus
             />
             <div className="flex gap-2">
               <button
                 onClick={handleAuth}
-                className="flex-1 bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+                className="flex-1 text-white p-2 rounded hover:opacity-90"
+                style={{ backgroundColor: currentTemplate?.colors.primary || '#2563EB' }}
               >
                 Acceder
               </button>
@@ -811,7 +936,14 @@ const Portfolio: React.FC = () => {
       )}
 
       {/* Header del portfolio */}
-      <header className={`bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white ${showAdminBar && isAuthenticated ? 'pt-16' : ''}`}>
+      <header 
+        className={`text-white ${showAdminBar && isAuthenticated ? 'pt-16' : ''}`}
+        style={{
+          background: currentTemplate 
+            ? `linear-gradient(135deg, ${currentTemplate.colors.primary}, ${currentTemplate.colors.secondary})`
+            : 'linear-gradient(135deg, #2563EB, #7C3AED, #4338CA)'
+        }}
+      >
         <div className="container mx-auto px-4 py-20 text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
@@ -872,7 +1004,10 @@ const Portfolio: React.FC = () => {
         {/* Projects Section */}
         {projects.filter(p => p.title.trim()).length > 0 && (
           <section className="mb-20">
-            <h2 className="text-4xl font-bold text-center mb-12 text-gray-800">
+            <h2 
+              className="text-4xl font-bold text-center mb-12"
+              style={{ color: currentTemplate?.colors.primary || '#374151' }}
+            >
               Proyectos Destacados
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -1030,7 +1165,12 @@ const Portfolio: React.FC = () => {
                     </div>
                     
                     <div className="p-8">
-                      <h3 className="text-2xl font-bold mb-4 text-gray-800">{project.title}</h3>
+                      <h3 
+                        className="text-2xl font-bold mb-4"
+                        style={{ color: currentTemplate?.colors.primary || '#374151' }}
+                      >
+                        {project.title}
+                      </h3>
                       <p className="text-gray-600 mb-6 leading-relaxed">{project.description}</p>
                       
                       {project.technologies && (
@@ -1038,16 +1178,18 @@ const Portfolio: React.FC = () => {
                           <TechList 
                             technologies={project.technologies}
                             variant="default"
+                            template={currentTemplate}
                           />
                         </div>
                       )}
                       
-                      <div className="flex gap-4">
+                      <div className="flex gap-4 flex-wrap">
                         {/* Botón para ver detalles del proyecto - SIEMPRE visible si hay título */}
                         {project.title.trim() && (
                           <button
                             onClick={() => navigateToProject(project.slug || generateSlug(project.title))}
-                            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            className="flex items-center gap-2 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-colors"
+                            style={{ backgroundColor: currentTemplate?.colors.primary || '#2563EB' }}
                           >
                             👁️ Ver Detalles
                           </button>
@@ -1056,14 +1198,19 @@ const Portfolio: React.FC = () => {
                         {/* Enlace externo si existe */}
                         {project.link && (
                           <a href={project.link} target="_blank" rel="noopener noreferrer"
-                             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                             className="flex items-center gap-2 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-colors"
+                             style={{ backgroundColor: currentTemplate?.colors.accent || '#10B981' }}>
                             🚀 Ver Live
                           </a>
                         )}
                         
                         {project.github && (
                           <a href={project.github} target="_blank" rel="noopener noreferrer"
-                             className="flex items-center gap-2 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
+                             className="flex items-center gap-2 border px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                             style={{ 
+                               borderColor: currentTemplate?.colors.primary || '#D1D5DB',
+                               color: currentTemplate?.colors.primary || '#374151'
+                             }}>
                             📁 Código
                           </a>
                         )}
@@ -1079,17 +1226,26 @@ const Portfolio: React.FC = () => {
         {/* Skills Section */}
         {skills.filter(s => s.category.trim()).length > 0 && (
           <section className="mb-20">
-            <h2 className="text-4xl font-bold text-center mb-12 text-gray-800">
+            <h2 
+              className="text-4xl font-bold text-center mb-12"
+              style={{ color: currentTemplate?.colors.primary || '#374151' }}
+            >
               Habilidades Técnicas
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {skills.filter(s => s.category.trim()).map((skill, index) => (
                 <div key={index} className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300">
-                  <h3 className="text-2xl font-bold mb-6 text-gray-800">{skill.category}</h3>
+                  <h3 
+                    className="text-2xl font-bold mb-6"
+                    style={{ color: currentTemplate?.colors.primary || '#374151' }}
+                  >
+                    {skill.category}
+                  </h3>
                   <div className="flex flex-wrap gap-3">
                     <TechList 
                       technologies={skill.items}
                       variant="outlined"
+                      template={currentTemplate}
                     />
                   </div>
                 </div>
@@ -1106,7 +1262,7 @@ const Portfolio: React.FC = () => {
             © {new Date().getFullYear()} {personalInfo.name || 'Tu Nombre'}. Todos los derechos reservados.
           </p>
           <p className="text-gray-400 mt-2 text-sm">
-            Portfolio creado con React y TypeScript
+            Portfolio con plantilla {currentTemplate ? `"${currentTemplate.name}"` : 'predeterminada'} • Portfolio creado con React y TypeScript
           </p>
         </div>
       </footer>
