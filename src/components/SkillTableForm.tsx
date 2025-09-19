@@ -1,7 +1,8 @@
-// SkillTableForm.tsx
+// SkillTableForm.tsx - IMPORTS CORREGIDOS
 import React, { useState } from 'react';
 import { Skill } from '../types/portfolio-types';
 import { Icons } from './portfolio-icons';
+// ✅ CORRECCIÓN: Importar Section desde el archivo correcto que SÍ tiene description
 import { Section } from './Section';
 
 interface SkillTableFormProps {
@@ -19,7 +20,7 @@ interface SkillModalProps {
   onSave: (index: number | undefined, skillData: Skill) => void;
 }
 
-// Modal para crear/editar habilidades
+// Modal para crear/editar habilidades  
 const SkillModal: React.FC<SkillModalProps> = ({
   skill,
   index,
@@ -27,16 +28,18 @@ const SkillModal: React.FC<SkillModalProps> = ({
   onClose,
   onSave
 }) => {
+  // ✅ CORRECCIÓN: Usar 'technologies' en lugar de 'items' 
   const [formData, setFormData] = useState<Skill>(
     skill || {
       category: '',
-      items: ''
+      technologies: '', // ✅ Cambiar 'items' por 'technologies'
+      level: ''
     }
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.category.trim() || !formData.items.trim()) {
+    if (!formData.category.trim() || !formData.technologies.trim()) {
       alert('La categoría y las habilidades son obligatorias');
       return;
     }
@@ -50,7 +53,7 @@ const SkillModal: React.FC<SkillModalProps> = ({
   };
 
   // Obtener lista de habilidades para preview
-  const skillsList = formData.items
+  const skillsList = formData.technologies
     .split(',')
     .map(item => item.trim())
     .filter(item => item.length > 0);
@@ -89,9 +92,6 @@ const SkillModal: React.FC<SkillModalProps> = ({
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
-              <div className="text-xs text-gray-500 mt-1">
-                Ejemplos: Frontend, Backend, Herramientas, Diseño, Metodologías
-              </div>
             </div>
 
             {/* Habilidades */}
@@ -100,8 +100,8 @@ const SkillModal: React.FC<SkillModalProps> = ({
                 Habilidades *
               </label>
               <textarea
-                value={formData.items}
-                onChange={(e) => updateField('items', e.target.value)}
+                value={formData.technologies}
+                onChange={(e) => updateField('technologies', e.target.value)}
                 placeholder="React, JavaScript, TypeScript, Node.js, Express"
                 rows={4}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -110,6 +110,24 @@ const SkillModal: React.FC<SkillModalProps> = ({
               <div className="text-xs text-gray-500 mt-1">
                 Separa cada habilidad con una coma. Serán mostradas como etiquetas individuales.
               </div>
+            </div>
+
+            {/* Nivel de experiencia */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nivel de experiencia
+              </label>
+              <select
+                value={formData.level || ''}
+                onChange={(e) => updateField('level', e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Seleccionar nivel</option>
+                <option value="Principiante">Principiante</option>
+                <option value="Intermedio">Intermedio</option>
+                <option value="Avanzado">Avanzado</option>
+                <option value="Experto">Experto</option>
+              </select>
             </div>
 
             {/* Preview de habilidades */}
@@ -130,22 +148,6 @@ const SkillModal: React.FC<SkillModalProps> = ({
                 </div>
               </div>
             )}
-
-            {/* Consejos */}
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="flex items-start gap-2">
-                <Icons.Info size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-amber-800">
-                  <strong>Consejos:</strong>
-                  <ul className="mt-1 space-y-1 list-disc list-inside">
-                    <li>Usa nombres reconocidos de tecnologías</li>
-                    <li>Ordena por nivel de dominio (más fuerte primero)</li>
-                    <li>Incluye versiones específicas si es relevante (React 18, Node.js 20)</li>
-                    <li>Combina habilidades técnicas y blandas según la categoría</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Footer del modal */}
@@ -204,7 +206,10 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
   const handleSave = (index: number | undefined, skillData: Skill) => {
     if (index !== undefined) {
       onUpdate(index, 'category', skillData.category);
-      onUpdate(index, 'items', skillData.items);
+      onUpdate(index, 'technologies', skillData.technologies); // ✅ Usar 'technologies'
+      if (skillData.level) {
+        onUpdate(index, 'level', skillData.level);
+      }
     }
   };
 
@@ -216,7 +221,7 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
   const getBadgeColor = (index: number) => {
     const colors = [
       'bg-blue-100 text-blue-800',
-      'bg-green-100 text-green-800',
+      'bg-green-100 text-green-800', 
       'bg-purple-100 text-purple-800',
       'bg-yellow-100 text-yellow-800',
       'bg-pink-100 text-pink-800',
@@ -227,6 +232,7 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
 
   return (
     <>
+      {/* ✅ CORRECCIÓN: Ahora usa el componente Section correcto con description */}
       <Section
         title="Habilidades"
         description="Organiza tus competencias por categorías"
@@ -269,8 +275,9 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
                 </tr>
               ) : (
                 skills.map((skill, index) => {
-                  const skillsList = skill.items
-                    ? skill.items.split(',').map(s => s.trim()).filter(s => s.length > 0)
+                  // ✅ CORRECCIÓN: Usar 'technologies' en lugar de 'items'
+                  const skillsList = skill.technologies
+                    ? skill.technologies.split(',').map(s => s.trim()).filter(s => s.length > 0)
                     : [];
                   
                   const maxVisible = 4;
@@ -282,9 +289,16 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
                       <td className="border border-gray-200 p-3">
                         <div className="flex items-center gap-2">
                           <Icons.Award size={16} className="text-blue-600 flex-shrink-0" />
-                          <span className="font-medium text-gray-900">
-                            {skill.category || 'Sin categoría'}
-                          </span>
+                          <div>
+                            <span className="font-medium text-gray-900">
+                              {skill.category || 'Sin categoría'}
+                            </span>
+                            {skill.level && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                Nivel: {skill.level}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="border border-gray-200 p-3">
@@ -353,7 +367,8 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
               <span>
                 Total: {skills.length} categorías, {' '}
                 {skills.reduce((total, skill) => {
-                  const count = skill.items ? skill.items.split(',').filter(s => s.trim()).length : 0;
+                  // ✅ CORRECCIÓN: Usar 'technologies' en lugar de 'items'
+                  const count = skill.technologies ? skill.technologies.split(',').filter(s => s.trim()).length : 0;
                   return total + count;
                 }, 0)} habilidades
               </span>

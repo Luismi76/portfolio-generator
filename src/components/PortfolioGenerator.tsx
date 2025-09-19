@@ -1,9 +1,8 @@
-// PortfolioGenerator.tsx - Integración actualizada con TemplateCustomizer
+// PortfolioGenerator.tsx - VERSIÓN COMPLETAMENTE CORREGIDA
 import React, { useRef, useState, useCallback } from 'react';
 import { Icons } from './portfolio-icons';
 import { 
   usePortfolioData, 
-  useDataExport, 
   useBeforeUnload,
 } from './portfolio-hooks';
 import { useTemplates } from './use-templates';
@@ -15,7 +14,6 @@ import PersonalInfoForm from './PersonalInfoForm';
 import ProjectTableForm from './ProjectTableForm';
 import SkillTableForm from './SkillTableForm';
 import { TemplateSelector } from './TemplateSelector';
-import TemplateCustomizer from './TemplateCustomizer';
 
 // Tipo para los modos de la aplicación
 type AppMode = 'editor' | 'templates' | 'customize' | 'preview' | 'portfolio';
@@ -26,7 +24,71 @@ interface PortfolioGeneratorProps {
   autoSave?: boolean;
 }
 
-// Resto de los componentes auxiliares (TechList, etc.) permanecen igual...
+// ✅ Hook para exportación de datos - DEFINIDO LOCALMENTE
+const useDataExport = () => {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportToJSON = useCallback((data: any) => {
+    try {
+      setIsExporting(true);
+      const jsonString = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `portfolio-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting JSON:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  }, []);
+
+  const importFromJSON = useCallback(async (file: File): Promise<{ 
+    success: boolean; 
+    data?: any; 
+    message: string 
+  }> => {
+    return new Promise((resolve) => {
+      setIsExporting(true);
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const importedData = JSON.parse(e.target?.result as string);
+          resolve({ 
+            success: true, 
+            data: importedData, 
+            message: 'Datos importados exitosamente' 
+          });
+        } catch (error) {
+          resolve({ 
+            success: false, 
+            message: `Error al importar: ${error instanceof Error ? error.message : 'Archivo JSON inválido'}` 
+          });
+        } finally {
+          setIsExporting(false);
+        }
+      };
+      reader.onerror = () => {
+        resolve({ 
+          success: false, 
+          message: 'Error al leer el archivo' 
+        });
+        setIsExporting(false);
+      };
+      reader.readAsText(file);
+    });
+  }, []);
+
+  return { exportToJSON, importFromJSON, isExporting };
+};
+
+// Componente TechList mejorado
 const TechList: React.FC<{ technologies: string; variant?: 'default' | 'outlined' }> = 
 ({ technologies, variant = 'default' }) => {
   if (!technologies) return null;
@@ -68,7 +130,194 @@ const TechList: React.FC<{ technologies: string; variant?: 'default' | 'outlined
   );
 };
 
-// Componente Header actualizado para incluir el modo customize
+// ✅ Componente TemplateRenderer SIMPLIFICADO
+const TemplateRenderer: React.FC<{
+  template: any;
+  config: any;
+  portfolioData: any;
+  children?: React.ReactNode;
+}> = ({ template, config, portfolioData, children }) => {
+  // Merge template colors con customizations
+  const colors = {
+    ...template.colors,
+    ...config.customizations?.colors
+  };
+  
+  const typography = {
+    ...template.typography,
+    ...config.customizations?.typography
+  };
+
+  return (
+    <div 
+      className="min-h-screen"
+      style={{
+        backgroundColor: colors?.background || '#ffffff',
+        fontFamily: typography?.fontFamily?.primary || "'Inter', sans-serif"
+      }}
+    >
+      {/* Header */}
+      <header 
+        className="py-16 text-white text-center"
+        style={{
+          background: colors?.gradient 
+            ? `linear-gradient(${colors.gradient.direction || '135deg'}, ${colors.gradient.from}, ${colors.gradient.to})`
+            : `linear-gradient(135deg, ${colors?.primary || '#3B82F6'}, ${colors?.secondary || '#1E40AF'})`
+        }}
+      >
+        <div className="max-w-4xl mx-auto px-4">
+          <h1 className="text-4xl font-bold mb-4">
+            {portfolioData.personalInfo.fullName || 'Tu Nombre'}
+          </h1>
+          {portfolioData.personalInfo.tagline && (
+            <p className="text-xl opacity-90 mb-6">
+              {portfolioData.personalInfo.tagline}
+            </p>
+          )}
+          <div className="flex justify-center gap-4 flex-wrap">
+            {portfolioData.personalInfo.email && (
+              <a 
+                href={`mailto:${portfolioData.personalInfo.email}`}
+                className="bg-white bg-opacity-20 px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all"
+              >
+                📧 Email
+              </a>
+            )}
+            {portfolioData.personalInfo.linkedin && (
+              <a 
+                href={portfolioData.personalInfo.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white bg-opacity-20 px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all"
+              >
+                💼 LinkedIn
+              </a>
+            )}
+            {portfolioData.personalInfo.github && (
+              <a 
+                href={portfolioData.personalInfo.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white bg-opacity-20 px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all"
+              >
+                🐙 GitHub
+              </a>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* About */}
+      {portfolioData.personalInfo.summary && (
+        <section className="py-12" style={{ backgroundColor: colors?.background || '#ffffff' }}>
+          <div className="max-w-4xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-8" style={{ color: colors?.text?.primary || '#1F2937' }}>
+              Sobre mí
+            </h2>
+            <div className="text-lg leading-relaxed" style={{ color: colors?.text?.secondary || '#6B7280' }}>
+              <p>{portfolioData.personalInfo.summary}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Skills */}
+      {portfolioData.skills?.length > 0 && (
+        <section className="py-12" style={{ backgroundColor: colors?.surface || '#F8FAFC' }}>
+          <div className="max-w-4xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-8" style={{ color: colors?.text?.primary || '#1F2937' }}>
+              Habilidades
+            </h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              {portfolioData.skills.map((skill: any, index: number) => (
+                <div key={index} className="p-6 rounded-lg shadow-md" style={{ backgroundColor: colors?.background || '#ffffff' }}>
+                  <h3 className="font-semibold mb-3" style={{ color: colors?.text?.primary || '#1F2937' }}>
+                    {skill.category}
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    <TechList technologies={skill.technologies} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Projects */}
+      {portfolioData.projects?.length > 0 && (
+        <section className="py-12" style={{ backgroundColor: colors?.background || '#ffffff' }}>
+          <div className="max-w-4xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-8" style={{ color: colors?.text?.primary || '#1F2937' }}>
+              Proyectos
+            </h2>
+            <div className="grid md:grid-cols-2 gap-8">
+              {portfolioData.projects.map((project: any, index: number) => (
+                <div key={index} className="rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: colors?.surface || '#F8FAFC' }}>
+                  {project.image && (
+                    <img 
+                      src={project.image} 
+                      alt={project.title}
+                      className="w-full h-48 object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                      }}
+                    />
+                  )}
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold mb-2" style={{ color: colors?.text?.primary || '#1F2937' }}>
+                      {project.title}
+                    </h3>
+                    <p className="mb-4" style={{ color: colors?.text?.secondary || '#6B7280' }}>
+                      {project.description}
+                    </p>
+                    {project.technologies && (
+                      <div className="mb-4">
+                        <TechList technologies={project.technologies} />
+                      </div>
+                    )}
+                    <div className="flex gap-3 flex-wrap">
+                      {project.liveUrl && (
+                        <a 
+                          href={project.liveUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 rounded transition-all text-white"
+                          style={{ backgroundColor: colors?.primary || '#3B82F6' }}
+                        >
+                          Ver Proyecto
+                        </a>
+                      )}
+                      {project.repoUrl && (
+                        <a 
+                          href={project.repoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 rounded border transition-all"
+                          style={{ 
+                            borderColor: colors?.primary || '#3B82F6', 
+                            color: colors?.primary || '#3B82F6'
+                          }}
+                        >
+                          Código
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {children}
+    </div>
+  );
+};
+
+// Componente Header
 interface AppHeaderProps {
   saveStatus: string;
   onExportHTML: () => void;
@@ -164,7 +413,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         <div className="hidden md:flex items-center gap-2">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            {saveStatus}
+            {saveStatus || 'Listo'}
           </div>
         </div>
 
@@ -210,7 +459,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 
           <div className="w-px h-8 bg-gray-300"></div>
 
-          {/* Navegación por modos - ACTUALIZADA */}
+          {/* Navegación por modos */}
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => onSwitchMode("editor")}
@@ -234,42 +483,32 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               <Icons.Code size={14} />
               Plantillas
             </button>
-            {/* NUEVO: Botón de personalización - solo visible si hay template seleccionada */}
             {selectedTemplateName && (
-              <button
-                onClick={() => onSwitchMode("customize")}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
-                  currentMode === 'customize'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                <Icons.Settings size={14} />
-                Personalizar
-              </button>
+              <>
+                <button
+                  onClick={() => onSwitchMode("preview")}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
+                    currentMode === 'preview'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  <Icons.Eye size={14} />
+                  Vista Previa
+                </button>
+                <button
+                  onClick={() => onSwitchMode("portfolio")}
+                  className={`px-3 py-1 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
+                    currentMode === 'portfolio'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  <Icons.ExternalLink size={14} />
+                  Portfolio
+                </button>
+              </>
             )}
-            <button
-              onClick={() => onSwitchMode("preview")}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
-                currentMode === 'preview'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              <Icons.Eye size={14} />
-              Vista Previa
-            </button>
-            <button
-              onClick={() => onSwitchMode("portfolio")}
-              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
-                currentMode === 'portfolio'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              <Icons.Eye size={14} />
-              Portfolio
-            </button>
           </div>
         </div>
       </div>
@@ -277,7 +516,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   </div>
 );
 
-// Componente principal ACTUALIZADO
+// Componente principal
 export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
   initialMode = 'editor',
   storageKey = 'portfolioData',
@@ -289,7 +528,7 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
   const templates = useTemplates();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Estado local - ACTUALIZADO para incluir 'customize'
+  // Estado local
   const [showDataMenu, setShowDataMenu] = useState(false);
   const [currentMode, setCurrentMode] = useState<AppMode>(initialMode);
 
@@ -303,6 +542,7 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
 
   const switchMode = useCallback((mode: AppMode) => {
     setCurrentMode(mode);
+    setShowDataMenu(false); // Cerrar menú al cambiar modo
   }, []);
 
   // Exportadores
@@ -318,10 +558,12 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
 
   const handleExportJSON = useCallback(() => {
     exportToJSON(portfolioHook.data);
+    setShowDataMenu(false);
   }, [portfolioHook.data, exportToJSON]);
 
   const handleImportJSON = useCallback(() => {
     fileInputRef.current?.click();
+    setShowDataMenu(false);
   }, []);
 
   const handleFileImport = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -331,6 +573,8 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
     const result = await importFromJSON(file);
     if (result.success && result.data) {
       portfolioHook.importData(result.data);
+    } else {
+      alert(result.message);
     }
     
     event.target.value = '';
@@ -339,36 +583,11 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
   const handleClearData = useCallback(() => {
     if (window.confirm("¿Estás seguro de que quieres borrar todos los datos?")) {
       portfolioHook.clearAllData();
+      setShowDataMenu(false);
     }
   }, [portfolioHook]);
 
-  // Handlers para plantillas - ACTUALIZADOS
-  const handleCustomizeTemplate = useCallback(() => {
-    if (templates.selectedTemplate) {
-      switchMode('customize');
-    }
-  }, [templates.selectedTemplate, switchMode]);
-
-  const handleAddTemplate = useCallback(() => {
-    console.log('Add custom template');
-    // TODO: Implementar creación de plantilla custom
-  }, []);
-
-  // Handlers del customizador
-  const handleCustomizerSave = useCallback(() => {
-    console.log('Template customization saved');
-    // Volver al modo templates después de guardar
-    switchMode('templates');
-  }, [switchMode]);
-
-  const handleCustomizerCancel = useCallback(() => {
-    // Resetear cambios si es necesario
-    templates.resetConfig();
-    // Volver al modo templates
-    switchMode('templates');
-  }, [templates, switchMode]);
-
-  // Renderizado de contenido - ACTUALIZADO
+  // Renderizado de contenido
   const renderContent = () => {
     switch (currentMode) {
       case 'templates':
@@ -377,49 +596,13 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
             templates={templates.templates}
             selectedTemplate={templates.selectedTemplate}
             onSelectTemplate={templates.selectTemplate}
-            onCustomize={handleCustomizeTemplate}
-            onAddTemplate={handleAddTemplate}
-          />
-        );
-      
-      case 'customize':
-        // NUEVO: Modo de personalización
-        if (!templates.selectedTemplate || !templates.config) {
-          return (
-            <div className="bg-white rounded-lg p-8 shadow-sm">
-              <div className="text-center">
-                <Icons.AlertCircle size={48} className="mx-auto text-yellow-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No hay plantilla para personalizar
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Selecciona una plantilla primero en la pestaña "Plantillas"
-                </p>
-                <button
-                  onClick={() => switchMode('templates')}
-                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                >
-                  <Icons.Code size={16} />
-                  Ir a Plantillas
-                </button>
-              </div>
-            </div>
-          );
-        }
-
-        return (
-          <TemplateCustomizer
-            template={templates.selectedTemplate}
-            config={templates.config}
-            onConfigChange={templates.updateConfig}
-            onSave={handleCustomizerSave}
-            onCancel={handleCustomizerCancel}
+            onCustomize={() => console.log('Customize')}
+            onAddTemplate={() => console.log('Add template')}
           />
         );
       
       case 'preview':
-        // Vista previa rápida y compacta
-        if (!templates.selectedTemplate) {
+        if (!templates.selectedTemplate || !templates.config) {
           return (
             <div className="bg-white rounded-lg p-8 shadow-sm">
               <div className="text-center">
@@ -442,61 +625,54 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
           );
         }
 
-        // Vista previa básica
         return (
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div 
-              className="p-8 text-white"
-              style={{
-                background: `linear-gradient(135deg, ${templates.selectedTemplate?.colors.primary || '#3B82F6'}, ${templates.selectedTemplate?.colors.secondary || '#1E40AF'})`
-              }}
-            >
-              <div className="max-w-4xl mx-auto text-center">
-                <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                  {portfolioHook.data.personalInfo.name || 'Tu Nombre'}
-                </h1>
-                <p className="text-xl md:text-2xl mb-6 opacity-90">
-                  {portfolioHook.data.personalInfo.title || 'Tu Título Profesional'}
-                </p>
-                <p className="text-lg opacity-80 max-w-2xl mx-auto">
-                  {portfolioHook.data.personalInfo.summary || 'Tu resumen profesional aparecerá aquí...'}
-                </p>
+            {/* Header informativo */}
+            <div className="bg-blue-50 border-b border-blue-200 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-blue-900">
+                    Vista Previa - Plantilla: {templates.selectedTemplate.name}
+                  </h3>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Esta es una vista previa de cómo se verá tu portfolio
+                  </p>
+                </div>
+                <button
+                  onClick={() => switchMode('portfolio')}
+                  className="flex items-center gap-2 bg-green-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-green-700"
+                >
+                  <Icons.ExternalLink size={14} />
+                  Ver Completo
+                </button>
               </div>
             </div>
-            
-            <div className="p-8">
-              <div className="text-center mb-8">
-                <p className="text-gray-600 mb-4">
-                  Vista previa usando la plantilla <strong>{templates.selectedTemplate.name}</strong>
-                </p>
-                <div className="flex justify-center gap-3">
-                  <button
-                    onClick={() => switchMode('customize')}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                  >
-                    <Icons.Settings size={16} />
-                    Personalizar Plantilla
-                  </button>
-                  <button
-                    onClick={() => switchMode('portfolio')}
-                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                  >
-                    <Icons.Eye size={16} />
-                    Ver Portfolio Completo
-                  </button>
-                </div>
+
+            {/* Vista previa */}
+            <div className="preview-container overflow-hidden bg-gray-100">
+              <div style={{ 
+                transform: 'scale(0.75)', 
+                transformOrigin: 'top left', 
+                width: '133.33%', 
+                height: '400px',
+                overflow: 'hidden'
+              }}>
+                <TemplateRenderer
+                  template={templates.selectedTemplate}
+                  config={templates.config}
+                  portfolioData={portfolioHook.data}
+                />
               </div>
             </div>
           </div>
         );
 
       case 'portfolio':
-        // Portfolio completo con funcionalidad completa - reutilizando la lógica existente
-        if (!templates.selectedTemplate) {
+        if (!templates.selectedTemplate || !templates.config) {
           return (
             <div className="bg-white rounded-lg p-8 shadow-sm">
               <div className="text-center">
-                <Icons.Eye size={48} className="mx-auto text-gray-300 mb-4" />
+                <Icons.ExternalLink size={48} className="mx-auto text-gray-300 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   Portfolio no disponible
                 </h3>
@@ -515,167 +691,27 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
           );
         }
 
-        // Aquí iría el renderizado completo del portfolio con la plantilla aplicada
-        // (manteniendo la lógica existente del PortfolioGenerator original)
         return (
-          <div className="min-h-screen bg-gray-50 -mx-4 -my-6">
-            <header 
-              className="text-white"
-              style={{
-                background: `linear-gradient(135deg, ${templates.selectedTemplate?.colors.primary || '#3B82F6'}, ${templates.selectedTemplate?.colors.secondary || '#1E40AF'})`
-              }}
-            >
-              <div className="container mx-auto px-4 py-20 text-center">
-                <div className="max-w-4xl mx-auto">
-                  <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-                    {portfolioHook.data.personalInfo.name || 'Tu Nombre'}
-                  </h1>
-                  <p className="text-xl md:text-2xl mb-8 opacity-90">
-                    {portfolioHook.data.personalInfo.title || 'Tu Título Profesional'}
-                  </p>
-                  {portfolioHook.data.personalInfo.summary && (
-                    <p className="text-lg opacity-80 max-w-3xl mx-auto mb-12">
-                      {portfolioHook.data.personalInfo.summary}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap justify-center gap-4">
-                    {portfolioHook.data.personalInfo.github && (
-                      <a
-                        href={portfolioHook.data.personalInfo.github}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-3 rounded-lg transition-all duration-300 flex items-center gap-2"
-                      >
-                        <Icons.Github size={20} />
-                        GitHub
-                      </a>
-                    )}
-                    {portfolioHook.data.personalInfo.linkedin && (
-                      <a
-                        href={portfolioHook.data.personalInfo.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-3 rounded-lg transition-all duration-300 flex items-center gap-2"
-                      >
-                        <Icons.ExternalLink size={20} />
-                        LinkedIn
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </header>
-
-            <main className="container mx-auto px-4 py-16">
-              {/* Proyectos */}
-              {portfolioHook.data.projects.some(p => p.title) && (
-                <section className="mb-20">
-                  <h2 className="text-4xl font-bold text-center mb-16 text-gray-800">
-                    Proyectos Destacados
-                  </h2>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {portfolioHook.data.projects
-                      .filter(project => project.title)
-                      .map((project, index) => (
-                        <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                          <div 
-                            className="h-48 bg-gradient-to-br"
-                            style={{
-                              background: `linear-gradient(135deg, ${templates.selectedTemplate?.colors.primary}20, ${templates.selectedTemplate?.colors.secondary}20)`
-                            }}
-                          />
-                          <div className="p-6">
-                            <h3 className="text-xl font-bold mb-3 text-gray-800">
-                              {project.title}
-                            </h3>
-                            <p className="text-gray-600 mb-4 line-clamp-3">
-                              {project.description}
-                            </p>
-                            {project.technologies && (
-                              <div className="mb-4">
-                                <div className="flex flex-wrap gap-2">
-                                  <TechList technologies={project.technologies} variant="outlined" />
-                                </div>
-                              </div>
-                            )}
-                            <div className="flex gap-3">
-                              {project.link && (
-                                <a
-                                  href={project.link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
-                                >
-                                  <Icons.ExternalLink size={16} />
-                                  Demo
-                                </a>
-                              )}
-                              {project.github && (
-                                <a
-                                  href={project.github}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2 text-gray-600 hover:text-gray-700 transition-colors"
-                                >
-                                  <Icons.Github size={16} />
-                                  Código
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    }
-                  </div>
-                </section>
-              )}
-
-              {/* Habilidades */}
-              {portfolioHook.data.skills.some(s => s.category && s.items) && (
-                <section className="mb-20">
-                  <h2 className="text-4xl font-bold text-center mb-16 text-gray-800">
-                    Habilidades
-                  </h2>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {portfolioHook.data.skills
-                      .filter(skill => skill.category && skill.items)
-                      .map((skill, index) => (
-                        <div key={index} className="bg-white rounded-xl shadow-lg p-6">
-                          <h3 
-                            className="text-xl font-bold mb-4"
-                            style={{ color: templates.selectedTemplate?.colors.primary }}
-                          >
-                            {skill.category}
-                          </h3>
-                          <div className="flex flex-wrap gap-2">
-                            <TechList technologies={skill.items} />
-                          </div>
-                        </div>
-                      ))
-                    }
-                  </div>
-                </section>
-              )}
-            </main>
-
-            <footer 
-              className="text-white py-8"
-              style={{
-                background: `linear-gradient(135deg, ${templates.selectedTemplate?.colors.secondary}, ${templates.selectedTemplate?.colors.primary})`
-              }}
-            >
-              <div className="container mx-auto px-4 text-center">
-                <p className="mb-2">
-                  © {new Date().getFullYear()} {portfolioHook.data.personalInfo.name || 'Tu Nombre'}. 
+          <div className="bg-gray-50 -mx-4 -my-6 min-h-screen">
+            <TemplateRenderer
+              template={templates.selectedTemplate}
+              config={templates.config}
+              portfolioData={portfolioHook.data}
+            />
+            {/* Footer adicional */}
+            <footer className="py-8 border-t border-gray-200" style={{ backgroundColor: templates.selectedTemplate.colors.surface }}>
+              <div className="text-center text-gray-600 max-w-4xl mx-auto px-4">
+                <p>
+                  © {new Date().getFullYear()} {portfolioHook.data.personalInfo.fullName || 'Tu Nombre'}. 
                   Todos los derechos reservados.
                 </p>
-                <p className="text-sm opacity-75">
+                <p className="text-sm mt-2">
                   Portfolio con plantilla "{templates.selectedTemplate?.name}" • 
                   <button
-                    onClick={() => switchMode('customize')}
-                    className="text-white hover:text-gray-200 ml-1 underline"
+                    onClick={() => switchMode('templates')}
+                    className="text-blue-600 hover:text-blue-700 ml-1 underline"
                   >
-                    Personalizar plantilla
+                    Cambiar plantilla
                   </button>
                 </p>
               </div>

@@ -4,7 +4,6 @@ import {
   PersonalInfoFormProps,
   ProjectFormProps,
   SkillFormProps,
-  PreviewProps,
   SectionProps,
   EditableItemProps,
   PersonalInfo,
@@ -77,8 +76,8 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
       <input
         type="text"
         placeholder="Nombre completo"
-        value={data.name}
-        onChange={(e) => onUpdate("name", e.target.value)}
+        value={data.fullName}
+        onChange={(e) => onUpdate("fullName", e.target.value)}
         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
       <input
@@ -418,8 +417,8 @@ export const SkillForm: React.FC<SkillFormProps> = ({
             <input
               type="text"
               placeholder="Habilidades (separadas por comas)"
-              value={skill.items}
-              onChange={(e) => onUpdate(index, "items", e.target.value)}
+              value={skill.technologies}
+              onChange={(e) => onUpdate(index, "technologies", e.target.value)}
               className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -444,12 +443,12 @@ export const PreviewPanel: React.FC<{
       <div className="bg-gray-50 rounded-lg p-4 border-2 border-dashed border-gray-300 min-h-[400px] flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
-            {personalInfo.name
-              ? personalInfo.name.charAt(0).toUpperCase()
+            {personalInfo.fullName
+              ? personalInfo.fullName.charAt(0).toUpperCase()
               : "P"}
           </div>
           <h3 className="text-xl font-bold text-gray-800 mb-2">
-            {personalInfo.name || "Tu Nombre"}
+            {personalInfo.fullName || "Tu Nombre"}
           </h3>
           <p className="text-gray-600 mb-4">
             {personalInfo.title || "Tu Título Profesional"}

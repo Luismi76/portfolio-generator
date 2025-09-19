@@ -365,7 +365,7 @@ export const useDataExport = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename || `portfolio-data-${data.personalInfo.name || 'backup'}.json`;
+      a.download = filename || `portfolio-data-${data.personalInfo.fullName || 'backup'}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

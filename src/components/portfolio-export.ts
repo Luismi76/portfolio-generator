@@ -1,4 +1,4 @@
-// portfolio-export.ts
+// portfolio-export.ts - VERSIÓN CORREGIDA
 import { PortfolioData, Project, FileExport, ExportResult, TECH_ICONS_CONFIG } from '../types/portfolio-types';
 
 // Utilidad para generar slug único
@@ -180,12 +180,12 @@ export const generateProjectsHTML = (projects: Project[]): string => {
             : ""
           }
           <div class="project-links">
-            ${project.link
-              ? `<a href="${project.link}" target="_blank">Ver Proyecto</a>`
+            ${project.liveUrl || project.link
+              ? `<a href="${project.liveUrl || project.link}" target="_blank">Ver Proyecto</a>`
               : ""
             }
-            ${project.github
-              ? `<a href="${project.github}" target="_blank">Código</a>`
+            ${project.repoUrl || project.github
+              ? `<a href="${project.repoUrl || project.github}" target="_blank">Código</a>`
               : ""
             }
           </div>
@@ -195,15 +195,16 @@ export const generateProjectsHTML = (projects: Project[]): string => {
     .join("");
 };
 
-// Generar HTML para habilidades
-export const generateSkillsHTML = (skills: Array<{category: string, items: string}>): string => {
+// ✅ CORREGIDO: Generar HTML para habilidades usando 'technologies'
+export const generateSkillsHTML = (skills: Array<{category: string, technologies: string, level?: string}>): string => {
   return skills
     .filter((s) => s.category.trim())
     .map((skill) => `
       <div class="skill-category">
         <h3>${skill.category}</h3>
+        ${skill.level ? `<div style="color: #667eea; font-size: 0.9em; margin-bottom: 10px;">Nivel: ${skill.level}</div>` : ''}
         <div class="skill-items">
-          ${skill.items
+          ${skill.technologies
             .split(",")
             .map((item) => {
               const skillName = item.trim();
@@ -236,27 +237,38 @@ export class SinglePageHTMLExporter {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${this.data.personalInfo.name || "Portfolio"}</title>
+    <title>${this.data.personalInfo.fullName || this.data.personalInfo.fullName || "Portfolio"}</title>
     <style>${generateBaseCSS()}</style>
 </head>
 <body>
     <div class="container">
         <header class="header">
-            <h1>${this.data.personalInfo.name || "Tu Nombre"}</h1>
+            <h1>${this.data.personalInfo.fullName || this.data.personalInfo.fullName || "Tu Nombre"}</h1>
             <div class="title">${this.data.personalInfo.title || "Tu Título"}</div>
+            ${this.data.personalInfo.tagline
+              ? `<div style="font-size: 1.2em; opacity: 0.8; margin-bottom: 10px;">${this.data.personalInfo.tagline}</div>`
+              : ""
+            }
             ${this.data.personalInfo.summary
               ? `<p>${this.data.personalInfo.summary}</p>`
               : ""
             }
         </header>
+        
         ${projectsHTML
           ? `<section class="section"><h2>Proyectos</h2><div class="projects-grid">${projectsHTML}</div></section>`
           : ""
         }
+        
         ${skillsHTML
           ? `<section class="section"><h2>Habilidades</h2><div class="skills-grid">${skillsHTML}</div></section>`
           : ""
         }
+        
+        <footer class="footer">
+            <p>&copy; ${new Date().getFullYear()} ${this.data.personalInfo.fullName || this.data.personalInfo.fullName || "Tu Nombre"}. Todos los derechos reservados.</p>
+            <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">Portfolio generado con Portfolio Generator</p>
+        </footer>
     </div>
 </body>
 </html>`;
@@ -265,7 +277,8 @@ export class SinglePageHTMLExporter {
   export(): ExportResult {
     try {
       const htmlContent = this.generate();
-      downloadFile(`${this.data.personalInfo.name || "portfolio"}.html`, htmlContent);
+      const filename = `${this.data.personalInfo.fullName || this.data.personalInfo.fullName || "portfolio"}.html`;
+      downloadFile(filename, htmlContent);
       return {
         success: true,
         message: "Portfolio exportado exitosamente"
@@ -291,17 +304,23 @@ export class MultiPageWebsiteExporter {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${project.title} - ${this.data.personalInfo.name}</title>
+    <title>${project.title} - ${this.data.personalInfo.fullName || this.data.personalInfo.fullName}</title>
     <style>${mainCSS}</style>
 </head>
 <body>
     <div class="container">
-        <a href="index.html" style="color:#667eea;text-decoration:none;margin-bottom:20px;display:inline-block;">← Volver</a>
+        <a href="index.html" style="color:#667eea;text-decoration:none;margin-bottom:20px;display:inline-block;">← Volver al Portfolio</a>
         
         <div class="header">
             <h1>${project.title}</h1>
             <p>${project.description}</p>
         </div>
+
+        ${project.image ? `
+            <div class="card" style="margin-bottom:30px;">
+                <img src="${project.image}" alt="${project.title}" style="width:100%;height:300px;object-fit:cover;">
+            </div>
+        ` : ''}
 
         ${project.detailedDescription ? `
             <div class="card" style="margin-bottom:30px;">
@@ -312,13 +331,26 @@ export class MultiPageWebsiteExporter {
             </div>
         ` : ''}
 
+        ${project.technologies ? `
+            <div class="card" style="margin-bottom:30px;">
+                <div class="card-content">
+                    <h3>Tecnologías Utilizadas</h3>
+                    <div class="tech-tags">
+                        ${project.technologies.split(',').map(tech => 
+                          `<span class="tech-tag">${getTechIcon(tech.trim())} ${tech.trim()}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            </div>
+        ` : ''}
+
         ${project.features ? `
             <div class="card" style="margin-bottom:30px;">
                 <div class="card-content">
                     <h3>Características</h3>
-                    <ul>
+                    <ul style="margin-left: 20px;">
                         ${project.features.split(',').map(feature => 
-                          `<li>${feature.trim()}</li>`
+                          `<li style="margin-bottom: 8px;">${feature.trim()}</li>`
                         ).join('')}
                     </ul>
                 </div>
@@ -329,7 +361,7 @@ export class MultiPageWebsiteExporter {
             <div class="card" style="margin-bottom:30px;">
                 <div class="card-content">
                     <h3>Instrucciones de Uso</h3>
-                    <pre style="white-space: pre-wrap; background: #f8f9fa; padding: 15px; border-radius: 8px; overflow-x: auto;">${project.instructions}</pre>
+                    <pre style="white-space: pre-wrap; background: #f8f9fa; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: 'Courier New', monospace;">${project.instructions}</pre>
                 </div>
             </div>
         ` : ''}
@@ -346,9 +378,9 @@ export class MultiPageWebsiteExporter {
         <div class="card" style="margin-bottom:30px;">
             <div class="card-content">
                 <h3>Enlaces del Proyecto</h3>
-                <div style="display: flex; gap: 15px; margin-top: 15px;">
-                    ${project.link ? `<a href="${project.link}" target="_blank" class="btn btn-primary">Ver Proyecto</a>` : ''}
-                    ${project.github ? `<a href="${project.github}" target="_blank" class="btn btn-primary">Ver Código</a>` : ''}
+                <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+                    ${project.liveUrl || project.link ? `<a href="${project.liveUrl || project.link}" target="_blank" class="btn btn-primary">Ver Proyecto</a>` : ''}
+                    ${project.repoUrl || project.github ? `<a href="${project.repoUrl || project.github}" target="_blank" class="btn btn-primary">Ver Código</a>` : ''}
                 </div>
             </div>
         </div>
@@ -359,20 +391,22 @@ export class MultiPageWebsiteExporter {
 
   private generateIndexPage(): string {
     const mainCSS = generateBaseCSS();
+    const skillsHTML = generateSkillsHTML(this.data.skills);
     
     return `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${this.data.personalInfo.name || 'Portfolio'}</title>
+    <title>${this.data.personalInfo.fullName || this.data.personalInfo.fullName || 'Portfolio'}</title>
     <style>${mainCSS}</style>
 </head>
 <body>
     <div class="container">
         <header class="header">
-            <h1>${this.data.personalInfo.name || 'Tu Nombre'}</h1>
+            <h1>${this.data.personalInfo.fullName || this.data.personalInfo.fullName || 'Tu Nombre'}</h1>
             <div class="title">${this.data.personalInfo.title || 'Tu Título'}</div>
+            ${this.data.personalInfo.tagline ? `<div style="font-size: 1.2em; opacity: 0.8; margin-bottom: 10px;">${this.data.personalInfo.tagline}</div>` : ''}
             ${this.data.personalInfo.summary ? `<p>${this.data.personalInfo.summary}</p>` : ''}
         </header>
 
@@ -406,10 +440,20 @@ export class MultiPageWebsiteExporter {
             </div>
         </section>
         ` : ''}
+
+        ${skillsHTML ? `
+        <section>
+            <h2 class="section-header">Habilidades</h2>
+            <div class="skills-grid">
+                ${skillsHTML}
+            </div>
+        </section>
+        ` : ''}
     </div>
 
     <footer class="footer">
-        <p>&copy; ${new Date().getFullYear()} ${this.data.personalInfo.name}. Portfolio generado con Portfolio Generator.</p>
+        <p>&copy; ${new Date().getFullYear()} ${this.data.personalInfo.fullName || this.data.personalInfo.fullName}. Todos los derechos reservados.</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">Portfolio generado con Portfolio Generator</p>
     </footer>
 </body>
 </html>`;
@@ -428,7 +472,7 @@ export class MultiPageWebsiteExporter {
     });
 
     // README
-    files['README.md'] = `# ${this.data.personalInfo.name} - Portfolio
+    files['README.md'] = `# ${this.data.personalInfo.fullName || this.data.personalInfo.fullName} - Portfolio
 
 Portfolio generado con Portfolio Generator.
 
@@ -450,6 +494,12 @@ Portfolio generado con Portfolio Generator.
 ${this.data.projects.filter(p => p.title.trim()).map(project => 
   `- [${project.title}](projects-${generateSlug(project.title)}.html)`
 ).join('\n')}
+
+## Contacto
+
+${this.data.personalInfo.email ? `- Email: ${this.data.personalInfo.email}` : ''}
+${this.data.personalInfo.linkedin ? `- LinkedIn: ${this.data.personalInfo.linkedin}` : ''}
+${this.data.personalInfo.github ? `- GitHub: ${this.data.personalInfo.github}` : ''}
 `;
 
     return files;
@@ -468,13 +518,16 @@ ${Object.keys(files).map(file => `- ${file}`).join('\n')}
 ## Pasos para GitHub Pages:
 
 1. Crear un nuevo repositorio en GitHub
-2. Crear estas carpetas y archivos:
-   - Subir index.html en la raíz
-   - Crear carpeta "projects" y subir archivos de proyectos
-   - Subir README.md
+2. Subir todos los archivos a la raíz del repositorio
 3. Ir a Settings → Pages
 4. Seleccionar "Deploy from a branch" → main → / (root)
 5. ¡Tu portfolio estará en https://tu-usuario.github.io/nombre-repo!
+
+## Archivos incluidos:
+
+- index.html: Página principal con todos tus proyectos
+- projects-*.html: Páginas individuales para cada proyecto
+- README.md: Documentación del portfolio
 
 ¡Descarga de archivos iniciada!`;
       

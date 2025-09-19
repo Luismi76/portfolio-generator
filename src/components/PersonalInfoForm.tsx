@@ -35,8 +35,8 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
           <input
             type="text"
             placeholder="Tu nombre completo"
-            value={data.name}
-            onChange={(e) => onUpdate("name", e.target.value)}
+            value={data.fullName}
+            onChange={(e) => onUpdate("fullName", e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
             required
           />

@@ -1,4 +1,4 @@
-// SkillForm.tsx
+// SkillForm.tsx - VERSIÓN CORREGIDA
 import React from 'react';
 import { Skill } from '../types/portfolio-types';
 import { Icons } from './portfolio-icons';
@@ -65,8 +65,8 @@ const EditableSkillItem: React.FC<EditableSkillItemProps> = ({
           <input
             type="text"
             placeholder="React, JavaScript, TypeScript, Node.js (separadas por comas)"
-            value={skill.items}
-            onChange={(e) => onUpdate(index, "items", e.target.value)}
+            value={skill.technologies} 
+            onChange={(e) => onUpdate(index, "technologies", e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
           />
           <div className="text-xs text-gray-500 mt-1">
@@ -74,14 +74,32 @@ const EditableSkillItem: React.FC<EditableSkillItemProps> = ({
           </div>
         </div>
 
+        {/* Nivel de experiencia */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Nivel de experiencia (opcional)
+          </label>
+          <select
+            value={skill.level || ''}
+            onChange={(e) => onUpdate(index, "level", e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          >
+            <option value="">Seleccionar nivel</option>
+            <option value="Principiante">Principiante</option>
+            <option value="Intermedio">Intermedio</option>
+            <option value="Avanzado">Avanzado</option>
+            <option value="Experto">Experto</option>
+          </select>
+        </div>
+
         {/* Preview de habilidades */}
-        {skill.items.trim() && (
+        {skill.technologies?.trim() && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Vista previa:
             </label>
             <div className="flex flex-wrap gap-2">
-              {skill.items
+              {skill.technologies
                 .split(',')
                 .filter(item => item.trim())
                 .map((item, itemIndex) => (
@@ -93,6 +111,11 @@ const EditableSkillItem: React.FC<EditableSkillItemProps> = ({
                   </span>
                 ))}
             </div>
+            {skill.level && (
+              <div className="mt-2 text-xs text-gray-600">
+                <strong>Nivel:</strong> {skill.level}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -137,6 +160,25 @@ export const SkillForm: React.FC<SkillFormProps> = ({
           </div>
         )}
 
+        {/* Estadísticas */}
+        {skills.length > 0 && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
+            <div className="flex items-center justify-between">
+              <span>
+                Total: {skills.length} categorías, {' '}
+                {skills.reduce((total, skill) => {
+                  const count = skill.technologies ? skill.technologies.split(',').filter(s => s.trim()).length : 0;
+                  return total + count;
+                }, 0)} habilidades
+              </span>
+              <div className="flex items-center gap-1 text-xs">
+                <Icons.Award size={12} />
+                <span>Organizadas por categorías</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Ayuda contextual */}
         <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
           <div className="flex items-start gap-2">
@@ -148,6 +190,7 @@ export const SkillForm: React.FC<SkillFormProps> = ({
                 <li>Incluye tanto habilidades técnicas como blandas</li>
                 <li>Usa nombres conocidos de tecnologías para mejor reconocimiento</li>
                 <li>Ordena por nivel de competencia (las más fuertes primero)</li>
+                <li>Añade tu nivel de experiencia para cada categoría</li>
               </ul>
             </div>
           </div>

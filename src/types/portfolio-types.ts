@@ -1,8 +1,11 @@
-// portfolio-types.ts
-// Tipos base para la información personal
+// portfolio-types.ts - VERSION CORREGIDA
+import React from 'react';
+
+// ✅ CORREGIDO - Información personal con campos correctos
 export interface PersonalInfo {
-  name: string;
+  fullName: string;      // ✅ Cambiado de 'name' a 'fullName'
   title: string;
+  tagline?: string;      // ✅ Añadido campo faltante
   email: string;
   phone: string;
   location: string;
@@ -12,7 +15,7 @@ export interface PersonalInfo {
   summary: string;
 }
 
-// Tipos para proyectos con campos extendidos
+// ✅ CORREGIDO - Proyectos con todos los campos utilizados
 export interface Project {
   title: string;
   description: string;
@@ -20,20 +23,23 @@ export interface Project {
   technologies: string;
   link: string;
   github: string;
-  image?: string; // Imagen principal
-  images?: string; // URLs separadas por comas - TODAS las imágenes
-  mainImageIndex?: number; // Índice de la imagen principal en el array
-  videos?: string; // URLs separadas por comas
+  liveUrl?: string;      // ✅ Añadido campo faltante
+  repoUrl?: string;      // ✅ Añadido campo faltante
+  image?: string;
+  images?: string;
+  mainImageIndex?: number;
+  videos?: string;
   instructions?: string;
-  features?: string; // Características separadas por comas
+  features?: string;
   challenges?: string;
-  slug?: string; // Identificador único para URLs
+  slug?: string;
 }
 
-// Tipos para habilidades organizadas por categorías
+// ✅ CORREGIDO - Habilidades con campo 'technologies'
 export interface Skill {
   category: string;
-  items: string; // Habilidades separadas por comas
+  technologies: string;  // ✅ Cambiado de 'items' a 'technologies'
+  level?: string;        // ✅ Añadido campo utilizado en componentes
 }
 
 // Tipos para experiencia laboral
@@ -85,21 +91,26 @@ export interface IconProps {
   className?: string;
 }
 
-// Props para componentes de sección
+// Props para componentes de sección - VERSIÓN ACTUALIZADA
 export interface SectionProps {
   title: string;
+  description?: string;  // ✅ AÑADIR este campo opcional
+  icon?: React.ComponentType<{ size?: number; className?: string }>; // ✅ AÑADIR icon
   children: React.ReactNode;
   onAdd?: () => void;
   showAddButton?: boolean;
+  addButtonText?: string; // ✅ AÑADIR este campo opcional
+  className?: string; // ✅ AÑADIR este campo opcional
 }
 
-// Props para elementos de lista editables
+// ✅ CORREGIDO - Props para EditableItem component
 export interface EditableItemProps {
   index: number;
   onRemove?: (index: number) => void;
   showRemoveButton?: boolean;
   title: string;
   children: React.ReactNode;
+  className?: string;
 }
 
 // Tipos para el manejo de archivos
@@ -113,14 +124,14 @@ export interface UsePortfolioDataOptions {
   storageKey?: string;
 }
 
-// Estado del hook de datos
+// ✅ AÑADIDO - Estado del hook de datos
 export interface PortfolioDataState {
   data: PortfolioData;
   isLoaded: boolean;
   saveStatus: string;
 }
 
-// Acciones para el hook de datos
+// ✅ AÑADIDO - Acciones para el hook de datos
 export interface PortfolioDataActions {
   updatePersonalInfo: (field: PersonalInfoKey, value: string) => void;
   updateProject: (index: number, field: keyof Project, value: string) => void;
@@ -148,32 +159,59 @@ export interface ExportResult {
   files?: FileExport;
 }
 
-// Props para el componente de vista previa
-export interface PreviewProps {
-  data: PortfolioData;
-  onClose: () => void;
-  onExport: (type: 'html' | 'website') => void;
-}
-
 // Props para formularios de sección
 export interface PersonalInfoFormProps {
   data: PersonalInfo;
   onUpdate: (field: PersonalInfoKey, value: string) => void;
 }
 
+// ✅ CORREGIDO - Props para ProjectForm sin onImageUpload
 export interface ProjectFormProps {
   projects: Project[];
   onUpdate: (index: number, field: keyof Project, value: string) => void;
   onAdd: () => void;
   onRemove: (index: number) => void;
-  onImageUpload: (index: number, file: File) => void;
 }
 
+// ✅ CORREGIDO - Props para SkillForm 
 export interface SkillFormProps {
   skills: Skill[];
   onUpdate: (index: number, field: keyof Skill, value: string) => void;
   onAdd: () => void;
   onRemove: (index: number) => void;
+}
+
+// ✅ CORREGIDO - Props para ProjectTableForm
+export interface ProjectTableFormProps {
+  projects: Project[];
+  onUpdate: (index: number, field: keyof Project, value: string) => void;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+}
+
+// ✅ CORREGIDO - Props para SkillTableForm
+export interface SkillTableFormProps {
+  skills: Skill[];
+  onUpdate: (index: number, field: keyof Skill, value: string) => void;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+}
+
+// Tipos para el manejo de modo de aplicación
+export type AppMode = 'editor' | 'templates' | 'customize' | 'preview' | 'portfolio';
+
+// ✅ AÑADIDO - Estado del componente principal
+export interface PortfolioGeneratorState {
+  showPreview: boolean;
+  showDataMenu: boolean;
+  currentMode: AppMode;
+}
+
+// Props para el componente principal
+export interface PortfolioGeneratorProps {
+  initialMode?: AppMode;
+  storageKey?: string;
+  autoSave?: boolean;
 }
 
 // Configuración de tecnologías para iconos
@@ -185,28 +223,12 @@ export interface TechIconConfig {
   };
 }
 
-// Tipos para el manejo de modo de aplicación
-export type AppMode = 'editor' | 'portfolio';
-
-// Props para el componente principal
-export interface PortfolioGeneratorProps {
-  initialMode?: AppMode;
-  storageKey?: string;
-  autoSave?: boolean;
-}
-
-// Estado del componente principal
-export interface PortfolioGeneratorState {
-  showPreview: boolean;
-  showDataMenu: boolean;
-  currentMode: AppMode;
-}
-
-// Constantes por defecto
+// ✅ CORREGIDO - Constantes por defecto con campos correctos
 export const DEFAULT_PORTFOLIO_DATA: PortfolioData = {
   personalInfo: {
-    name: "",
+    fullName: "",        // ✅ Cambiado de 'name'
     title: "",
+    tagline: "",         // ✅ Añadido
     email: "",
     phone: "",
     location: "",
@@ -222,6 +244,8 @@ export const DEFAULT_PORTFOLIO_DATA: PortfolioData = {
     technologies: "",
     link: "",
     github: "",
+    liveUrl: "",         // ✅ Añadido
+    repoUrl: "",         // ✅ Añadido
     image: "",
     images: "",
     videos: "",
@@ -233,7 +257,8 @@ export const DEFAULT_PORTFOLIO_DATA: PortfolioData = {
   }],
   skills: [{
     category: "",
-    items: "",
+    technologies: "",    // ✅ Cambiado de 'items'
+    level: ""            // ✅ Añadido
   }],
   experience: [{
     company: "",
