@@ -1,4 +1,4 @@
-// PortfolioGenerator.tsx - VERSIÓN COMPLETAMENTE CORREGIDA
+// PortfolioGenerator.tsx - VERSIÓN CON NAVEGACIÓN A PERSONALIZAR CORREGIDA
 import React, { useRef, useState, useCallback } from 'react';
 import { Icons } from './portfolio-icons';
 import { 
@@ -14,6 +14,7 @@ import PersonalInfoForm from './PersonalInfoForm';
 import ProjectTableForm from './ProjectTableForm';
 import SkillTableForm from './SkillTableForm';
 import { TemplateSelector } from './TemplateSelector';
+import TemplateRenderer from './TemplateRenderer';
 
 // Tipo para los modos de la aplicación
 type AppMode = 'editor' | 'templates' | 'customize' | 'preview' | 'portfolio';
@@ -88,234 +89,536 @@ const useDataExport = () => {
   return { exportToJSON, importFromJSON, isExporting };
 };
 
-// Componente TechList mejorado
-const TechList: React.FC<{ technologies: string; variant?: 'default' | 'outlined' }> = 
-({ technologies, variant = 'default' }) => {
-  if (!technologies) return null;
-  
-  const techs = technologies.split(',').map(tech => tech.trim()).filter(tech => tech);
-  
-  const getTechIcon = (tech: string): string => {
-    const techLower = tech.toLowerCase();
-    if (techLower.includes('react')) return '⚛️';
-    if (techLower.includes('vue')) return '💚';
-    if (techLower.includes('angular')) return '🅰️';
-    if (techLower.includes('javascript') || techLower.includes('js')) return '💛';
-    if (techLower.includes('typescript') || techLower.includes('ts')) return '💙';
-    if (techLower.includes('python')) return '🐍';
-    if (techLower.includes('node')) return '💚';
-    if (techLower.includes('css')) return '🎨';
-    if (techLower.includes('html')) return '🌐';
-    if (techLower.includes('docker')) return '🐳';
-    if (techLower.includes('git')) return '📦';
-    return '⚡';
-  };
-  
-  return (
-    <>
-      {techs.map((tech, index) => (
-        <span
-          key={index}
-          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 ${
-            variant === 'outlined'
-              ? 'bg-white border border-gray-300 text-gray-700 hover:border-blue-300'
-              : 'bg-blue-100 text-blue-800'
-          }`}
-        >
-          <span>{getTechIcon(tech)}</span>
-          {tech}
-        </span>
-      ))}
-    </>
-  );
-};
 
-// ✅ Componente TemplateRenderer SIMPLIFICADO
-const TemplateRenderer: React.FC<{
+// ✅ Componente TemplateCustomizer COMPLETO
+const TemplateCustomizer: React.FC<{
   template: any;
   config: any;
-  portfolioData: any;
-  children?: React.ReactNode;
-}> = ({ template, config, portfolioData, children }) => {
-  // Merge template colors con customizations
-  const colors = {
-    ...template.colors,
-    ...config.customizations?.colors
-  };
+  onConfigChange: (config: any) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}> = ({ template, config, onConfigChange, onSave, onCancel }) => {
+  const [activeTab, setActiveTab] = useState<'colors' | 'typography' | 'layout' | 'sections'>('colors');
   
-  const typography = {
-    ...template.typography,
-    ...config.customizations?.typography
+  // Estados locales para la configuración
+  const [colors, setColors] = useState({
+    primary: template.colors.primary,
+    secondary: template.colors.secondary,
+    accent: template.colors.accent,
+    background: template.colors.background,
+    surface: template.colors.surface,
+    ...config.customizations?.colors
+  });
+
+  const [typography, setTypography] = useState({
+    fontFamily: {
+      primary: template.typography.fontFamily.primary,
+      heading: template.typography.fontFamily.heading,
+      ...config.customizations?.typography?.fontFamily
+    },
+    fontSize: {
+      ...template.typography.fontSize,
+      ...config.customizations?.typography?.fontSize
+    },
+    fontWeight: {
+      ...template.typography.fontWeight,
+      ...config.customizations?.typography?.fontWeight
+    }
+  });
+
+  const [layout, setLayout] = useState({
+    maxWidth: template.layout.maxWidth,
+    spacing: { ...template.layout.spacing },
+    borderRadius: { ...template.layout.borderRadius },
+    ...config.customizations?.layout
+  });
+
+  const [sections, setSections] = useState(
+    config.customizations?.sections || template.sections || [
+      { id: 'header', name: 'Encabezado', enabled: true, order: 1 },
+      { id: 'about', name: 'Sobre mí', enabled: true, order: 2 },
+      { id: 'skills', name: 'Habilidades', enabled: true, order: 3 },
+      { id: 'projects', name: 'Proyectos', enabled: true, order: 4 },
+      { id: 'experience', name: 'Experiencia', enabled: false, order: 5 },
+      { id: 'education', name: 'Educación', enabled: false, order: 6 },
+      { id: 'contact', name: 'Contacto', enabled: true, order: 7 }
+    ]
+  );
+
+  const [customCSS, setCustomCSS] = useState(config.customizations?.customCSS || '');
+
+  // Actualizar configuración solo cuando se guarda, no automáticamente
+  const handleSave = () => {
+    const updatedConfig = {
+      ...config,
+      customizations: {
+        ...config.customizations,
+        colors,
+        typography,
+        layout,
+        sections,
+        customCSS
+      }
+    };
+    onConfigChange(updatedConfig);
+    onSave();
   };
+
+  const handleColorChange = (key: string, value: string) => {
+    setColors((prev: any) => ({ ...prev, [key]: value } as any));
+  };
+
+  const handleTypographyChange = (category: string, key: string, value: string | number) => {
+    setTypography((prev: any) => ({
+      ...prev,
+      [category]: { ...(prev as any)[category], [key]: value }
+    } as any));
+  };
+
+  const handleLayoutChange = (category: string, key: string, value: string) => {
+    if (category === '') {
+      setLayout((prev: any) => ({ ...prev, [key]: value } as any));
+    } else {
+      setLayout((prev: any) => ({
+        ...prev,
+        [category]: { ...(prev as any)[category], [key]: value }
+      } as any));
+    }
+  };
+
+  const handleSectionToggle = (sectionId: string) => {
+    setSections((prev: any[]) => 
+      prev.map((section: any) => 
+        section.id === sectionId 
+          ? { ...section, enabled: !section.enabled }
+          : section
+      )
+    );
+  };
+
+  const handleSectionReorder = (sectionId: string, newOrder: number) => {
+    setSections((prev: any[]) => {
+      const updated = prev.map((section: any) => 
+        section.id === sectionId 
+          ? { ...section, order: newOrder }
+          : section
+      );
+      return updated.sort((a: any, b: any) => a.order - b.order);
+    });
+  };
+
+  const fontOptions = [
+    { value: "'Inter', sans-serif", label: 'Inter (Moderno)' },
+    { value: "'Roboto', sans-serif", label: 'Roboto (Limpio)' },
+    { value: "'Poppins', sans-serif", label: 'Poppins (Redondeado)' },
+    { value: "'Source Sans Pro', sans-serif", label: 'Source Sans Pro' },
+    { value: "'Montserrat', sans-serif", label: 'Montserrat (Elegante)' },
+    { value: "'Open Sans', sans-serif", label: 'Open Sans' },
+    { value: "'Lato', sans-serif", label: 'Lato' },
+    { value: "'Playfair Display', serif", label: 'Playfair Display (Serif)' },
+    { value: "'Merriweather', serif", label: 'Merriweather (Serif)' },
+    { value: "'Fira Code', monospace", label: 'Fira Code (Monospace)' }
+  ];
+
+  const TabButton = ({ tab, label, active, onClick }: {
+    tab: 'colors' | 'typography' | 'layout' | 'sections';
+    label: string; 
+    active: boolean;
+    onClick: (tab: 'colors' | 'typography' | 'layout' | 'sections') => void;
+  }) => (
+    <button
+      onClick={() => onClick(tab)}
+      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+        active 
+          ? 'bg-blue-600 text-white' 
+          : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+      }`}
+    >
+      {label}
+    </button>
+  );
 
   return (
-    <div 
-      className="min-h-screen"
-      style={{
-        backgroundColor: colors?.background || '#ffffff',
-        fontFamily: typography?.fontFamily?.primary || "'Inter', sans-serif"
-      }}
-    >
+    <div className="bg-white rounded-lg shadow-sm">
       {/* Header */}
-      <header 
-        className="py-16 text-white text-center"
-        style={{
-          background: colors?.gradient 
-            ? `linear-gradient(${colors.gradient.direction || '135deg'}, ${colors.gradient.from}, ${colors.gradient.to})`
-            : `linear-gradient(135deg, ${colors?.primary || '#3B82F6'}, ${colors?.secondary || '#1E40AF'})`
-        }}
-      >
-        <div className="max-w-4xl mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-4">
-            {portfolioData.personalInfo.fullName || 'Tu Nombre'}
-          </h1>
-          {portfolioData.personalInfo.tagline && (
-            <p className="text-xl opacity-90 mb-6">
-              {portfolioData.personalInfo.tagline}
-            </p>
-          )}
-          <div className="flex justify-center gap-4 flex-wrap">
-            {portfolioData.personalInfo.email && (
-              <a 
-                href={`mailto:${portfolioData.personalInfo.email}`}
-                className="bg-white bg-opacity-20 px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all"
-              >
-                📧 Email
-              </a>
-            )}
-            {portfolioData.personalInfo.linkedin && (
-              <a 
-                href={portfolioData.personalInfo.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white bg-opacity-20 px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all"
-              >
-                💼 LinkedIn
-              </a>
-            )}
-            {portfolioData.personalInfo.github && (
-              <a 
-                href={portfolioData.personalInfo.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white bg-opacity-20 px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all"
-              >
-                🐙 GitHub
-              </a>
-            )}
-          </div>
+      <div className="flex items-center justify-between p-6 border-b">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">
+            Personalizar: {template.name}
+          </h2>
+          <p className="text-gray-600 mt-1">
+            Ajusta colores, tipografía, diseño y secciones de tu plantilla
+          </p>
         </div>
-      </header>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Guardar Cambios
+          </button>
+        </div>
+      </div>
 
-      {/* About */}
-      {portfolioData.personalInfo.summary && (
-        <section className="py-12" style={{ backgroundColor: colors?.background || '#ffffff' }}>
-          <div className="max-w-4xl mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-8" style={{ color: colors?.text?.primary || '#1F2937' }}>
-              Sobre mí
-            </h2>
-            <div className="text-lg leading-relaxed" style={{ color: colors?.text?.secondary || '#6B7280' }}>
-              <p>{portfolioData.personalInfo.summary}</p>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Tabs */}
+      <div className="flex gap-1 p-6 pb-0">
+        <TabButton tab="colors" label="Colores" active={activeTab === 'colors'} onClick={setActiveTab} />
+        <TabButton tab="typography" label="Tipografía" active={activeTab === 'typography'} onClick={setActiveTab} />
+        <TabButton tab="layout" label="Diseño" active={activeTab === 'layout'} onClick={setActiveTab} />
+        <TabButton tab="sections" label="Secciones" active={activeTab === 'sections'} onClick={setActiveTab} />
+      </div>
 
-      {/* Skills */}
-      {portfolioData.skills?.length > 0 && (
-        <section className="py-12" style={{ backgroundColor: colors?.surface || '#F8FAFC' }}>
-          <div className="max-w-4xl mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-8" style={{ color: colors?.text?.primary || '#1F2937' }}>
-              Habilidades
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              {portfolioData.skills.map((skill: any, index: number) => (
-                <div key={index} className="p-6 rounded-lg shadow-md" style={{ backgroundColor: colors?.background || '#ffffff' }}>
-                  <h3 className="font-semibold mb-3" style={{ color: colors?.text?.primary || '#1F2937' }}>
-                    {skill.category}
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    <TechList technologies={skill.technologies} />
+      <div className="p-6">
+        {activeTab === 'colors' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Panel de colores */}
+            <div className="space-y-6">
+              <h3 className="font-medium text-gray-900">Esquema de Colores</h3>
+              
+              {[
+                { key: 'primary', label: 'Color Primario', desc: 'Botones, enlaces principales' },
+                { key: 'secondary', label: 'Color Secundario', desc: 'Elementos complementarios' },
+                { key: 'accent', label: 'Color de Acento', desc: 'Highlights y detalles' },
+                { key: 'background', label: 'Fondo Principal', desc: 'Fondo de la página' },
+                { key: 'surface', label: 'Fondo de Tarjetas', desc: 'Fondo de elementos' }
+              ].map(({ key, label, desc }: { key: string; label: string; desc: string }) => (
+                <div key={key} className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {label}
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={(colors as any)[key] || '#000000'}
+                      onChange={(e) => handleColorChange(key, e.target.value)}
+                      className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={(colors as any)[key] || ''}
+                      onChange={(e) => handleColorChange(key, e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    />
                   </div>
+                  <p className="text-xs text-gray-500">{desc}</p>
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-      )}
 
-      {/* Projects */}
-      {portfolioData.projects?.length > 0 && (
-        <section className="py-12" style={{ backgroundColor: colors?.background || '#ffffff' }}>
-          <div className="max-w-4xl mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-8" style={{ color: colors?.text?.primary || '#1F2937' }}>
-              Proyectos
-            </h2>
-            <div className="grid md:grid-cols-2 gap-8">
-              {portfolioData.projects.map((project: any, index: number) => (
-                <div key={index} className="rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: colors?.surface || '#F8FAFC' }}>
-                  {project.image && (
-                    <img 
-                      src={project.image} 
-                      alt={project.title}
-                      className="w-full h-48 object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = "none";
-                      }}
-                    />
-                  )}
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold mb-2" style={{ color: colors?.text?.primary || '#1F2937' }}>
-                      {project.title}
-                    </h3>
-                    <p className="mb-4" style={{ color: colors?.text?.secondary || '#6B7280' }}>
-                      {project.description}
-                    </p>
-                    {project.technologies && (
-                      <div className="mb-4">
-                        <TechList technologies={project.technologies} />
-                      </div>
-                    )}
-                    <div className="flex gap-3 flex-wrap">
-                      {project.liveUrl && (
-                        <a 
-                          href={project.liveUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-4 py-2 rounded transition-all text-white"
-                          style={{ backgroundColor: colors?.primary || '#3B82F6' }}
-                        >
-                          Ver Proyecto
-                        </a>
-                      )}
-                      {project.repoUrl && (
-                        <a 
-                          href={project.repoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-4 py-2 rounded border transition-all"
-                          style={{ 
-                            borderColor: colors?.primary || '#3B82F6', 
-                            color: colors?.primary || '#3B82F6'
-                          }}
-                        >
-                          Código
-                        </a>
-                      )}
+            {/* Vista previa de colores */}
+            <div className="space-y-4">
+              <h3 className="font-medium text-gray-900">Vista Previa</h3>
+              <div className="space-y-3 p-4 border rounded-lg" style={{ backgroundColor: colors.background }}>
+                <div 
+                  className="h-16 rounded-lg flex items-center justify-center text-white font-semibold"
+                  style={{ backgroundColor: colors.primary }}
+                >
+                  Header Principal
+                </div>
+                <div 
+                  className="p-4 rounded-lg"
+                  style={{ backgroundColor: colors.surface }}
+                >
+                  <div 
+                    className="h-4 rounded mb-2"
+                    style={{ backgroundColor: colors.secondary, width: '60%' }}
+                  ></div>
+                  <div className="flex gap-2">
+                    {[colors.accent, colors.primary, colors.secondary].map((color: string, i: number) => (
+                      <div 
+                        key={i}
+                        className="flex-1 h-3 rounded"
+                        style={{ backgroundColor: color + (i === 0 ? '' : '80') }}
+                      ></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'typography' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <h3 className="font-medium text-gray-900">Configuración Tipográfica</h3>
+              
+              {/* Fuente principal */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Fuente Principal
+                </label>
+                <select
+                  value={typography.fontFamily.primary}
+                  onChange={(e) => handleTypographyChange('fontFamily', 'primary', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg"
+                >
+                  {fontOptions.map(font => (
+                    <option key={font.value} value={font.value}>{font.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Fuente de títulos */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Fuente de Títulos
+                </label>
+                <select
+                  value={typography.fontFamily.heading}
+                  onChange={(e) => handleTypographyChange('fontFamily', 'heading', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg"
+                >
+                  {fontOptions.map(font => (
+                    <option key={font.value} value={font.value}>{font.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Tamaños de fuente */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tamaño Base (Texto normal)
+                </label>
+                <select
+                  value={typography.fontSize.base}
+                  onChange={(e) => handleTypographyChange('fontSize', 'base', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg"
+                >
+                  <option value="0.875rem">Pequeño (14px)</option>
+                  <option value="1rem">Normal (16px)</option>
+                  <option value="1.125rem">Grande (18px)</option>
+                  <option value="1.25rem">Extra Grande (20px)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Vista previa tipografía */}
+            <div className="space-y-4">
+              <h3 className="font-medium text-gray-900">Vista Previa Tipográfica</h3>
+              <div className="p-4 border rounded-lg space-y-4">
+                <h1 style={{ 
+                  fontFamily: typography.fontFamily.heading, 
+                  fontSize: '2.25rem',
+                  fontWeight: typography.fontWeight.bold 
+                }}>
+                  Título Principal
+                </h1>
+                <h2 style={{ 
+                  fontFamily: typography.fontFamily.heading, 
+                  fontSize: '1.5rem',
+                  fontWeight: typography.fontWeight.semibold 
+                }}>
+                  Subtítulo de Sección
+                </h2>
+                <p style={{ 
+                  fontFamily: typography.fontFamily.primary, 
+                  fontSize: typography.fontSize.base 
+                }}>
+                  Este es un párrafo de ejemplo con la fuente principal seleccionada. 
+                  Muestra cómo se verá el texto normal en tu portfolio.
+                </p>
+                <div style={{ 
+                  fontFamily: typography.fontFamily.primary, 
+                  fontSize: typography.fontSize.sm 
+                }}>
+                  <strong>Texto en negrita</strong> y <em>texto en cursiva</em>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'layout' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <h3 className="font-medium text-gray-900">Configuración de Diseño</h3>
+              
+              {/* Ancho máximo */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ancho Máximo del Contenido
+                </label>
+                <select
+                  value={layout.maxWidth}
+                  onChange={(e) => handleLayoutChange('', 'maxWidth', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg"
+                >
+                  <option value="900px">Estrecho (900px)</option>
+                  <option value="1200px">Normal (1200px)</option>
+                  <option value="1400px">Amplio (1400px)</option>
+                  <option value="100%">Completo (100%)</option>
+                </select>
+              </div>
+
+              {/* Espaciado */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Espaciado Entre Secciones
+                </label>
+                <select
+                  value={layout.spacing.lg}
+                  onChange={(e) => handleLayoutChange('spacing', 'lg', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg"
+                >
+                  <option value="1.5rem">Compacto</option>
+                  <option value="2rem">Normal</option>
+                  <option value="3rem">Amplio</option>
+                  <option value="4rem">Extra Amplio</option>
+                </select>
+              </div>
+
+              {/* Radio de bordes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Esquinas Redondeadas
+                </label>
+                <select
+                  value={layout.borderRadius.lg}
+                  onChange={(e) => handleLayoutChange('borderRadius', 'lg', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg"
+                >
+                  <option value="0px">Sin Redondear</option>
+                  <option value="0.5rem">Suave</option>
+                  <option value="0.75rem">Normal</option>
+                  <option value="1rem">Redondeado</option>
+                  <option value="1.5rem">Muy Redondeado</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-medium text-gray-900">Vista Previa del Diseño</h3>
+              <div 
+                className="border p-4 mx-auto"
+                style={{ maxWidth: layout.maxWidth === '100%' ? '300px' : '300px' }}
+              >
+                <div 
+                  className="bg-gray-200 h-12 mb-4"
+                  style={{ borderRadius: layout.borderRadius.lg }}
+                ></div>
+                <div 
+                  className="space-y-2"
+                  style={{ gap: layout.spacing.lg }}
+                >
+                  <div 
+                    className="bg-gray-100 h-8"
+                    style={{ borderRadius: layout.borderRadius.lg }}
+                  ></div>
+                  <div 
+                    className="bg-gray-100 h-6"
+                    style={{ borderRadius: layout.borderRadius.lg }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'sections' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-gray-900">Gestión de Secciones</h3>
+              <div className="text-sm text-gray-600">
+                {sections.filter((s: any) => s.enabled).length} de {sections.length} secciones activas
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {sections.sort((a: any, b: any) => a.order - b.order).map((section: any) => (
+                <div 
+                  key={section.id}
+                  className={`p-4 border rounded-lg ${section.enabled ? 'bg-white' : 'bg-gray-50'}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={section.enabled}
+                        onChange={() => handleSectionToggle(section.id)}
+                        className="h-4 w-4 text-blue-600 rounded"
+                      />
+                      <span className={`font-medium ${section.enabled ? 'text-gray-900' : 'text-gray-500'}`}>
+                        {section.name}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm text-gray-600">Orden:</label>
+                      <select
+                        value={section.order}
+                        onChange={(e) => handleSectionReorder(section.id, parseInt(e.target.value))}
+                        className="w-16 px-2 py-1 text-sm border border-gray-300 rounded"
+                      >
+                        {sections.map((_: any, i: number) => (
+                          <option key={i + 1} value={i + 1}>{i + 1}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
+                  
+                  {!section.enabled && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Esta sección no se mostrará en tu portfolio
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-      )}
 
-      {children}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-2">
+                <Icons.Info size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800">
+                  <strong>Consejos:</strong>
+                  <ul className="mt-1 space-y-1 list-disc list-inside">
+                    <li>Desactiva secciones que no necesites para un diseño más limpio</li>
+                    <li>Reordena las secciones según tus prioridades</li>
+                    <li>La sección "Header" siempre debe estar primera</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CSS Personalizado (en todas las pestañas) */}
+        <div className="mt-8 pt-6 border-t">
+          <details className="group">
+            <summary className="cursor-pointer flex items-center gap-2 font-medium text-gray-900 hover:text-blue-600">
+              <Icons.Code size={16} />
+              CSS Personalizado (Avanzado)
+              <Icons.ChevronDown size={14} className="group-open:rotate-180 transition-transform" />
+            </summary>
+            <div className="mt-4 space-y-3">
+              <p className="text-sm text-gray-600">
+                Añade CSS personalizado para ajustes específicos de diseño
+              </p>
+              <textarea
+                value={customCSS}
+                onChange={(e) => setCustomCSS(e.target.value)}
+                placeholder="/* Tu CSS personalizado aquí */
+.mi-estilo-custom {
+  color: #333;
+  font-weight: bold;
+}"
+                rows={6}
+                className="w-full p-3 border border-gray-300 rounded-lg font-mono text-sm"
+              />
+            </div>
+          </details>
+        </div>
+      </div>
     </div>
   );
 };
+
 
 // Componente Header
 interface AppHeaderProps {
@@ -484,6 +787,19 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               Plantillas
             </button>
             {selectedTemplateName && (
+              <button
+                onClick={() => onSwitchMode("customize")}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
+                  currentMode === 'customize'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <Icons.Settings size={14} />
+                Personalizar
+              </button>
+            )}
+            {selectedTemplateName && (
               <>
                 <button
                   onClick={() => onSwitchMode("preview")}
@@ -541,9 +857,22 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
   }, []);
 
   const switchMode = useCallback((mode: AppMode) => {
+    console.log('switchMode called:', { from: currentMode, to: mode });
     setCurrentMode(mode);
     setShowDataMenu(false); // Cerrar menú al cambiar modo
-  }, []);
+    
+    // 🔥 ACTUALIZAR URL DEL NAVEGADOR
+    const url = new URL(window.location.href);
+    const urlMode = mode === 'portfolio' ? 'porfolio' : mode;
+    url.searchParams.set('mode', urlMode);
+    
+    // Si navegamos a portfolio, recargar la página
+    if (mode === 'portfolio') {
+      window.location.href = url.toString();
+    } else {
+      window.history.pushState({}, '', url.toString());
+    }
+  }, [currentMode]);
 
   // Exportadores
   const handleExportHTML = useCallback(() => {
@@ -587,8 +916,10 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
     }
   }, [portfolioHook]);
 
-  // Renderizado de contenido
+  // 🔥 AQUÍ ESTÁ LA CORRECCIÓN - Añadir el caso 'customize'
   const renderContent = () => {
+    console.log('renderContent called with currentMode:', currentMode);
+    
     switch (currentMode) {
       case 'templates':
         return (
@@ -596,8 +927,42 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
             templates={templates.templates}
             selectedTemplate={templates.selectedTemplate}
             onSelectTemplate={templates.selectTemplate}
-            onCustomize={() => console.log('Customize')}
+            onCustomize={() => switchMode('customize')}
             onAddTemplate={() => console.log('Add template')}
+          />
+        );
+      
+      case 'customize':
+        if (!templates.selectedTemplate || !templates.config) {
+          return (
+            <div className="bg-white rounded-lg p-8 shadow-sm">
+              <div className="text-center">
+                <Icons.Settings size={48} className="mx-auto text-gray-300 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Selecciona una plantilla primero
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Para personalizar un diseño, primero debes seleccionar una plantilla
+                </p>
+                <button
+                  onClick={() => switchMode('templates')}
+                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                >
+                  <Icons.Code size={16} />
+                  Ir a Plantillas
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <TemplateCustomizer
+            template={templates.selectedTemplate}
+            config={templates.config}
+            onConfigChange={templates.updateConfig}
+            onSave={() => switchMode('preview')}
+            onCancel={() => switchMode('templates')}
           />
         );
       

@@ -1,20 +1,26 @@
 import React from 'react';
 import PortfolioGenerator from './components/PortfolioGenerator';
-import Portfolio from './components/Portfolio';
 
 function App(): React.ReactElement {
   // Detectar el modo desde diferentes fuentes
-  const getMode = (): 'editor' | 'portfolio' => {
+  const getMode = (): 'editor' | 'templates' | 'customize' | 'preview' | 'portfolio' => {
     // 1. Variable de entorno (para build)
     if (process.env.REACT_APP_MODE === 'portfolio') {
       return 'portfolio';
     }
     
-    // 2. URL parameter (?mode=editor o ?mode=portfolio)
+    // 2. URL parameter (?mode=editor, ?mode=porfolio, etc.)
     const urlParams = new URLSearchParams(window.location.search);
     const urlMode = urlParams.get('mode');
-    if (urlMode === 'editor' || urlMode === 'portfolio') {
-      return urlMode as 'editor' | 'portfolio';
+    
+    // Mapear "porfolio" a "portfolio" para compatibilidad
+    if (urlMode === 'porfolio') {
+      return 'portfolio';
+    }
+    
+    if (urlMode === 'editor' || urlMode === 'portfolio' || urlMode === 'templates' || 
+        urlMode === 'customize' || urlMode === 'preview') {
+      return urlMode as 'editor' | 'templates' | 'customize' | 'preview' | 'portfolio';
     }
     
     // 3. LocalStorage setting
@@ -23,16 +29,15 @@ function App(): React.ReactElement {
       return 'portfolio';
     }
     
-    // 4. Default: editor para desarrollo
-    return 'portfolio';
+    // 4. Default: portfolio para producción, editor para desarrollo
+    return process.env.NODE_ENV === 'production' ? 'portfolio' : 'editor';
   };
 
-  const mode = getMode();
+  const initialMode = getMode();
 
   return (
     <div className="App">
-      {/* Renderizar componente según el modo */}
-      {mode === 'editor' ? <PortfolioGenerator /> : <Portfolio />}
+      <PortfolioGenerator initialMode={initialMode} />
     </div>
   );
 }
