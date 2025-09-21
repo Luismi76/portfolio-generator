@@ -417,8 +417,8 @@ export const SkillForm: React.FC<SkillFormProps> = ({
             <input
               type="text"
               placeholder="Habilidades (separadas por comas)"
-              value={skill.technologies}
-              onChange={(e) => onUpdate(index, "technologies", e.target.value)}
+              value={skill.items}
+              onChange={(e) => onUpdate(index, "items", e.target.value)}
               className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             />
           </div>

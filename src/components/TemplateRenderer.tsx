@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Template, TemplateConfig } from '../types/template-types';
 import { PortfolioData } from '../types/portfolio-types';
+import ProjectDetail from './ProjectDetail';
 
 interface TemplateRendererProps {
   template: Template;
@@ -287,67 +288,15 @@ const TemplateRenderer: React.FC<TemplateRendererProps> = ({
     return { gradient: 'from-cyan-500 via-blue-500 to-indigo-500', emoji: '🌐' };
   };
 
-  // Si estamos viendo un proyecto individual
-  if (currentView === 'project') {
-    const project = portfolioData.projects.find(p => 
-      p.slug === currentProjectSlug || generateSlug(p.title) === currentProjectSlug
-    );
-    
-    if (!project) {
-      return (
-        <div 
-          className="min-h-screen flex items-center justify-center" 
-          style={{ backgroundColor: colors.background }}
-        >
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4" style={{ color: colors.text.primary }}>
-              Proyecto no encontrado
-            </h1>
-            <p className="mb-4" style={{ color: colors.text.secondary }}>
-              El proyecto "{currentProjectSlug}" no existe o fue eliminado.
-            </p>
-            <button
-              onClick={navigateToPortfolio}
-              className="px-4 py-2 rounded-lg text-white"
-              style={{ backgroundColor: colors.primary }}
-            >
-              Volver al Portfolio
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="min-h-screen" style={{ backgroundColor: colors.background }}>
-        {/* Header del proyecto individual */}
-        <header className="sticky top-0 z-10 border-b" style={{ backgroundColor: colors.surface }}>
-          <div style={{ maxWidth: layout.maxWidth, margin: '0 auto', padding: '1rem' }}>
-            <button
-              onClick={navigateToPortfolio}
-              className="flex items-center gap-2 transition-colors"
-              style={{ color: colors.primary }}
-            >
-              ← Volver al Portfolio
-            </button>
-          </div>
-        </header>
-
-        {/* Contenido del proyecto */}
-        <div style={{ maxWidth: layout.maxWidth, margin: '0 auto', padding: '2rem 1rem' }}>
-          <h1 
-            className="text-3xl md:text-4xl font-bold mb-4"
-            style={{ color: colors.text.primary, fontFamily: typography.fontFamily.heading }}
-          >
-            {project.title}
-          </h1>
-          <p style={{ color: colors.text.secondary }}>
-            {project.detailedDescription || project.description}
-          </p>
-        </div>
-      </div>
-    );
-  }
+if (currentView === 'project') {
+  return (
+    <ProjectDetail
+      projectSlug={currentProjectSlug}
+      onBack={navigateToPortfolio}
+      portfolioData={portfolioData}
+    />
+  );
+}
 
   // Generate CSS variables
   const cssVariables = {
@@ -653,7 +602,7 @@ const TemplateRenderer: React.FC<TemplateRendererProps> = ({
       {/* Renderizar secciones según configuración */}
       {enabledSections.map(section => renderSection(section.id))}
       
-      <footer 
+{/*       <footer 
         className="py-8 text-center"
         style={{ backgroundColor: colors.surface, color: colors.text.secondary }}
       >
@@ -663,7 +612,7 @@ const TemplateRenderer: React.FC<TemplateRendererProps> = ({
             Portfolio con plantilla "{template.name}" • Creado con Portfolio Generator
           </p>
         </div>
-      </footer>
+      </footer> */}
       
       {/* Modal para imagen ampliada */}
       {selectedImage && (

@@ -7,8 +7,7 @@ import {
 } from './portfolio-hooks';
 import { useTemplates } from './use-templates';
 import { 
-  SinglePageHTMLExporter,
-  MultiPageWebsiteExporter 
+  createTemplateAwareExporter
 } from './portfolio-export';
 import PersonalInfoForm from './PersonalInfoForm';
 import ProjectTableForm from './ProjectTableForm';
@@ -874,16 +873,66 @@ export const PortfolioGenerator: React.FC<PortfolioGeneratorProps> = ({
     }
   }, [currentMode]);
 
-  // Exportadores
-  const handleExportHTML = useCallback(() => {
-    const singleExporter = new SinglePageHTMLExporter(portfolioHook.data);
-    singleExporter.export();
-  }, [portfolioHook.data]);
+// Función para exportar HTML simple con plantilla personalizada
+const handleExportHTML = useCallback(() => {
+  try {
+    if (!templates.selectedTemplate) {
+      alert('❌ No hay plantilla seleccionada. Por favor, selecciona una plantilla primero.');
+      return;
+    }
 
-  const handleExportWebsite = useCallback(() => {
-    const multiExporter = new MultiPageWebsiteExporter(portfolioHook.data);
-    multiExporter.export();
-  }, [portfolioHook.data]);
+    // ✅ USAR el nuevo exportador con plantilla Y configuración personalizada
+    const templateAwareExporter = createTemplateAwareExporter(
+      portfolioHook.data, 
+      templates.selectedTemplate, 
+      'single',
+      templates.config || undefined // ✅ Pasar la configuración personalizada
+    );
+    
+    const result = templateAwareExporter.export();
+    
+    if (result.success) {
+      console.log('✅ Portfolio exportado:', result.message);
+    } else {
+      console.error('❌ Error en exportación:', result.message);
+      alert(`Error al exportar: ${result.message}`);
+    }
+  } catch (error) {
+    console.error('❌ Error inesperado en exportación:', error);
+    alert('Error inesperado al exportar el portfolio');
+  }
+}, [portfolioHook.data, templates.selectedTemplate, templates.config]);
+
+// Función para exportar sitio web completo con plantilla personalizada
+const handleExportWebsite = useCallback(() => {
+  try {
+    if (!templates.selectedTemplate) {
+      alert('❌ No hay plantilla seleccionada. Por favor, selecciona una plantilla primero.');
+      return;
+    }
+
+    // ✅ USAR el nuevo exportador con plantilla Y configuración personalizada
+    const templateAwareExporter = createTemplateAwareExporter(
+      portfolioHook.data, 
+      templates.selectedTemplate, 
+      'multi',
+      templates.config || undefined // ✅ Pasar la configuración personalizada
+    );
+    
+    const result = templateAwareExporter.export();
+    
+    if (result.success) {
+      console.log('✅ Sitio web exportado:', result.message);
+      alert(`🎉 ${result.message}\n\n📁 Archivos descargados listos para GitHub Pages!`);
+    } else {
+      console.error('❌ Error en exportación:', result.message);
+      alert(`Error al exportar: ${result.message}`);
+    }
+  } catch (error) {
+    console.error('❌ Error inesperado en exportación:', error);
+    alert('Error inesperado al exportar el sitio web');
+  }
+}, [portfolioHook.data, templates.selectedTemplate, templates.config]);
 
   const handleExportJSON = useCallback(() => {
     exportToJSON(portfolioHook.data);

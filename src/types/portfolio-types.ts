@@ -38,7 +38,7 @@ export interface Project {
 // ✅ CORREGIDO - Habilidades con campo 'technologies'
 export interface Skill {
   category: string;
-  technologies: string;  // ✅ Cambiado de 'items' a 'technologies'
+  items: string;  // ✅ Cambiado de 'items' a 'technologies'
   level?: string;        // ✅ Añadido campo utilizado en componentes
 }
 
@@ -257,7 +257,7 @@ export const DEFAULT_PORTFOLIO_DATA: PortfolioData = {
   }],
   skills: [{
     category: "",
-    technologies: "",    // ✅ Cambiado de 'items'
+    items: "",    // ✅ Cambiado de 'items'
     level: ""            // ✅ Añadido
   }],
   experience: [{

@@ -65,8 +65,8 @@ const EditableSkillItem: React.FC<EditableSkillItemProps> = ({
           <input
             type="text"
             placeholder="React, JavaScript, TypeScript, Node.js (separadas por comas)"
-            value={skill.technologies} 
-            onChange={(e) => onUpdate(index, "technologies", e.target.value)}
+            value={skill.items} 
+            onChange={(e) => onUpdate(index, "items", e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
           />
           <div className="text-xs text-gray-500 mt-1">
@@ -93,13 +93,13 @@ const EditableSkillItem: React.FC<EditableSkillItemProps> = ({
         </div>
 
         {/* Preview de habilidades */}
-        {skill.technologies?.trim() && (
+        {skill.items?.trim() && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Vista previa:
             </label>
             <div className="flex flex-wrap gap-2">
-              {skill.technologies
+              {skill.items
                 .split(',')
                 .filter(item => item.trim())
                 .map((item, itemIndex) => (
@@ -167,7 +167,7 @@ export const SkillForm: React.FC<SkillFormProps> = ({
               <span>
                 Total: {skills.length} categorías, {' '}
                 {skills.reduce((total, skill) => {
-                  const count = skill.technologies ? skill.technologies.split(',').filter(s => s.trim()).length : 0;
+                  const count = skill.items ? skill.items.split(',').filter(s => s.trim()).length : 0;
                   return total + count;
                 }, 0)} habilidades
               </span>
