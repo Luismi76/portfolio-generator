@@ -1,19 +1,19 @@
 // PortfolioGenerator.tsx - VERSIÓN CON NAVEGACIÓN A PERSONALIZAR CORREGIDA
 import React, { useRef, useState, useCallback } from 'react';
-import { Icons } from './portfolio-icons';
+import { Icons } from '../portfolio-icons';
 import { 
   usePortfolioData, 
   useBeforeUnload,
-} from './portfolio-hooks';
-import { useTemplates } from './use-templates';
+} from '../portfolio-hooks';
+import { useTemplates } from '../use-templates';
 import { 
   createTemplateAwareExporter
-} from './portfolio-export';
-import PersonalInfoForm from './PersonalInfoForm';
-import ProjectTableForm from './ProjectTableForm';
-import SkillTableForm from './SkillTableForm';
-import { TemplateSelector } from './TemplateSelector';
-import TemplateRenderer from './TemplateRenderer';
+} from '../portfolio-export';
+import PersonalInfoForm from '../PersonalInfoForm';
+import ProjectTableForm from '../ProjectTableForm';
+import SkillTableForm from '../SkillTableForm';
+import { TemplateSelector } from '../TemplateSelector';
+import TemplateRenderer from '../TemplateRenderer';
 
 // Tipo para los modos de la aplicación
 type AppMode = 'editor' | 'templates' | 'customize' | 'preview' | 'portfolio';
@@ -975,9 +975,8 @@ const handleExportWebsite = useCallback(() => {
           <TemplateSelector
             templates={templates.templates}
             selectedTemplate={templates.selectedTemplate}
-            onSelectTemplate={templates.selectTemplate}
+            onTemplateSelect={templates.selectTemplate}
             onCustomize={() => switchMode('customize')}
-            onAddTemplate={() => console.log('Add template')}
           />
         );
       

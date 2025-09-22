@@ -1,180 +1,139 @@
-// TemplateSelector.tsx
+// src/components/TemplateSelector.tsx - CORREGIDO
 import React, { useState } from 'react';
-import { Template } from '../types/template-types';
+import { Template, TemplateSelectorProps } from '../types/template-types';
 import { Icons } from './portfolio-icons';
 
-interface TemplateSelectorProps {
-  templates: Template[];
-  selectedTemplate: Template | null;
-  onSelectTemplate: (template: Template) => void;
-  onCustomize?: () => void;
-  onAddTemplate?: () => void;
-}
-
-interface TemplateCardProps {
+// Componente para tarjeta individual de plantilla
+const TemplateCard: React.FC<{
   template: Template;
   isSelected: boolean;
   onSelect: () => void;
   onCustomize?: () => void;
-}
-
-const TemplateCard: React.FC<TemplateCardProps> = ({
-  template,
-  isSelected,
-  onSelect,
-  onCustomize
-}) => {
-  const [isHovered, setIsHovered] = useState(false);
-
+}> = ({ template, isSelected, onSelect, onCustomize }) => {
   return (
-    <div
-      className={`relative border-2 rounded-lg overflow-hidden cursor-pointer transition-all duration-300 ${
+    <div 
+      className={`relative bg-white rounded-lg border-2 transition-all cursor-pointer hover:shadow-lg ${
         isSelected 
-          ? 'border-blue-500 ring-2 ring-blue-200 shadow-lg' 
-          : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+          ? 'border-blue-500 shadow-lg' 
+          : 'border-gray-200 hover:border-gray-300'
       }`}
       onClick={onSelect}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Preview mockup */}
-      <div className="aspect-video bg-gradient-to-br from-gray-50 to-gray-100 p-3 relative overflow-hidden">
-        {/* Simulación visual de la plantilla con más detalle */}
-        <div 
-          className="w-full h-full rounded-md p-3 text-xs relative"
-          style={{ 
-            background: `linear-gradient(135deg, ${template.colors.background}, ${template.colors.surface})`,
-          }}
-        >
-          {/* Header mockup con gradiente */}
+      {/* Preview de la plantilla */}
+      <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-lg relative overflow-hidden">
+        {template.colors.gradient ? (
           <div 
-            className="absolute top-0 left-0 right-0 h-8 rounded-t-md p-2 flex items-center"
+            className="w-full h-full"
             style={{
-              background: `linear-gradient(135deg, ${template.colors.primary}, ${template.colors.secondary})`
+              background: `linear-gradient(${template.colors.gradient.direction || '135deg'}, ${template.colors.gradient.from}, ${template.colors.gradient.to})`
             }}
-          >
-            <div className="w-4 h-1 bg-white bg-opacity-80 rounded-full mr-2"></div>
-            <div className="flex-1">
-              <div className="h-1 bg-white bg-opacity-60 rounded mb-0.5" style={{ width: '60%' }}></div>
-              <div className="h-0.5 bg-white bg-opacity-40 rounded" style={{ width: '40%' }}></div>
+          />
+        ) : (
+          <div 
+            className="w-full h-full"
+            style={{ backgroundColor: template.colors.primary }}
+          />
+        )}
+        
+        {/* Overlay con información */}
+        <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+          <div className="text-white text-center">
+            <div 
+              className="text-lg font-bold mb-1"
+              style={{ fontFamily: template.typography.fontFamily.heading }}
+            >
+              {template.name}
             </div>
-          </div>
-          
-          {/* Content mockup */}
-          <div className="mt-10 space-y-1">
             <div 
-              className="h-1 rounded"
-              style={{ backgroundColor: template.colors.primary, width: '80%' }}
-            />
-            <div 
-              className="h-0.5 rounded"
-              style={{ backgroundColor: template.colors.secondary, width: '65%' }}
-            />
-            <div 
-              className="h-0.5 rounded"
-              style={{ backgroundColor: template.colors.secondary, width: '45%' }}
-            />
-          </div>
-
-          {/* Cards mockup */}
-          <div className="grid grid-cols-2 gap-1 mt-3">
-            {[1, 2].map((i) => (
-              <div 
-                key={i}
-                className="h-6 rounded border p-1"
-                style={{ 
-                  backgroundColor: template.colors.surface,
-                  borderColor: template.colors.primary + '40'
-                }}
-              >
-                <div 
-                  className="h-1 rounded mb-1"
-                  style={{ backgroundColor: template.colors.primary, width: '80%' }}
-                />
-                <div 
-                  className="h-0.5 rounded"
-                  style={{ backgroundColor: template.colors.accent, width: '60%' }}
-                />
-              </div>
-            ))}
-          </div>
-
-          {/* Accent elements */}
-          <div className="absolute bottom-2 right-2">
-            <div 
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: template.colors.accent }}
-            />
+              className="text-sm opacity-90"
+              style={{ fontFamily: template.typography.fontFamily.primary }}
+            >
+              Preview
+            </div>
           </div>
         </div>
 
-        {/* Overlay de selección */}
-        {isSelected && (
-          <div className="absolute top-2 right-2 bg-blue-600 text-white p-1 rounded-full">
-            <Icons.Check size={12} />
-          </div>
-        )}
+        {/* Badge de categoría */}
+        <div className="absolute top-2 left-2">
+          <span className="bg-white bg-opacity-90 text-gray-700 px-2 py-1 rounded text-xs font-medium">
+            {template.category}
+          </span>
+        </div>
 
-        {/* Overlay de hover con acciones */}
-        {isHovered && !isSelected && (
-          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect();
-              }}
-              className="bg-white text-gray-900 px-3 py-1 rounded-md text-sm font-medium hover:bg-gray-100"
-            >
-              Seleccionar
-            </button>
+        {/* Badge built-in */}
+        {template.isBuiltIn && (
+          <div className="absolute top-2 right-2">
+            <span className="bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">
+              Oficial
+            </span>
           </div>
         )}
       </div>
 
-      {/* Información de la plantilla */}
-      <div className="p-3">
-        <div className="flex items-start justify-between">
+      {/* Contenido de la tarjeta */}
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-2">
           <div className="flex-1">
-            <h3 className="font-medium text-gray-900 text-sm">{template.name}</h3>
-            <p className="text-xs text-gray-600 mt-1 line-clamp-2">{template.description}</p>
-            
-            {/* Tags */}
-            <div className="flex flex-wrap gap-1 mt-2">
-              {template.category && (
-                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
-                  {template.category}
-                </span>
-              )}
-              {template.tags?.slice(0, 2).map((tag) => (
-                <span 
-                  key={tag}
-                  className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+            <h3 className="font-semibold text-gray-900 mb-1">
+              {template.name}
+            </h3>
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {template.description}
+            </p>
           </div>
+        </div>
 
-          {/* Botón de personalización */}
-          {isSelected && onCustomize && (
+        {/* Tags */}
+        {template.tags && template.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {template.tags.slice(0, 3).map((tag, index) => (
+              <span 
+                key={index}
+                className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs"
+              >
+                {tag}
+              </span>
+            ))}
+            {template.tags.length > 3 && (
+              <span className="text-gray-500 text-xs">
+                +{template.tags.length - 3} más
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Acciones */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span>v{template.version}</span>
+            {template.author && (
+              <>
+                <span>•</span>
+                <span>{template.author}</span>
+              </>
+            )}
+          </div>
+          
+          {onCustomize && isSelected && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onCustomize();
               }}
-              className="text-blue-600 hover:text-blue-700 p-1"
-              title="Personalizar plantilla"
+              className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-colors"
             >
-              <Icons.Settings size={14} />
+              <Icons.Settings size={12} />
+              Personalizar
             </button>
           )}
         </div>
       </div>
 
-      {/* Indicador de plantilla activa */}
+      {/* Indicador de selección */}
       {isSelected && (
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600"></div>
+        <div className="absolute -top-1 -right-1 bg-blue-600 text-white rounded-full p-1">
+          <Icons.Check size={12} />
+        </div>
       )}
     </div>
   );
@@ -183,9 +142,8 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
 export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   templates,
   selectedTemplate,
-  onSelectTemplate,
-  onCustomize,
-  onAddTemplate
+  onTemplateSelect,
+  onCustomize
 }) => {
   const [filter, setFilter] = useState<string>('all');
 
@@ -198,25 +156,15 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   const categories = ['all', ...Array.from(new Set(templates.map(t => t.category).filter(Boolean)))];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Plantillas de Portfolio</h2>
-          <p className="text-sm text-gray-600">
+          <h2 className="text-2xl font-bold text-gray-900">Plantillas de Portfolio</h2>
+          <p className="text-gray-600 mt-1">
             Elige una plantilla base y personalízala según tus necesidades
           </p>
         </div>
-
-        {onAddTemplate && (
-          <button
-            onClick={onAddTemplate}
-            className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700"
-          >
-            <Icons.Plus size={16} />
-            Nueva Plantilla
-          </button>
-        )}
       </div>
 
       {/* Filtros */}
@@ -225,61 +173,64 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           <button
             key={category}
             onClick={() => setFilter(category)}
-            className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === category
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            {category === 'all' ? 'Todas' : category}
+            {category === 'all' ? 'Todas' : category.charAt(0).toUpperCase() + category.slice(1)}
           </button>
         ))}
       </div>
 
       {/* Grid de plantillas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTemplates.map((template) => (
           <TemplateCard
             key={template.id}
             template={template}
             isSelected={selectedTemplate?.id === template.id}
-            onSelect={() => onSelectTemplate(template)}
-            onCustomize={onCustomize}
+            onSelect={() => onTemplateSelect(template)}
+            onCustomize={onCustomize ? () => onCustomize(template) : undefined}
           />
         ))}
       </div>
 
       {/* Plantilla seleccionada info */}
       {selectedTemplate && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-blue-600 rounded-lg">
-              <Icons.Settings size={16} className="text-white" />
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-blue-600 rounded-lg">
+              <Icons.Settings size={20} className="text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="font-medium text-blue-900">
+              <h3 className="text-lg font-semibold text-blue-900">
                 Plantilla seleccionada: {selectedTemplate.name}
               </h3>
-              <p className="text-sm text-blue-700 mt-1">
+              <p className="text-blue-700 mt-1">
                 {selectedTemplate.description}
               </p>
-              <div className="flex items-center gap-3 mt-2">
-                <span className="text-xs text-blue-600">
+              <div className="flex items-center gap-4 mt-3">
+                <span className="text-sm text-blue-600">
                   Versión: {selectedTemplate.version}
                 </span>
                 {selectedTemplate.author && (
-                  <span className="text-xs text-blue-600">
-                    Por: {selectedTemplate.author}
+                  <span className="text-sm text-blue-600">
+                    Autor: {selectedTemplate.author}
                   </span>
                 )}
+                <span className="text-sm text-blue-600">
+                  Categoría: {selectedTemplate.category}
+                </span>
               </div>
             </div>
             {onCustomize && (
               <button
-                onClick={onCustomize}
-                className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-blue-700"
+                onClick={() => onCustomize(selectedTemplate)}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
               >
-                <Icons.Settings size={14} />
+                <Icons.Settings size={16} />
                 Personalizar
               </button>
             )}
@@ -295,17 +246,14 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             No hay plantillas en esta categoría
           </h3>
           <p className="text-gray-600 mb-4">
-            Prueba con otra categoría o agrega una nueva plantilla personalizada
+            Prueba con otra categoría o selecciona "Todas" para ver todas las plantillas disponibles
           </p>
-          {onAddTemplate && (
-            <button
-              onClick={onAddTemplate}
-              className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              <Icons.Plus size={16} />
-              Crear Primera Plantilla
-            </button>
-          )}
+          <button
+            onClick={() => setFilter('all')}
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Ver todas las plantillas
+          </button>
         </div>
       )}
     </div>
