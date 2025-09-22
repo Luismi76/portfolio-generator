@@ -280,17 +280,157 @@ export const DEFAULT_PORTFOLIO_DATA: PortfolioData = {
 };
 
 // Configuración de tecnologías
+// Configuración COMPLETA de tecnologías - reemplaza la existente en portfolio-types.ts
 export const TECH_ICONS_CONFIG: TechIconConfig = {
-  react: { emoji: '⚛️', color: '#61DAFB' },
-  vue: { emoji: '💚', color: '#4FC08D' },
-  javascript: { emoji: '💛', color: '#F7DF1E' },
-  typescript: { emoji: '💙', color: '#3178C6' },
-  python: { emoji: '🐍', color: '#3776AB' },
-  css: { emoji: '🎨', color: '#1572B6' },
-  node: { emoji: '💚', color: '#339933' },
-  html: { emoji: '🟧', color: '#E34F26' },
-  git: { emoji: '📝', color: '#F05032' },
-  docker: { emoji: '🐳', color: '#2496ED' },
-  aws: { emoji: '☁️', color: '#FF9900' },
-  default: { emoji: '⚡', color: '#6366F1' },
+  // Frontend
+  'react': { emoji: '⚛️', color: '#61DAFB' },
+  'vue': { emoji: '💚', color: '#4FC08D' },
+  'angular': { emoji: '🅰️', color: '#DD0031' },
+  'html': { emoji: '🟧', color: '#E34F26' },
+  'html5': { emoji: '🟧', color: '#E34F26' },
+  'css': { emoji: '🎨', color: '#1572B6' },
+  'css3': { emoji: '🎨', color: '#1572B6' },
+  'javascript': { emoji: '💛', color: '#F7DF1E' },
+  'js': { emoji: '💛', color: '#F7DF1E' },
+  'typescript': { emoji: '💙', color: '#3178C6' },
+  'ts': { emoji: '💙', color: '#3178C6' },
+  'tailwind': { emoji: '🌊', color: '#06B6D4' },
+  'tailwindcss': { emoji: '🌊', color: '#06B6D4' },
+  'bootstrap': { emoji: '🅱️', color: '#7952B3' },
+  'sass': { emoji: '💗', color: '#CC6699' },
+  'scss': { emoji: '💗', color: '#CC6699' },
+  'nextjs': { emoji: '⚫', color: '#000000' },
+  'next': { emoji: '⚫', color: '#000000' },
+  'nuxt': { emoji: '💚', color: '#00DC82' },
+  'vite': { emoji: '⚡', color: '#646CFF' },
+  'webpack': { emoji: '📦', color: '#8DD6F9' },
+  
+  // Backend
+  'nodejs': { emoji: '💚', color: '#339933' },
+  'node': { emoji: '💚', color: '#339933' },
+  'express': { emoji: '🚂', color: '#000000' },
+  'expressjs': { emoji: '🚂', color: '#000000' },
+  'python': { emoji: '🐍', color: '#3776AB' },
+  'java': { emoji: '☕', color: '#ED8B00' },
+  'php': { emoji: '🐘', color: '#777BB4' },
+  'csharp': { emoji: '#️⃣', color: '#239120' },
+  'c#': { emoji: '#️⃣', color: '#239120' },
+  'go': { emoji: '🐹', color: '#00ADD8' },
+  'golang': { emoji: '🐹', color: '#00ADD8' },
+  'rust': { emoji: '🦀', color: '#000000' },
+  'ruby': { emoji: '💎', color: '#CC342D' },
+  'kotlin': { emoji: '🟣', color: '#7F52FF' },
+  'swift': { emoji: '🐦', color: '#FA7343' },
+  
+  // Frameworks
+  'laravel': { emoji: '🔴', color: '#FF2D20' },
+  'django': { emoji: '💚', color: '#092E20' },
+  'flask': { emoji: '🌶️', color: '#000000' },
+  'fastapi': { emoji: '⚡', color: '#009688' },
+  'spring': { emoji: '🌱', color: '#6DB33F' },
+  'springboot': { emoji: '🌱', color: '#6DB33F' },
+  'dotnet': { emoji: '🔵', color: '#512BD4' },
+  '.net': { emoji: '🔵', color: '#512BD4' },
+  'rails': { emoji: '🚂', color: '#CC0000' },
+  
+  // Databases
+  'mongodb': { emoji: '🍃', color: '#47A248' },
+  'mongo': { emoji: '🍃', color: '#47A248' },
+  'mysql': { emoji: '🐬', color: '#4479A1' },
+  'postgresql': { emoji: '🐘', color: '#336791' },
+  'postgres': { emoji: '🐘', color: '#336791' },
+  'redis': { emoji: '🔴', color: '#DC382D' },
+  'sqlite': { emoji: '💾', color: '#003B57' },
+  'sqlserver': { emoji: '🗄️', color: '#CC2927' },
+  'sql server': { emoji: '🗄️', color: '#CC2927' },
+  'oracle': { emoji: '🔶', color: '#F80000' },
+  'firebase': { emoji: '🔥', color: '#FFCA28' },
+  'supabase': { emoji: '🟢', color: '#3ECF8E' },
+  
+  // Cloud & DevOps
+  'aws': { emoji: '☁️', color: '#FF9900' },
+  'azure': { emoji: '💙', color: '#0078D4' },
+  'gcp': { emoji: '☁️', color: '#4285F4' },
+  'google cloud': { emoji: '☁️', color: '#4285F4' },
+  'heroku': { emoji: '💜', color: '#430098' },
+  'vercel': { emoji: '▲', color: '#000000' },
+  'netlify': { emoji: '💚', color: '#00C7B7' },
+  'docker': { emoji: '🐳', color: '#2496ED' },
+  'kubernetes': { emoji: '☸️', color: '#326CE5' },
+  'k8s': { emoji: '☸️', color: '#326CE5' },
+  'nginx': { emoji: '🟢', color: '#009639' },
+  'apache': { emoji: '🪶', color: '#D22128' },
+  
+  // Version Control
+  'git': { emoji: '📝', color: '#F05032' },
+  'github': { emoji: '🐙', color: '#181717' },
+  'gitlab': { emoji: '🦊', color: '#FCA326' },
+  
+  // Testing
+  'jest': { emoji: '🃏', color: '#C21325' },
+  'cypress': { emoji: '🌲', color: '#17202C' },
+  'selenium': { emoji: '🕷️', color: '#43B02A' },
+  
+  // API & Communication
+  'rest': { emoji: '🔗', color: '#FF6C37' },
+  'rest api': { emoji: '🔗', color: '#FF6C37' },
+  'api': { emoji: '🔗', color: '#FF6C37' },
+  'graphql': { emoji: '💗', color: '#E10098' },
+  'websocket': { emoji: '🔌', color: '#000000' },
+  'websockets': { emoji: '🔌', color: '#000000' },
+  
+  // Mobile Development
+  'android': { emoji: '🤖', color: '#3DDC84' },
+  'ios': { emoji: '🍎', color: '#000000' },
+  'flutter': { emoji: '💙', color: '#02569B' },
+  'react native': { emoji: '⚛️', color: '#61DAFB' },
+  'ionic': { emoji: '⚡', color: '#3880FF' },
+  
+  // Machine Learning & Data Science
+  'tensorflow': { emoji: '🧠', color: '#FF6F00' },
+  'pytorch': { emoji: '🔥', color: '#EE4C2C' },
+  'pandas': { emoji: '🐼', color: '#150458' },
+  'numpy': { emoji: '🔢', color: '#013243' },
+  'sklearn': { emoji: '🧠', color: '#F7931E' },
+  'scikit-learn': { emoji: '🧠', color: '#F7931E' },
+  'jupyter': { emoji: '📓', color: '#F37626' },
+  
+  // Design & UI Tools
+  'figma': { emoji: '🎨', color: '#F24E1E' },
+  'photoshop': { emoji: '🖼️', color: '#31A8FF' },
+  
+  // Business Intelligence
+  'powerbi': { emoji: '📊', color: '#F2C811' },
+  'power bi': { emoji: '📊', color: '#F2C811' },
+  'tableau': { emoji: '📈', color: '#E97627' },
+  'excel': { emoji: '📗', color: '#217346' },
+  
+  // UI/Component Libraries
+  'shadcn/ui': { emoji: '🎨', color: '#000000' },
+  'shadcn': { emoji: '🎨', color: '#000000' },
+  'lucide-react': { emoji: '✨', color: '#F56565' },
+  'lucide': { emoji: '✨', color: '#F56565' },
+  'livekit': { emoji: '📹', color: '#0055FF' },
+  'recharts': { emoji: '📊', color: '#8884D8' },
+  'proxmox': { emoji: '☁️', color: '#E57000' },
+  
+  // Hardware & IoT
+  'esp32-c3': { emoji: '🔧', color: '#FF6600' },
+  'esp32': { emoji: '🔧', color: '#FF6600' },
+  'bl': { emoji: '📡', color: '#0066CC' },
+  'bluetooth': { emoji: '📡', color: '#0066CC' },
+  'tof vl53l1x': { emoji: '📏', color: '#666666' },
+  'vl53l1x': { emoji: '📏', color: '#666666' },
+  'tof': { emoji: '📏', color: '#666666' },
+  'ws2812': { emoji: '🌈', color: '#FF0080' },
+  'lipo': { emoji: '🔋', color: '#00AA00' },
+  'tp4056': { emoji: '⚡', color: '#FF4400' },
+  'impresión 3d': { emoji: '🖨️', color: '#FF6600' },
+  '3d printing': { emoji: '🖨️', color: '#FF6600' },
+  'arduino': { emoji: '🔧', color: '#00979D' },
+  'esp-idf': { emoji: '⚙️', color: '#E7352C' },
+  'idf': { emoji: '⚙️', color: '#E7352C' },
+  
+  // Default fallback
+  'default': { emoji: '⚡', color: '#6366F1' },
 };
