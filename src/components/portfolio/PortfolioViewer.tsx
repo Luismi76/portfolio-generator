@@ -2,7 +2,7 @@
 import React from "react";
 import { usePortfolioData } from "../portfolio-hooks";
 import { useTemplates } from "../use-templates";
-import { getSimpleTechIcon, getSkillIcon } from "../../utils/simpleTechIcons";
+import { TechList } from "../TechIcons";
 // Al inicio del archivo Portfolio.tsx, añadir:
 //import { TECH_ICONS_CONFIG } from '../../types/portfolio-types';
 
@@ -376,15 +376,17 @@ const PortfolioViewer: React.FC = () => {
                           {project.description}
                         </p>
                         {project.technologies && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {project.technologies
-                              .split(",")
-                              .filter((tech) => tech.trim())
-                              .map((tech, index) => (
-                                <span key={index} className="tech-badge">
-                                  {getSimpleTechIcon(tech)} {tech.trim()}
-                                </span>
-                              ))}
+                          <div
+                            style={{
+                              marginTop: layout.spacingSm,
+                              marginBottom: layout.spacingSm,
+                            }}
+                          >
+                            <TechList
+                              technologies={project.technologies}
+                              variant="minimal"
+                              className=""
+                            />
                           </div>
                         )}
                         <div
@@ -504,25 +506,11 @@ const PortfolioViewer: React.FC = () => {
                           gap: layout.spacingXs,
                         }}
                       >
-                        {skill.items.split(",").map((item, idx) => (
-  <span
-    key={idx}
-    style={{
-      backgroundColor: colors.surface,
-      color: colors.textPrimary,
-      padding: `${layout.spacingXs} ${layout.spacingSm}`,
-      borderRadius: layout.radiusLg,
-      border: `1px solid ${colors.primary}30`,
-      fontSize: typography.fontSizeSm,
-      display: "inline-flex",        // <- Añade esto
-      alignItems: "center",          // <- Añade esto
-      gap: layout.spacingXs,         // <- Añade esto
-    }}
-  >
-    <span>{getSkillIcon(item.trim())}</span>  {/* <- Añade el icono */}
-    <span>{item.trim()}</span>                {/* <- Envuelve el texto */}
-  </span>
-))}
+                        <TechList
+                          technologies={skill.items}
+                          variant="outlined"
+                          className=""
+                        />
                       </div>
                     </div>
                   ))}
