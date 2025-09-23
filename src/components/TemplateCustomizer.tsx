@@ -1,7 +1,66 @@
-// src/components/TemplateCustomizer.tsx - CON LAYOUT Y SECCIONES
-import React, { useState } from 'react';
-import { TemplateCustomizerProps, TemplateColors, TemplateTypography, TemplateLayout, TemplateSection } from '../types/template-types';
-import { Icons } from './portfolio-icons';
+// src/components/TemplateCustomizer.tsx - CORREGIDO (merge profundo, layout/sections robustos)
+import React, { useState } from "react";
+import {
+  TemplateCustomizerProps,
+  TemplateColors,
+  TemplateTypography,
+  TemplateLayout,
+  TemplateSection,
+} from "../types/template-types";
+import { Icons } from "./portfolio-icons";
+
+/* =========================
+   Helpers
+========================= */
+
+// Merge profundo genérico (conserva ramas anidadas: text, gradient, fontFamily, etc.)
+const mergeDeep = <T extends object>(base: T, part?: Partial<T>): T => {
+  if (!part) return base;
+  const out: any = Array.isArray(base) ? [...(base as any)] : { ...base };
+  Object.keys(part).forEach((k) => {
+    const v: any = (part as any)[k];
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      out[k] = mergeDeep((base as any)[k] ?? {}, v);
+    } else {
+      out[k] = v;
+    }
+  });
+  return out;
+};
+
+// Detección robusta de variante de sombras
+type ShadowVariant = "subtle" | "medium" | "strong";
+const detectShadowVariant = (sh: TemplateLayout["shadows"]): ShadowVariant => {
+  const s = JSON.stringify(sh);
+  if (s.includes("/ 0.3")) return "strong";
+  if (s.includes("/ 0.2")) return "medium";
+  return "subtle";
+};
+
+const SHADOW_PRESETS: Record<ShadowVariant, TemplateLayout["shadows"]> = {
+  subtle: {
+    sm: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+    md: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+    lg: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+    xl: "0 20px 25px -5px rgb(0 0 0 / 0.1)",
+  },
+  medium: {
+    sm: "0 2px 4px 0 rgb(0 0 0 / 0.1)",
+    md: "0 6px 12px -2px rgb(0 0 0 / 0.2)",
+    lg: "0 15px 25px -5px rgb(0 0 0 / 0.2)",
+    xl: "0 25px 35px -8px rgb(0 0 0 / 0.2)",
+  },
+  strong: {
+    sm: "0 3px 6px 0 rgb(0 0 0 / 0.15)",
+    md: "0 8px 16px -4px rgb(0 0 0 / 0.3)",
+    lg: "0 20px 30px -8px rgb(0 0 0 / 0.3)",
+    xl: "0 30px 45px -12px rgb(0 0 0 / 0.3)",
+  },
+};
+
+/* =========================
+   UI Controles atómicos
+========================= */
 
 const ColorPicker: React.FC<{
   label: string;
@@ -9,9 +68,7 @@ const ColorPicker: React.FC<{
   onChange: (value: string) => void;
 }> = ({ label, value, onChange }) => (
   <div className="space-y-2">
-    <label className="block text-sm font-medium text-gray-700">
-      {label}
-    </label>
+    <label className="block text-sm font-medium text-gray-700">{label}</label>
     <div className="flex items-center gap-3">
       <input
         type="color"
@@ -36,21 +93,19 @@ const FontSelector: React.FC<{
   onChange: (value: string) => void;
 }> = ({ label, value, onChange }) => {
   const fonts = [
-    { name: 'Inter', value: "'Inter', sans-serif" },
-    { name: 'Poppins', value: "'Poppins', sans-serif" },
-    { name: 'Roboto', value: "'Roboto', sans-serif" },
-    { name: 'SF Pro', value: "'SF Pro Display', sans-serif" },
-    { name: 'Helvetica', value: "'Helvetica Neue', sans-serif" },
-    { name: 'Georgia', value: "'Georgia', serif" },
-    { name: 'Times', value: "'Times New Roman', serif" },
-    { name: 'Courier', value: "'Courier New', monospace" }
+    { name: "Inter", value: "'Inter', sans-serif" },
+    { name: "Poppins", value: "'Poppins', sans-serif" },
+    { name: "Roboto", value: "'Roboto', sans-serif" },
+    { name: "SF Pro", value: "'SF Pro Display', sans-serif" },
+    { name: "Helvetica", value: "'Helvetica Neue', sans-serif" },
+    { name: "Georgia", value: "'Georgia', serif" },
+    { name: "Times", value: "'Times New Roman', serif" },
+    { name: "Courier", value: "'Courier New', monospace" },
   ];
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">
-        {label}
-      </label>
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -75,11 +130,12 @@ const SliderControl: React.FC<{
   step: number;
   unit: string;
 }> = ({ label, value, onChange, min, max, step, unit }) => {
-  // Extraer valor numérico del string CSS
-  const numericValue = parseFloat(value) || 0;
-  
-  const handleChange = (newValue: number) => {
-    onChange(`${newValue}${unit}`);
+  const parsed = parseFloat(value);
+  const numericValue = Number.isFinite(parsed) ? parsed : min;
+
+  const handleChange = (nv: number) => {
+    const safe = Number.isFinite(nv) ? nv : min;
+    onChange(`${safe}${unit}`);
   };
 
   return (
@@ -121,7 +177,9 @@ const SectionToggle: React.FC<{
       <div>
         <h4 className="font-medium text-gray-900">{section.name}</h4>
         <p className="text-sm text-gray-500">
-          {section.enabled ? 'Visible en el portfolio' : 'Oculta en el portfolio'}
+          {section.enabled
+            ? "Visible en el portfolio"
+            : "Oculta en el portfolio"}
         </p>
       </div>
     </div>
@@ -129,10 +187,13 @@ const SectionToggle: React.FC<{
       <label className="text-sm text-gray-500">Orden:</label>
       <input
         type="number"
-        min="1"
-        max="10"
+        min={1}
+        max={10}
         value={section.order}
-        onChange={(e) => onOrderChange(section.id, parseInt(e.target.value))}
+        onChange={(e) => {
+          const v = parseInt(e.target.value, 10);
+          onOrderChange(section.id, Number.isFinite(v) ? v : 1);
+        }}
         className="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
         disabled={!section.enabled}
       />
@@ -140,45 +201,45 @@ const SectionToggle: React.FC<{
   </div>
 );
 
+/* =========================
+   Customizer principal
+========================= */
+
 export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
   template,
   config,
   onConfigChange,
   onSave,
-  onCancel
+  onCancel,
 }) => {
-  const [activeTab, setActiveTab] = useState<'colors' | 'typography' | 'layout' | 'sections'>('colors');
+  const [activeTab, setActiveTab] = useState<
+    "colors" | "typography" | "layout" | "sections"
+  >("colors");
 
-  // Obtener valores actuales con fallbacks
-  const currentColors: TemplateColors = {
-    ...template.colors,
-    ...config.customizations.colors
-  };
+  // Valores actuales (merge profundo)
+  const currentColors: TemplateColors = mergeDeep(
+    template.colors,
+    config.customizations.colors
+  );
+  const currentTypography: TemplateTypography = mergeDeep(
+    template.typography,
+    config.customizations.typography
+  );
+  const currentLayout: TemplateLayout = mergeDeep(
+    template.layout,
+    config.customizations.layout
+  );
+  const currentSections: TemplateSection[] =
+    config.customizations.sections ?? template.sections;
 
-  const currentTypography: TemplateTypography = {
-    ...template.typography,
-    ...config.customizations.typography
-  };
-
-  const currentLayout: TemplateLayout = {
-    ...template.layout,
-    ...config.customizations.layout
-  };
-
-  const currentSections: TemplateSection[] = 
-    config.customizations.sections || template.sections;
-
-  // Handlers para actualizar configuración
+  // Updaters con merge profundo
   const updateColors = (newColors: Partial<TemplateColors>) => {
     onConfigChange({
       ...config,
       customizations: {
         ...config.customizations,
-        colors: {
-          ...config.customizations.colors,
-          ...newColors
-        }
-      }
+        colors: mergeDeep(config.customizations.colors ?? {}, newColors),
+      },
     });
   };
 
@@ -187,11 +248,11 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
       ...config,
       customizations: {
         ...config.customizations,
-        typography: {
-          ...config.customizations.typography,
-          ...newTypography
-        }
-      }
+        typography: mergeDeep(
+          config.customizations.typography ?? {},
+          newTypography
+        ),
+      },
     });
   };
 
@@ -200,11 +261,8 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
       ...config,
       customizations: {
         ...config.customizations,
-        layout: {
-          ...config.customizations.layout,
-          ...newLayout
-        }
-      }
+        layout: mergeDeep(config.customizations.layout ?? {}, newLayout),
+      },
     });
   };
 
@@ -213,31 +271,34 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
       ...config,
       customizations: {
         ...config.customizations,
-        sections: newSections
-      }
+        sections: newSections,
+      },
     });
   };
 
+  // Handlers secciones
   const handleSectionToggle = (sectionId: string, enabled: boolean) => {
-    const updatedSections = currentSections.map(section =>
-      section.id === sectionId ? { ...section, enabled } : section
+    const updated = currentSections.map((s) =>
+      s.id === sectionId ? { ...s, enabled } : s
     );
-    updateSections(updatedSections);
+    updateSections(updated);
   };
 
   const handleSectionOrderChange = (sectionId: string, order: number) => {
-    const updatedSections = currentSections.map(section =>
-      section.id === sectionId ? { ...section, order } : section
+    const updated = currentSections.map((s) =>
+      s.id === sectionId ? { ...s, order } : s
     );
-    updateSections(updatedSections);
+    updateSections(updated);
   };
 
   const tabs = [
-    { id: 'colors' as const, label: 'Colores', icon: Icons.Settings },
-    { id: 'typography' as const, label: 'Tipografía', icon: Icons.User },
-    { id: 'layout' as const, label: 'Layout', icon: Icons.Code },
-    { id: 'sections' as const, label: 'Secciones', icon: Icons.Award }
+    { id: "colors" as const, label: "Colores", icon: Icons.Settings },
+    { id: "typography" as const, label: "Tipografía", icon: Icons.User },
+    { id: "layout" as const, label: "Layout", icon: Icons.Code },
+    { id: "sections" as const, label: "Secciones", icon: Icons.Award },
   ];
+
+  const shadowVariant = detectShadowVariant(currentLayout.shadows);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -250,18 +311,21 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
                 Personalizar Plantilla: {template.name}
               </h1>
               <p className="text-gray-600">
-                Ajusta colores, tipografía, layout y secciones según tus preferencias
+                Ajusta colores, tipografía, layout y secciones según tus
+                preferencias
               </p>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <button
+                type="button"
                 onClick={onCancel}
                 className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={onSave}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
@@ -279,11 +343,12 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
             {tabs.map((tab) => (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
                 }`}
               >
                 <tab.icon size={16} />
@@ -299,30 +364,61 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Panel de configuración */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            {activeTab === 'colors' && (
+            {activeTab === "colors" && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold">Configuración de Colores</h3>
-                
+                <h3 className="text-lg font-semibold">
+                  Configuración de Colores
+                </h3>
+
+                {/* Toggle gradiente */}
+                <div className="flex items-center gap-2">
+                  <input
+                    id="toggle-gradient"
+                    type="checkbox"
+                    checked={!!currentColors.gradient}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        updateColors({
+                          gradient: {
+                            from: currentColors.primary,
+                            to: currentColors.secondary,
+                            direction:
+                              currentColors.gradient?.direction || "135deg",
+                          },
+                        });
+                      } else {
+                        updateColors({ gradient: undefined as any });
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor="toggle-gradient"
+                    className="text-sm text-gray-700"
+                  >
+                    Usar gradiente en cabecera
+                  </label>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <ColorPicker
                     label="Color Primario"
                     value={currentColors.primary}
-                    onChange={(value) => updateColors({ primary: value })}
+                    onChange={(v) => updateColors({ primary: v })}
                   />
                   <ColorPicker
                     label="Color Secundario"
                     value={currentColors.secondary}
-                    onChange={(value) => updateColors({ secondary: value })}
+                    onChange={(v) => updateColors({ secondary: v })}
                   />
                   <ColorPicker
                     label="Color de Acento"
                     value={currentColors.accent}
-                    onChange={(value) => updateColors({ accent: value })}
+                    onChange={(v) => updateColors({ accent: v })}
                   />
                   <ColorPicker
                     label="Fondo"
                     value={currentColors.background}
-                    onChange={(value) => updateColors({ background: value })}
+                    onChange={(v) => updateColors({ background: v })}
                   />
                 </div>
 
@@ -332,16 +428,20 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
                     <ColorPicker
                       label="Texto Principal"
                       value={currentColors.text.primary}
-                      onChange={(value) => updateColors({ 
-                        text: { ...currentColors.text, primary: value }
-                      })}
+                      onChange={(v) =>
+                        updateColors({
+                          text: { ...currentColors.text, primary: v },
+                        })
+                      }
                     />
                     <ColorPicker
                       label="Texto Secundario"
                       value={currentColors.text.secondary}
-                      onChange={(value) => updateColors({ 
-                        text: { ...currentColors.text, secondary: value }
-                      })}
+                      onChange={(v) =>
+                        updateColors({
+                          text: { ...currentColors.text, secondary: v },
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -353,16 +453,20 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
                       <ColorPicker
                         label="Color Inicial"
                         value={currentColors.gradient.from}
-                        onChange={(value) => updateColors({ 
-                          gradient: { ...currentColors.gradient!, from: value }
-                        })}
+                        onChange={(v) =>
+                          updateColors({
+                            gradient: { ...currentColors.gradient!, from: v },
+                          })
+                        }
                       />
                       <ColorPicker
                         label="Color Final"
                         value={currentColors.gradient.to}
-                        onChange={(value) => updateColors({ 
-                          gradient: { ...currentColors.gradient!, to: value }
-                        })}
+                        onChange={(v) =>
+                          updateColors({
+                            gradient: { ...currentColors.gradient!, to: v },
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -370,54 +474,75 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
               </div>
             )}
 
-            {activeTab === 'typography' && (
+            {activeTab === "typography" && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold">Configuración de Tipografía</h3>
-                
+                <h3 className="text-lg font-semibold">
+                  Configuración de Tipografía
+                </h3>
+
                 <div className="space-y-4">
                   <FontSelector
                     label="Fuente Principal"
                     value={currentTypography.fontFamily.primary}
-                    onChange={(value) => updateTypography({
-                      fontFamily: { ...currentTypography.fontFamily, primary: value }
-                    })}
+                    onChange={(value) =>
+                      updateTypography({
+                        fontFamily: {
+                          ...currentTypography.fontFamily,
+                          primary: value,
+                        },
+                      })
+                    }
                   />
                   <FontSelector
                     label="Fuente de Títulos"
                     value={currentTypography.fontFamily.heading}
-                    onChange={(value) => updateTypography({
-                      fontFamily: { ...currentTypography.fontFamily, heading: value }
-                    })}
+                    onChange={(value) =>
+                      updateTypography({
+                        fontFamily: {
+                          ...currentTypography.fontFamily,
+                          heading: value,
+                        },
+                      })
+                    }
                   />
                 </div>
 
                 <div className="space-y-4">
                   <h4 className="font-medium">Tamaños de Fuente</h4>
                   <div className="grid grid-cols-2 gap-4">
-                    {Object.entries(currentTypography.fontSize).map(([key, value]) => (
-                      <div key={key} className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 capitalize">
-                          {key}
-                        </label>
-                        <input
-                          type="text"
-                          value={value}
-                          onChange={(e) => updateTypography({
-                            fontSize: { ...currentTypography.fontSize, [key]: e.target.value }
-                          })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                        />
-                      </div>
-                    ))}
+                    {Object.entries(currentTypography.fontSize).map(
+                      ([key, val]) => (
+                        <div key={key} className="space-y-2">
+                          <label className="block text-sm font-medium text-gray-700 capitalize">
+                            {key}
+                          </label>
+                          <input
+                            type="text"
+                            value={val}
+                            onChange={(e) =>
+                              updateTypography({
+                                fontSize: {
+                                  ...currentTypography.fontSize,
+                                  [key]: e.target.value,
+                                },
+                              })
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          />
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
-            {activeTab === 'layout' && (
+            {activeTab === "layout" && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold">Configuración de Layout</h3>
-                
+                <h3 className="text-lg font-semibold">
+                  Configuración de Layout
+                </h3>
+
                 <div className="space-y-6">
                   {/* Ancho máximo */}
                   <div className="space-y-2">
@@ -426,7 +551,9 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
                     </label>
                     <select
                       value={currentLayout.maxWidth}
-                      onChange={(e) => updateLayout({ maxWidth: e.target.value })}
+                      onChange={(e) =>
+                        updateLayout({ maxWidth: e.target.value })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="800px">Estrecho (800px)</option>
@@ -444,9 +571,11 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
                       <SliderControl
                         label="Espaciado Pequeño (xs)"
                         value={currentLayout.spacing.xs}
-                        onChange={(value) => updateLayout({
-                          spacing: { ...currentLayout.spacing, xs: value }
-                        })}
+                        onChange={(v) =>
+                          updateLayout({
+                            spacing: { ...currentLayout.spacing, xs: v },
+                          })
+                        }
                         min={0.25}
                         max={2}
                         step={0.25}
@@ -455,9 +584,11 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
                       <SliderControl
                         label="Espaciado Mediano (md)"
                         value={currentLayout.spacing.md}
-                        onChange={(value) => updateLayout({
-                          spacing: { ...currentLayout.spacing, md: value }
-                        })}
+                        onChange={(v) =>
+                          updateLayout({
+                            spacing: { ...currentLayout.spacing, md: v },
+                          })
+                        }
                         min={1}
                         max={5}
                         step={0.5}
@@ -466,9 +597,11 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
                       <SliderControl
                         label="Espaciado Grande (xl)"
                         value={currentLayout.spacing.xl}
-                        onChange={(value) => updateLayout({
-                          spacing: { ...currentLayout.spacing, xl: value }
-                        })}
+                        onChange={(v) =>
+                          updateLayout({
+                            spacing: { ...currentLayout.spacing, xl: v },
+                          })
+                        }
                         min={2}
                         max={8}
                         step={0.5}
@@ -484,9 +617,14 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
                       <SliderControl
                         label="Pequeño"
                         value={currentLayout.borderRadius.sm}
-                        onChange={(value) => updateLayout({
-                          borderRadius: { ...currentLayout.borderRadius, sm: value }
-                        })}
+                        onChange={(v) =>
+                          updateLayout({
+                            borderRadius: {
+                              ...currentLayout.borderRadius,
+                              sm: v,
+                            },
+                          })
+                        }
                         min={0}
                         max={1}
                         step={0.125}
@@ -495,9 +633,14 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
                       <SliderControl
                         label="Grande"
                         value={currentLayout.borderRadius.lg}
-                        onChange={(value) => updateLayout({
-                          borderRadius: { ...currentLayout.borderRadius, lg: value }
-                        })}
+                        onChange={(v) =>
+                          updateLayout({
+                            borderRadius: {
+                              ...currentLayout.borderRadius,
+                              lg: v,
+                            },
+                          })
+                        }
                         min={0.5}
                         max={2}
                         step={0.125}
@@ -514,31 +657,13 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
                         Estilo de sombras
                       </label>
                       <select
-                        value={currentLayout.shadows.md.includes('rgb(0 0 0 / 0.1)') ? 'subtle' : 
-                               currentLayout.shadows.md.includes('rgb(0 0 0 / 0.2)') ? 'medium' : 'strong'}
-                        onChange={(e) => {
-                          const shadowStyles = {
-                            subtle: {
-                              sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-                              md: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                              lg: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                              xl: '0 20px 25px -5px rgb(0 0 0 / 0.1)'
-                            },
-                            medium: {
-                              sm: '0 2px 4px 0 rgb(0 0 0 / 0.1)',
-                              md: '0 6px 12px -2px rgb(0 0 0 / 0.2)',
-                              lg: '0 15px 25px -5px rgb(0 0 0 / 0.2)',
-                              xl: '0 25px 35px -8px rgb(0 0 0 / 0.2)'
-                            },
-                            strong: {
-                              sm: '0 3px 6px 0 rgb(0 0 0 / 0.15)',
-                              md: '0 8px 16px -4px rgb(0 0 0 / 0.3)',
-                              lg: '0 20px 30px -8px rgb(0 0 0 / 0.3)',
-                              xl: '0 30px 45px -12px rgb(0 0 0 / 0.3)'
-                            }
-                          };
-                          updateLayout({ shadows: shadowStyles[e.target.value as keyof typeof shadowStyles] });
-                        }}
+                        value={shadowVariant}
+                        onChange={(e) =>
+                          updateLayout({
+                            shadows:
+                              SHADOW_PRESETS[e.target.value as ShadowVariant],
+                          })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="subtle">Sutil</option>
@@ -551,15 +676,17 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
               </div>
             )}
 
-            {activeTab === 'sections' && (
+            {activeTab === "sections" && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold">Configuración de Secciones</h3>
+                <h3 className="text-lg font-semibold">
+                  Configuración de Secciones
+                </h3>
                 <p className="text-gray-600">
                   Activa o desactiva secciones y ajusta su orden de aparición
                 </p>
-                
+
                 <div className="space-y-4">
-                  {currentSections
+                  {[...currentSections]
                     .sort((a, b) => a.order - b.order)
                     .map((section) => (
                       <SectionToggle
@@ -570,13 +697,62 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
                       />
                     ))}
                 </div>
-
+                {currentSections.some((s) => s.id === "projects") && (
+                  <div className="mt-6 border-t pt-6">
+                    <h4 className="font-medium mb-3">
+                      Proyectos: columnas del grid
+                    </h4>
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm text-gray-600">
+                        Columnas (2–4):
+                      </label>
+                      <input
+                        type="range"
+                        min={2}
+                        max={4}
+                        step={1}
+                        value={
+                          currentSections.find((s) => s.id === "projects")
+                            ?.props?.gridCols ?? 3
+                        }
+                        onChange={(e) => {
+                          const val = Math.max(
+                            2,
+                            Math.min(4, parseInt(e.target.value, 10) || 3)
+                          );
+                          const updated = currentSections.map((s) =>
+                            s.id === "projects"
+                              ? {
+                                  ...s,
+                                  props: { ...(s.props || {}), gridCols: val },
+                                }
+                              : s
+                          );
+                          updateSections(updated);
+                        }}
+                        className="w-48"
+                      />
+                      <span className="text-sm text-gray-700">
+                        {currentSections.find((s) => s.id === "projects")?.props
+                          ?.gridCols ?? 3}{" "}
+                        columnas
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Se aplica al diseño de escritorio; en móviles seguirá
+                      siendo responsive.
+                    </p>
+                  </div>
+                )}
                 <div className="border-t pt-4">
                   <h4 className="font-medium mb-3">Configuración Avanzada</h4>
                   <div className="space-y-3">
                     <button
+                      type="button"
                       onClick={() => {
-                        const resetSections = template.sections.map(section => ({ ...section }));
+                        const resetSections = template.sections.map((s) => ({
+                          ...s,
+                        }));
                         updateSections(resetSections);
                       }}
                       className="text-sm bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200"
@@ -584,7 +760,8 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
                       Restaurar secciones por defecto
                     </button>
                     <div className="text-sm text-gray-500">
-                      Las secciones desactivadas no aparecerán en tu portfolio final
+                      Las secciones desactivadas no aparecerán en tu portfolio
+                      final
                     </div>
                   </div>
                 </div>
@@ -592,35 +769,39 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
             )}
           </div>
 
-          {/* Preview */}
+          {/* Vista previa */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-lg font-semibold mb-4">Vista Previa</h3>
-            
+
             <div className="border rounded-lg overflow-hidden">
               {/* Header preview */}
-              <div 
+              <div
                 className="p-8 text-white"
                 style={{
-                  background: currentColors.gradient 
-                    ? `linear-gradient(${currentColors.gradient.direction || '135deg'}, ${currentColors.gradient.from}, ${currentColors.gradient.to})`
+                  background: currentColors.gradient
+                    ? `linear-gradient(${
+                        currentColors.gradient.direction || "135deg"
+                      }, ${currentColors.gradient.from}, ${
+                        currentColors.gradient.to
+                      })`
                     : currentColors.primary,
-                  marginBottom: currentLayout.spacing.md
+                  marginBottom: currentLayout.spacing.md,
                 }}
               >
-                <h1 
+                <h1
                   className="font-bold mb-2"
-                  style={{ 
+                  style={{
                     fontFamily: currentTypography.fontFamily.heading,
-                    fontSize: currentTypography.fontSize['3xl']
+                    fontSize: currentTypography.fontSize["3xl"],
                   }}
                 >
                   Tu Nombre
                 </h1>
-                <p 
+                <p
                   className="opacity-90"
-                  style={{ 
+                  style={{
                     fontFamily: currentTypography.fontFamily.primary,
-                    fontSize: currentTypography.fontSize.lg
+                    fontSize: currentTypography.fontSize.lg,
                   }}
                 >
                   Tu Título Profesional
@@ -628,42 +809,42 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
               </div>
 
               {/* Sections preview */}
-              <div 
+              <div
                 className="p-6 space-y-6"
-                style={{ 
+                style={{
                   backgroundColor: currentColors.surface,
                   maxWidth: currentLayout.maxWidth,
-                  margin: '0 auto'
+                  margin: "0 auto",
                 }}
               >
-                {currentSections
-                  .filter(section => section.enabled)
+                {[...currentSections]
+                  .filter((s) => s.enabled)
                   .sort((a, b) => a.order - b.order)
                   .map((section) => (
-                    <div 
+                    <div
                       key={section.id}
                       className="rounded-lg p-4"
-                      style={{ 
+                      style={{
                         marginBottom: currentLayout.spacing.md,
                         borderRadius: currentLayout.borderRadius.md,
-                        boxShadow: currentLayout.shadows.sm
+                        boxShadow: currentLayout.shadows.sm,
                       }}
                     >
-                      <h2 
+                      <h2
                         className="font-semibold mb-2"
-                        style={{ 
+                        style={{
                           color: currentColors.text.primary,
                           fontFamily: currentTypography.fontFamily.heading,
-                          fontSize: currentTypography.fontSize.xl
+                          fontSize: currentTypography.fontSize.xl,
                         }}
                       >
                         {section.name}
                       </h2>
-                      <p 
-                        style={{ 
+                      <p
+                        style={{
                           color: currentColors.text.secondary,
                           fontFamily: currentTypography.fontFamily.primary,
-                          fontSize: currentTypography.fontSize.base
+                          fontSize: currentTypography.fontSize.base,
                         }}
                       >
                         Contenido de la sección {section.name}
@@ -673,13 +854,16 @@ export const TemplateCustomizer: React.FC<TemplateCustomizerProps> = ({
               </div>
             </div>
 
-            {/* Reset button */}
+            {/* Reset total */}
             <div className="mt-4 pt-4 border-t">
               <button
-                onClick={() => onConfigChange({
-                  templateId: template.id,
-                  customizations: {}
-                })}
+                type="button"
+                onClick={() =>
+                  onConfigChange({
+                    templateId: template.id,
+                    customizations: {},
+                  })
+                }
                 className="text-sm text-gray-600 hover:text-gray-800"
               >
                 Restaurar todos los valores por defecto

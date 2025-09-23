@@ -1,7 +1,8 @@
 // src/types/template-types.ts - CORREGIDO
-import { PortfolioData } from './portfolio-types';
 
-// Configuración de colores de una plantilla
+// =====================
+// Colores de la plantilla
+// =====================
 export interface TemplateColors {
   primary: string;
   secondary: string;
@@ -20,7 +21,9 @@ export interface TemplateColors {
   };
 }
 
-// Configuración tipográfica
+// =====================
+// Tipografía
+// =====================
 export interface TemplateTypography {
   fontFamily: {
     primary: string;
@@ -45,7 +48,9 @@ export interface TemplateTypography {
   };
 }
 
+// =====================
 // Layout y espaciado
+// =====================
 export interface TemplateLayout {
   maxWidth: string;
   spacing: {
@@ -69,7 +74,9 @@ export interface TemplateLayout {
   };
 }
 
-// Estructura de secciones
+// =====================
+// Secciones
+// =====================
 export interface TemplateSection {
   id: string;
   name: string;
@@ -79,13 +86,17 @@ export interface TemplateSection {
   props?: Record<string, any>;
 }
 
-// Configuración completa de plantilla
+// =====================
+// Plantilla completa
+// =====================
+export type TemplateCategory = 'modern' | 'classic' | 'creative' | 'minimal' | 'tech';
+
 export interface Template {
   id: string;
   name: string;
   description: string;
-  category: 'modern' | 'classic' | 'creative' | 'minimal' | 'tech';
-  preview: string;
+  category: TemplateCategory;
+  preview: string; // URL o data URL de la miniatura
   colors: TemplateColors;
   typography: TemplateTypography;
   layout: TemplateLayout;
@@ -95,10 +106,12 @@ export interface Template {
   author?: string;
   tags: string[];
   isBuiltIn: boolean;
-  // REMOVIDO pageLayout que causaba el error
+  // Nota: pageLayout eliminado según indicas
 }
 
-// Configuración seleccionada por el usuario
+// =====================
+// Configuración elegida por el usuario
+// =====================
 export interface TemplateConfig {
   templateId: string;
   customizations: {
@@ -110,15 +123,16 @@ export interface TemplateConfig {
   };
 }
 
-// Props para el selector de plantillas - CORREGIDO
+// =====================
+// Props de UI
+// =====================
 export interface TemplateSelectorProps {
   templates: Template[];
-  selectedTemplate?: Template | null; // CAMBIADO: acepta null
+  selectedTemplate?: Template | null; // acepta null
   onTemplateSelect: (template: Template) => void;
   onCustomize?: (template: Template) => void;
 }
 
-// Props para el customizador de plantillas
 export interface TemplateCustomizerProps {
   template: Template;
   config: TemplateConfig;
@@ -127,7 +141,9 @@ export interface TemplateCustomizerProps {
   onCancel: () => void;
 }
 
-// Hook para gestión de plantillas - CORREGIDO
+// =====================
+// Hook de plantillas
+// =====================
 export interface UseTemplatesOptions {
   defaultTemplateId?: string;
   storageKey?: string;
@@ -135,7 +151,7 @@ export interface UseTemplatesOptions {
 
 export interface UseTemplatesReturn {
   templates: Template[];
-  selectedTemplate: Template | null; // CAMBIADO: puede ser null
+  selectedTemplate: Template | null; // puede ser null
   config: TemplateConfig | null;
   selectTemplate: (template: Template) => void;
   updateConfig: (config: Partial<TemplateConfig>) => void;

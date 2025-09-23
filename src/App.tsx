@@ -1,9 +1,9 @@
-// src/App.tsx - Con sistema de plantillas
+// src/App.tsx - Con sistema de plantillas (corregido para TemplateSelector plug-and-play)
 import React, { useState, useEffect } from 'react';
 
 // Componentes principales
 import ModernPortfolioEditor from './components/editor/ModernPortfolioEditor';
-import PortfolioViewer from './components/portfolio/PortfolioViewer';
+import PortfolioViewer from './components/PorfolioViewer';
 import { TemplateSelector } from './components/TemplateSelector';
 import { TemplateCustomizer } from './components/TemplateCustomizer';
 import { useTemplates } from './components/use-templates';
@@ -22,11 +22,11 @@ const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }
   const sizeClasses = {
     sm: 'w-4 h-4',
     md: 'w-8 h-8',
-    lg: 'w-12 h-12'
+    lg: 'w-12 h-12',
   };
 
   return (
-    <div className={`${sizeClasses[size]} animate-spin rounded-full border-2 border-gray-300 border-t-blue-600`}></div>
+    <div className={`${sizeClasses[size]} animate-spin rounded-full border-2 border-gray-300 border-t-blue-600`} />
   );
 };
 
@@ -40,9 +40,7 @@ const ModeToggle: React.FC<{
       <button
         onClick={() => onModeChange('editor')}
         className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-          currentMode === 'editor'
-            ? 'bg-blue-600 text-white'
-            : 'text-gray-600 hover:bg-gray-100'
+          currentMode === 'editor' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
         }`}
       >
         Editor
@@ -50,9 +48,7 @@ const ModeToggle: React.FC<{
       <button
         onClick={() => onModeChange('templates')}
         className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-          currentMode === 'templates'
-            ? 'bg-blue-600 text-white'
-            : 'text-gray-600 hover:bg-gray-100'
+          currentMode === 'templates' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
         }`}
       >
         Plantillas
@@ -60,9 +56,7 @@ const ModeToggle: React.FC<{
       <button
         onClick={() => onModeChange('portfolio')}
         className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-          currentMode === 'portfolio'
-            ? 'bg-blue-600 text-white'
-            : 'text-gray-600 hover:bg-gray-100'
+          currentMode === 'portfolio' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
         }`}
       >
         Portfolio
@@ -81,16 +75,14 @@ const App: React.FC = () => {
     if (process.env.REACT_APP_MODE === 'portfolio') {
       return 'portfolio';
     }
-
     if (process.env.REACT_APP_MODE === 'editor') {
       return 'editor';
     }
-
     if (process.env.REACT_APP_MODE === 'templates') {
       return 'templates';
     }
 
-    // 2. Parámetro URL (?mode=editor|portfolio|templates)
+    // 2. Parámetro URL (?mode=editor|portfolio|templates|customize)
     const urlParams = new URLSearchParams(window.location.search);
     const urlMode = urlParams.get('mode') as AppMode;
     if (['editor', 'portfolio', 'templates', 'customize'].includes(urlMode)) {
@@ -120,15 +112,15 @@ const App: React.FC = () => {
 
   // Cambiar modo
   const switchMode = (newMode: AppMode) => {
-    setAppState(prev => ({ ...prev, mode: newMode }));
-    
+    setAppState((prev) => ({ ...prev, mode: newMode }));
+
     // Guardar en localStorage
     try {
       localStorage.setItem('app-mode', newMode);
     } catch (error) {
       console.warn('Error saving mode to localStorage:', error);
     }
-    
+
     // Actualizar URL sin recargar página
     const url = new URL(window.location.href);
     url.searchParams.set('mode', newMode);
@@ -137,13 +129,13 @@ const App: React.FC = () => {
 
   // Shortcuts de teclado
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       // Solo en desarrollo
       if (process.env.NODE_ENV !== 'development') return;
 
       if (event.ctrlKey || event.metaKey) {
         switch (event.key.toLowerCase()) {
-          case 'm':
+          case 'm': {
             event.preventDefault();
             // Ciclar entre modos: editor -> templates -> portfolio -> editor
             const modes: AppMode[] = ['editor', 'templates', 'portfolio'];
@@ -151,6 +143,7 @@ const App: React.FC = () => {
             const nextMode = modes[(currentIndex + 1) % modes.length];
             switchMode(nextMode);
             break;
+          }
           case 'e':
             event.preventDefault();
             switchMode('editor');
@@ -177,15 +170,15 @@ const App: React.FC = () => {
       try {
         // Simular carga de configuración (solo en desarrollo)
         if (process.env.NODE_ENV === 'development') {
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise((resolve) => setTimeout(resolve, 300));
         }
-        
-        setAppState(prev => ({ ...prev, isLoading: false }));
+
+        setAppState((prev) => ({ ...prev, isLoading: false }));
       } catch (error) {
-        setAppState(prev => ({
+        setAppState((prev) => ({
           ...prev,
           isLoading: false,
-          error: error instanceof Error ? error.message : 'Error desconocido'
+          error: error instanceof Error ? error.message : 'Error desconocido',
         }));
       }
     };
@@ -196,15 +189,15 @@ const App: React.FC = () => {
   // Handler para errores
   const handleError = (error: Error) => {
     console.error('App Error:', error);
-    setAppState(prev => ({
+    setAppState((prev) => ({
       ...prev,
-      error: error.message
+      error: error.message,
     }));
   };
 
   // Limpiar error
   const clearError = () => {
-    setAppState(prev => ({ ...prev, error: null }));
+    setAppState((prev) => ({ ...prev, error: null }));
   };
 
   // Mostrar pantalla de carga
@@ -213,12 +206,8 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <LoadingSpinner size="lg" />
-          <h2 className="mt-6 text-2xl font-bold text-gray-800">
-            Portfolio Generator
-          </h2>
-          <p className="mt-2 text-gray-600">
-            Cargando tu editor de portfolios profesionales...
-          </p>
+          <h2 className="mt-6 text-2xl font-bold text-gray-800">Portfolio Generator</h2>
+          <p className="mt-2 text-gray-600">Cargando tu editor de portfolios profesionales...</p>
         </div>
       </div>
     );
@@ -230,12 +219,8 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-xl shadow-xl p-6 text-center border border-red-200">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
-            Oops! Algo salió mal
-          </h2>
-          <p className="text-gray-600 mb-6">
-            {appState.error}
-          </p>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Oops! Algo salió mal</h2>
+          <p className="text-gray-600 mb-6">{appState.error}</p>
           <div className="space-y-3">
             <button
               onClick={clearError}
@@ -260,16 +245,14 @@ const App: React.FC = () => {
     switch (appState.mode) {
       case 'editor':
         return <ModernPortfolioEditor />;
-      
+
       case 'templates':
         return (
           <div className="min-h-screen bg-gray-50">
             <div className="bg-white shadow-sm border-b">
               <div className="max-w-6xl mx-auto px-4 py-4">
                 <div className="flex items-center justify-between">
-                  <h1 className="text-2xl font-bold text-gray-800">
-                    Gestión de Plantillas
-                  </h1>
+                  <h1 className="text-2xl font-bold text-gray-800">Gestión de Plantillas</h1>
                   <button
                     onClick={() => switchMode('editor')}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -280,34 +263,26 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="max-w-6xl mx-auto px-4 py-8">
-              <TemplateSelector
-                templates={templates.templates}
-                selectedTemplate={templates.selectedTemplate}
-                onTemplateSelect={templates.selectTemplate}
-                onCustomize={(template) => switchMode('customize')}
-              />
+              {/* Versión plug-and-play: solo onCustomizeClick */}
+              <TemplateSelector onCustomizeClick={() => switchMode('customize')} />
             </div>
           </div>
         );
-      
+
       case 'customize':
         return templates.selectedTemplate && templates.config ? (
           <TemplateCustomizer
             template={templates.selectedTemplate}
             config={templates.config}
-            onConfigChange={templates.updateConfig}
+            onConfigChange={(cfg) => templates.updateConfig(cfg)} // forwarder
             onSave={() => switchMode('templates')}
             onCancel={() => switchMode('templates')}
           />
         ) : (
           <div className="min-h-screen bg-gray-50 flex items-center justify-center">
             <div className="text-center">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">
-                No hay plantilla seleccionada
-              </h2>
-              <p className="text-gray-600 mb-4">
-                Selecciona una plantilla para personalizar
-              </p>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">No hay plantilla seleccionada</h2>
+              <p className="text-gray-600 mb-4">Selecciona una plantilla para personalizar</p>
               <button
                 onClick={() => switchMode('templates')}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -317,10 +292,10 @@ const App: React.FC = () => {
             </div>
           </div>
         );
-      
+
       case 'portfolio':
         return <PortfolioViewer />;
-      
+
       default:
         return <ModernPortfolioEditor />;
     }
@@ -330,10 +305,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Toggle de modo (solo en desarrollo) */}
       {process.env.NODE_ENV === 'development' && (
-        <ModeToggle
-          currentMode={appState.mode}
-          onModeChange={switchMode}
-        />
+        <ModeToggle currentMode={appState.mode} onModeChange={switchMode} />
       )}
 
       {/* Contenido principal */}
@@ -345,12 +317,17 @@ const App: React.FC = () => {
           <div className="font-semibold">Portfolio Generator v2.0</div>
           <div className="flex items-center gap-2 mt-1">
             <span>Modo:</span>
-            <span className={`px-2 py-1 rounded text-xs font-medium ${
-              appState.mode === 'editor' ? 'bg-green-600 text-white' :
-              appState.mode === 'templates' ? 'bg-purple-600 text-white' :
-              appState.mode === 'customize' ? 'bg-orange-600 text-white' :
-              'bg-blue-600 text-white'
-            }`}>
+            <span
+              className={`px-2 py-1 rounded text-xs font-medium ${
+                appState.mode === 'editor'
+                  ? 'bg-green-600 text-white'
+                  : appState.mode === 'templates'
+                  ? 'bg-purple-600 text-white'
+                  : appState.mode === 'customize'
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-blue-600 text-white'
+              }`}
+            >
               {appState.mode === 'editor' && 'Editor'}
               {appState.mode === 'templates' && 'Plantillas'}
               {appState.mode === 'customize' && 'Personalizar'}
