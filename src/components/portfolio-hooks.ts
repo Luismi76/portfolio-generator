@@ -1,5 +1,5 @@
-// portfolio-hooks.ts
-import { useState, useEffect, useRef, useCallback } from 'react';
+// src/portfolio-hooks.ts
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   PortfolioData,
   PortfolioDataState,
@@ -14,10 +14,21 @@ import {
   SectionKey,
   DEFAULT_PORTFOLIO_DATA,
   AppMode,
-  PortfolioGeneratorState
-} from '../types/portfolio-types';
+  PortfolioGeneratorState,
+} from "../types/portfolio-types";
 
-// Hook para manejo de localStorage con tipos
+// ==========================
+// Claves de almacenamiento
+// ==========================
+const STORAGE_KEYS = {
+  portfolio: "portfolioData",
+  templateConfig: "portfolioTemplates_config",
+  customTemplates: "portfolioTemplates_custom",
+} as const;
+
+// ==========================
+// Hook localStorage tipado
+// ==========================
 export const useLocalStorage = <T>(
   key: string,
   initialValue: T,
@@ -26,16 +37,12 @@ export const useLocalStorage = <T>(
     deserialize?: (value: string) => T;
   } = {}
 ) => {
-  const {
-    serialize = JSON.stringify,
-    deserialize = JSON.parse,
-  } = options;
+  const { serialize = JSON.stringify, deserialize = JSON.parse } = options;
 
   const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return initialValue;
     }
-    
     try {
       const item = window.localStorage.getItem(key);
       return item ? deserialize(item) : initialValue;
@@ -45,23 +52,26 @@ export const useLocalStorage = <T>(
     }
   });
 
-  const setValue = useCallback((value: T | ((val: T) => T)) => {
-    try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, serialize(valueToStore));
+  const setValue = useCallback(
+    (value: T | ((val: T) => T)) => {
+      try {
+        const valueToStore =
+          value instanceof Function ? value(storedValue) : value;
+        setStoredValue(valueToStore);
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(key, serialize(valueToStore));
+        }
+      } catch (error) {
+        console.warn(`Error setting localStorage key "${key}":`, error);
       }
-    } catch (error) {
-      console.warn(`Error setting localStorage key "${key}":`, error);
-    }
-  }, [key, serialize, storedValue]);
+    },
+    [key, serialize, storedValue]
+  );
 
   const removeValue = useCallback(() => {
     try {
       setStoredValue(initialValue);
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         window.localStorage.removeItem(key);
       }
     } catch (error) {
@@ -72,7 +82,9 @@ export const useLocalStorage = <T>(
   return [storedValue, setValue, removeValue] as const;
 };
 
-// Hook para manejo de estado con auto-guardado
+// ==========================
+// Auto guardado
+// ==========================
 export const useAutoSave = <T>(
   key: string,
   data: T,
@@ -82,140 +94,247 @@ export const useAutoSave = <T>(
   } = {}
 ) => {
   const { delay = 1000, enabled = true } = options;
-  const [saveStatus, setSaveStatus] = useState<string>('');
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const [saveStatus, setSaveStatus] = useState<string>("");
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     if (!enabled) return;
 
-    // Limpiar timeout anterior
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-    // Programar guardado
     timeoutRef.current = setTimeout(() => {
       try {
         localStorage.setItem(key, JSON.stringify(data));
-        setSaveStatus('Guardado ✅');
-        setTimeout(() => setSaveStatus(''), 2000);
+        setSaveStatus("Guardado ✅");
+        setTimeout(() => setSaveStatus(""), 2000);
       } catch (error) {
-        setSaveStatus('Error al guardar ❌');
-        setTimeout(() => setSaveStatus(''), 2000);
-        console.error('Error saving to localStorage:', error);
+        setSaveStatus("Error al guardar ❌");
+        setTimeout(() => setSaveStatus(""), 2000);
+        console.error("Error saving to localStorage:", error);
       }
     }, delay);
 
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [data, delay, enabled, key]);
 
   return saveStatus;
 };
 
-// Hook principal para manejo de datos del portfolio
+// ==========================
+// Normalizador de datos
+// ==========================
+// Helpers de normalización (pueden ir encima de normalizePortfolio)
+const s = (v: any): string => (typeof v === "string" ? v : "");
+const n = (v: any, def = 0): number => (typeof v === "number" ? v : def);
+const arr = <T = any>(v: any): T[] => (Array.isArray(v) ? v : []);
+
+// Reemplaza completamente tu normalizePortfolio por esta versión
+const normalizePortfolio = (raw: any): PortfolioData => {
+  const pi = raw?.personalInfo ?? {};
+
+  // Aseguramos TODOS los campos requeridos por tu tipo PersonalInfo
+  const personalInfo: PortfolioData["personalInfo"] = {
+    fullName: s(pi.fullName) || s(pi.name),
+    title: s(pi.title),
+    summary: s(pi.summary),
+    email: s(pi.email),
+    phone: s(pi.phone), // ← requerido en tu tipo
+    location: s(pi.location), // ← requerido en tu tipo
+    github: s(pi.github),
+    linkedin: s(pi.linkedin),
+    website: s(pi.website),
+    // Si tu tipo PersonalInfo también tiene photoUrl, descomenta:
+    // photoUrl:  s(pi.photoUrl),
+  };
+
+  const projects: PortfolioData["projects"] = arr(raw?.projects).map(
+    (p: any) => ({
+      title: s(p.title),
+      description: s(p.description),
+      detailedDescription: s(p.detailedDescription),
+      technologies: s(p.technologies),
+      link: s(p.link),
+      github: s(p.github),
+      image: s(p.image),
+      images: s(p.images),
+      videos: s(p.videos),
+      instructions: s(p.instructions),
+      features: s(p.features),
+      challenges: s(p.challenges),
+      slug: s(
+        p.slug ||
+          s(p.title)
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "")
+      ),
+      mainImageIndex: n(p.mainImageIndex, 0),
+    })
+  );
+
+  const skills: PortfolioData["skills"] = arr(raw?.skills).map((it: any) => ({
+    category: s(it.category),
+    items: s(it.items),
+  }));
+
+  const experience: PortfolioData["experience"] = arr(raw?.experience).map(
+    (e: any) => ({
+      company: s(e.company),
+      position: s(e.position),
+      period: s(e.period),
+      description: s(e.description),
+    })
+  );
+
+  const education: PortfolioData["education"] = arr(raw?.education).map(
+    (e: any) => ({
+      institution: s(e.institution),
+      degree: s(e.degree),
+      period: s(e.period),
+      description: s(e.description),
+    })
+  );
+
+  const achievements: PortfolioData["achievements"] = arr(
+    raw?.achievements
+  ).map((a: any) => ({
+    title: s(a.title),
+    description: s(a.description),
+    date: s(a.date),
+  }));
+
+  // Devolvemos un objeto que CUMPLE PortfolioData (sin "as PortfolioData")
+  return {
+    personalInfo,
+    projects,
+    skills,
+    experience,
+    education,
+    achievements,
+  };
+};
+
+// ==========================
+// Hook principal de datos
+// ==========================
 export const usePortfolioData = (
   options: UsePortfolioDataOptions = {}
 ): PortfolioDataState & PortfolioDataActions => {
-  const { autoSave = true, storageKey = 'portfolioData' } = options;
-  
-  const [portfolioData, setPortfolioData] = useState<PortfolioData>(DEFAULT_PORTFOLIO_DATA);
+  const { autoSave = true, storageKey = STORAGE_KEYS.portfolio } = options;
+
+  const [portfolioData, setPortfolioData] = useState<PortfolioData>(
+    DEFAULT_PORTFOLIO_DATA
+  );
   const [isLoaded, setIsLoaded] = useState(false);
-  
-  const saveStatus = useAutoSave(storageKey, portfolioData, { enabled: autoSave && isLoaded });
 
-  // Cargar datos iniciales
+  const saveStatus = useAutoSave(storageKey, portfolioData, {
+    enabled: autoSave && isLoaded,
+  });
+
+  // Cargar inicial
   useEffect(() => {
-    const loadData = () => {
-      try {
-        const savedData = localStorage.getItem(storageKey);
-        if (savedData) {
-          const parsedData = JSON.parse(savedData);
-          setPortfolioData(parsedData);
-        }
-      } catch (error) {
-        console.error('Error loading portfolio data:', error);
-      } finally {
-        setIsLoaded(true);
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setPortfolioData(normalizePortfolio(parsed));
+      } else {
+        // si no hay nada guardado, persistimos el default una vez
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify(DEFAULT_PORTFOLIO_DATA)
+        );
       }
-    };
-
-    loadData();
+    } catch (e) {
+      console.error("Error loading portfolio data:", e);
+    } finally {
+      setIsLoaded(true);
+    }
   }, [storageKey]);
 
-  // Función para actualizar información personal
-  const updatePersonalInfo = useCallback((field: PersonalInfoKey, value: string) => {
-    setPortfolioData(prev => ({
-      ...prev,
-      personalInfo: { ...prev.personalInfo, [field]: value },
-    }));
-  }, []);
+  // Actualizadores
+  const updatePersonalInfo = useCallback(
+    (field: PersonalInfoKey, value: string) => {
+      setPortfolioData((prev) => ({
+        ...prev,
+        personalInfo: { ...prev.personalInfo, [field]: value },
+      }));
+    },
+    []
+  );
 
-  // Función para actualizar proyectos
-  const updateProject = useCallback((index: number, field: keyof Project, value: string) => {
-    setPortfolioData(prev => ({
-      ...prev,
-      projects: prev.projects.map((item, i) => {
-        if (i === index) {
-          const updatedItem = { ...item, [field]: value };
-          // Auto-generar slug cuando cambia el título
-          if (field === 'title') {
-            updatedItem.slug = value
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/(^-|-$)/g, '');
+  const updateProject = useCallback(
+    (index: number, field: keyof Project, value: string) => {
+      setPortfolioData((prev) => ({
+        ...prev,
+        projects: prev.projects.map((item, i) => {
+          if (i === index) {
+            const updatedItem: Project = { ...item, [field]: value } as Project;
+            if (field === "title") {
+              updatedItem.slug = value
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/(^-|-$)/g, "");
+            }
+            return updatedItem;
           }
-          return updatedItem;
-        }
-        return item;
-      }),
-    }));
-  }, []);
+          return item;
+        }),
+      }));
+    },
+    []
+  );
 
-  // Función para actualizar habilidades
-  const updateSkill = useCallback((index: number, field: keyof Skill, value: string) => {
-    setPortfolioData(prev => ({
-      ...prev,
-      skills: prev.skills.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      ),
-    }));
-  }, []);
+  const updateSkill = useCallback(
+    (index: number, field: keyof Skill, value: string) => {
+      setPortfolioData((prev) => ({
+        ...prev,
+        skills: prev.skills.map((item, i) =>
+          i === index ? { ...item, [field]: value } : item
+        ),
+      }));
+    },
+    []
+  );
 
-  // Función para actualizar experiencia
-  const updateExperience = useCallback((index: number, field: keyof Experience, value: string) => {
-    setPortfolioData(prev => ({
-      ...prev,
-      experience: prev.experience.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      ),
-    }));
-  }, []);
+  const updateExperience = useCallback(
+    (index: number, field: keyof Experience, value: string) => {
+      setPortfolioData((prev) => ({
+        ...prev,
+        experience: prev.experience.map((item, i) =>
+          i === index ? { ...item, [field]: value } : item
+        ),
+      }));
+    },
+    []
+  );
 
-  // Función para actualizar educación
-  const updateEducation = useCallback((index: number, field: keyof Education, value: string) => {
-    setPortfolioData(prev => ({
-      ...prev,
-      education: prev.education.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      ),
-    }));
-  }, []);
+  const updateEducation = useCallback(
+    (index: number, field: keyof Education, value: string) => {
+      setPortfolioData((prev) => ({
+        ...prev,
+        education: prev.education.map((item, i) =>
+          i === index ? { ...item, [field]: value } : item
+        ),
+      }));
+    },
+    []
+  );
 
-  // Función para actualizar logros
-  const updateAchievement = useCallback((index: number, field: keyof Achievement, value: string) => {
-    setPortfolioData(prev => ({
-      ...prev,
-      achievements: prev.achievements.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      ),
-    }));
-  }, []);
+  const updateAchievement = useCallback(
+    (index: number, field: keyof Achievement, value: string) => {
+      setPortfolioData((prev) => ({
+        ...prev,
+        achievements: prev.achievements.map((item, i) =>
+          i === index ? { ...item, [field]: value } : item
+        ),
+      }));
+    },
+    []
+  );
 
-  // Función para agregar elementos a secciones
   const addItem = useCallback((section: SectionKey) => {
     const newItems = {
       projects: {
@@ -232,7 +351,7 @@ export const usePortfolioData = (
         features: "",
         challenges: "",
         slug: "",
-        mainImageIndex: 0
+        mainImageIndex: 0,
       },
       skills: { category: "", items: "" },
       experience: { company: "", position: "", period: "", description: "" },
@@ -240,54 +359,59 @@ export const usePortfolioData = (
       achievements: { title: "", description: "", date: "" },
     };
 
-    setPortfolioData(prev => ({
+    setPortfolioData((prev) => ({
       ...prev,
-      [section]: [...prev[section], newItems[section]],
+      [section]: [...(prev as any)[section], (newItems as any)[section]],
     }));
   }, []);
 
-  // Función para remover elementos de secciones
   const removeItem = useCallback((section: SectionKey, index: number) => {
-    setPortfolioData(prev => {
-      const newData = { ...prev };
+    setPortfolioData((prev) => {
+      const next = { ...prev };
       switch (section) {
         case "projects":
-          newData.projects = newData.projects.filter((_, i) => i !== index);
+          next.projects = next.projects.filter((_, i) => i !== index);
           break;
         case "skills":
-          newData.skills = newData.skills.filter((_, i) => i !== index);
+          next.skills = next.skills.filter((_, i) => i !== index);
           break;
         case "experience":
-          newData.experience = newData.experience.filter((_, i) => i !== index);
+          next.experience = next.experience.filter((_, i) => i !== index);
           break;
         case "education":
-          newData.education = newData.education.filter((_, i) => i !== index);
+          next.education = next.education.filter((_, i) => i !== index);
           break;
         case "achievements":
-          newData.achievements = newData.achievements.filter((_, i) => i !== index);
+          next.achievements = next.achievements.filter((_, i) => i !== index);
           break;
       }
-      return newData;
+      return next;
     });
   }, []);
 
-  // Función para importar datos
+  // IMPORTAR datos (desde objeto ya parseado/normalizado)
   const importData = useCallback((data: PortfolioData) => {
-    setPortfolioData(data);
+    const normalized = normalizePortfolio(data);
+    setPortfolioData(normalized);
+    try {
+      localStorage.setItem(STORAGE_KEYS.portfolio, JSON.stringify(normalized));
+    } catch (e) {
+      console.warn(
+        "No se pudo guardar los datos importados en localStorage:",
+        e
+      );
+    }
   }, []);
 
-  // Función para limpiar todos los datos
   const clearAllData = useCallback(() => {
     setPortfolioData(DEFAULT_PORTFOLIO_DATA);
     localStorage.removeItem(storageKey);
   }, [storageKey]);
 
   return {
-    // Estado
     data: portfolioData,
     isLoaded,
     saveStatus,
-    // Acciones
     updatePersonalInfo,
     updateProject,
     updateSkill,
@@ -301,114 +425,136 @@ export const usePortfolioData = (
   };
 };
 
-// Hook para manejo de archivos de imagen
+// ==========================
+// Hook de subida de imágenes
+// ==========================
 export const useImageUpload = (
   onUpload: (base64: string) => void,
-  options: {
-    maxSize?: number;
-  } = {}
+  options: { maxSize?: number } = {}
 ) => {
   const { maxSize = 5 * 1024 * 1024 } = options;
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
-  const uploadImage = useCallback((file: File) => {
-    setError('');
-    setIsUploading(true);
+  const uploadImage = useCallback(
+    (file: File) => {
+      setError("");
+      setIsUploading(true);
 
-    // Validar tipo de archivo
-    if (!file.type.startsWith('image/')) {
-      setError('Por favor selecciona un archivo de imagen');
-      setIsUploading(false);
-      return;
-    }
+      if (!file.type.startsWith("image/")) {
+        setError("Por favor selecciona un archivo de imagen");
+        setIsUploading(false);
+        return;
+      }
+      if (file.size > maxSize) {
+        setError(`La imagen debe ser menor a ${maxSize / 1024 / 1024}MB`);
+        setIsUploading(false);
+        return;
+      }
 
-    // Validar tamaño
-    if (file.size > maxSize) {
-      setError(`La imagen debe ser menor a ${maxSize / 1024 / 1024}MB`);
-      setIsUploading(false);
-      return;
-    }
-
-    // Convertir a base64
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const base64 = e.target?.result as string;
-      onUpload(base64);
-      setIsUploading(false);
-    };
-    reader.onerror = () => {
-      setError('Error al cargar la imagen');
-      setIsUploading(false);
-    };
-    reader.readAsDataURL(file);
-  }, [onUpload, maxSize]);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string;
+        onUpload(base64);
+        setIsUploading(false);
+      };
+      reader.onerror = () => {
+        setError("Error al cargar la imagen");
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
+    },
+    [onUpload, maxSize]
+  );
 
   return {
     uploadImage,
     isUploading,
     error,
-    clearError: () => setError(''),
+    clearError: () => setError(""),
   };
 };
 
-// Hook para manejo de exportación de datos
+// ==========================
+// Export / Import JSON
+// ==========================
+type ImportResult =
+  | { success: true; data: PortfolioData; message: string }
+  | { success: false; message: string };
+
 export const useDataExport = () => {
   const [isExporting, setIsExporting] = useState(false);
 
   const exportToJSON = useCallback((data: PortfolioData, filename?: string) => {
     setIsExporting(true);
-    
     try {
-      const dataStr = JSON.stringify(data, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
+      // Empaquetamos también meta por si quieres incluir config de plantilla en el futuro
+      const payload = {
+        portfolio: data,
+        exportedAt: new Date().toISOString(),
+        by: "Portfolio Generator",
+      };
+      const dataStr = JSON.stringify(payload, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = filename || `portfolio-data-${data.personalInfo.fullName || 'backup'}.json`;
+      a.download =
+        filename || `portfolio-${data.personalInfo.fullName || "backup"}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
-      return { success: true, message: 'Datos exportados exitosamente' };
+      return { success: true, message: "Datos exportados exitosamente" };
     } catch (error) {
-      return { 
-        success: false, 
-        message: `Error al exportar: ${error instanceof Error ? error.message : 'Error desconocido'}` 
+      return {
+        success: false,
+        message: `Error al exportar: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`,
       };
     } finally {
       setIsExporting(false);
     }
   }, []);
 
-  const importFromJSON = useCallback((file: File): Promise<{ success: boolean; data?: PortfolioData; message: string }> => {
+  const importFromJSON = useCallback((file: File): Promise<ImportResult> => {
     return new Promise((resolve) => {
       setIsExporting(true);
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const importedData = JSON.parse(e.target?.result as string);
-          resolve({ 
-            success: true, 
-            data: importedData, 
-            message: 'Datos importados exitosamente' 
+          const raw = JSON.parse(e.target?.result as string);
+
+          // Soporta dos formatos: { portfolio: {...} } o PortfolioData plano
+          const candidate = raw?.portfolio ?? raw;
+          const normalized = normalizePortfolio(candidate);
+
+          // Persistimos en la misma clave que lee el visor
+          localStorage.setItem(
+            STORAGE_KEYS.portfolio,
+            JSON.stringify(normalized)
+          );
+
+          resolve({
+            success: true,
+            data: normalized,
+            message: "Datos importados y guardados",
           });
         } catch (error) {
-          resolve({ 
-            success: false, 
-            message: `Error al importar: ${error instanceof Error ? error.message : 'Archivo JSON inválido'}` 
+          resolve({
+            success: false,
+            message: `Error al importar: ${
+              error instanceof Error ? error.message : "Archivo JSON inválido"
+            }`,
           });
         } finally {
           setIsExporting(false);
         }
       };
       reader.onerror = () => {
-        resolve({ 
-          success: false, 
-          message: 'Error al leer el archivo' 
-        });
+        resolve({ success: false, message: "Error al leer el archivo" });
         setIsExporting(false);
       };
       reader.readAsText(file);
@@ -422,8 +568,10 @@ export const useDataExport = () => {
   };
 };
 
-// Hook para manejo del estado de la aplicación
-export const useAppState = (initialMode: AppMode = 'editor') => {
+// ==========================
+// Estado general de la app
+// ==========================
+export const useAppState = (initialMode: AppMode = "editor") => {
   const [state, setState] = useState<PortfolioGeneratorState>({
     showPreview: false,
     showDataMenu: false,
@@ -431,26 +579,28 @@ export const useAppState = (initialMode: AppMode = 'editor') => {
   });
 
   const actions = {
-    setShowPreview: (show: boolean) => 
-      setState(prev => ({ ...prev, showPreview: show })),
-      
-    setShowDataMenu: (show: boolean) => 
-      setState(prev => ({ ...prev, showDataMenu: show })),
-      
-    setCurrentMode: (mode: AppMode) => 
-      setState(prev => ({ ...prev, currentMode: mode })),
-      
-    togglePreview: () => 
-      setState(prev => ({ ...prev, showPreview: !prev.showPreview })),
-      
-    toggleDataMenu: () => 
-      setState(prev => ({ ...prev, showDataMenu: !prev.showDataMenu })),
+    setShowPreview: (show: boolean) =>
+      setState((prev) => ({ ...prev, showPreview: show })),
+
+    setShowDataMenu: (show: boolean) =>
+      setState((prev) => ({ ...prev, showDataMenu: show })),
+
+    setCurrentMode: (mode: AppMode) =>
+      setState((prev) => ({ ...prev, currentMode: mode })),
+
+    togglePreview: () =>
+      setState((prev) => ({ ...prev, showPreview: !prev.showPreview })),
+
+    toggleDataMenu: () =>
+      setState((prev) => ({ ...prev, showDataMenu: !prev.showDataMenu })),
   };
 
   return [state, actions] as const;
 };
 
-// Hook para manejar clicks fuera de un elemento
+// ==========================
+// Click outside
+// ==========================
 export const useClickOutside = (
   ref: React.RefObject<HTMLElement>,
   callback: () => void,
@@ -458,96 +608,63 @@ export const useClickOutside = (
 ) => {
   useEffect(() => {
     if (!enabled) return;
-
     const handleClickOutside = (event: MouseEvent) => {
       if (ref.current && !ref.current.contains(event.target as Node)) {
         callback();
       }
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [ref, callback, enabled]);
 };
 
-// Hook para manejar el evento beforeunload
+// ==========================
+// beforeunload
+// ==========================
 export const useBeforeUnload = (data: any, enabled = true) => {
   useEffect(() => {
     if (!enabled) return;
-
     const handleBeforeUnload = () => {
-      localStorage.setItem('portfolioData', JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEYS.portfolio, JSON.stringify(data));
     };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [data, enabled]);
 };
 
-// Hook para cambio de modo con persistencia
+// ==========================
+// Modo de la app con URL
+// ==========================
 export const useModeSwitcher = () => {
-  const [currentMode, setCurrentMode] = useLocalStorage<AppMode>('portfolioMode', 'editor');
+  const [currentMode, setCurrentMode] = useLocalStorage<AppMode>(
+    "portfolioMode",
+    "editor"
+  );
 
-  const switchMode = useCallback((mode: AppMode) => {
-    setCurrentMode(mode);
-    const url = new URL(window.location.href);
-    url.searchParams.set('mode', mode);
-    window.location.href = url.toString();
-  }, [setCurrentMode]);
+  const switchMode = useCallback(
+    (mode: AppMode) => {
+      setCurrentMode(mode);
+      const url = new URL(window.location.href);
+      url.searchParams.set("mode", mode);
+      window.location.href = url.toString();
+    },
+    [setCurrentMode]
+  );
 
   return {
     currentMode,
     switchMode,
-    isEditorMode: currentMode === 'editor',
-    isPortfolioMode: currentMode === 'portfolio',
+    isEditorMode: currentMode === "editor",
+    isPortfolioMode: currentMode === "portfolio",
   };
 };
-// Hook para manejo de plantillas
-export const useTemplates = () => {
-  const [templates] = useState([
-    {
-      id: 'creative',
-      name: 'Creative',
-      colors: {
-        primary: '#8B5CF6',
-        secondary: '#A855F7',
-        accent: '#10B981',
-        surface: '#FFFFFF'
-      }
-    },
-    {
-      id: 'professional',
-      name: 'Professional',
-      colors: {
-        primary: '#2563EB',
-        secondary: '#1D4ED8',
-        accent: '#059669',
-        surface: '#F8FAFC'
-      }
-    },
-    {
-      id: 'minimal',
-      name: 'Minimal',
-      colors: {
-        primary: '#374151',
-        secondary: '#4B5563',
-        accent: '#F59E0B',
-        surface: '#FFFFFF'
-      }
-    }
-  ]);
 
-  const [selectedTemplate, setSelectedTemplate] = useLocalStorage('selectedTemplate', null);
+/**
+ * ⚠️ IMPORTANTE:
+ * He eliminado un hook `useTemplates` que tenías al final de este archivo,
+ * porque colisiona con tu hook real `use-templates.ts`. Mantén el hook de
+ * plantillas SOLO en `src/components/use-templates.ts` y NO lo declares aquí.
+ */
 
-  const selectTemplate = useCallback((template: any) => {
-    setSelectedTemplate(template);
-  }, [setSelectedTemplate]);
-
-  return {
-    templates,
-    selectedTemplate,
-    selectTemplate
-  };
-};

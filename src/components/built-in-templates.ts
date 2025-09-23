@@ -287,3 +287,4 @@ export const getTemplateById = (id?: string): Template | null => {
   if (!id) return null;
   return BUILT_IN_TEMPLATES.find((t) => t.id === id) || null;
 };
+

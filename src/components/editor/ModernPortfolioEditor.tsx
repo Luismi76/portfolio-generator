@@ -1,38 +1,51 @@
-import React, { useState } from 'react';
-import { Icons } from '../portfolio-icons';
-import { usePortfolioData, useDataExport } from '../portfolio-hooks';
-import { downloadFile } from '../portfolio-export';
-import { PersonalInfoForm } from '../PersonalInfoForm';
-import ProjectTableForm from '../ProjectTableForm';
-import SkillTableForm from '../SkillTableForm';
+import React, { useState } from "react";
+import { Icons } from "../portfolio-icons";
+import { usePortfolioData, useDataExport } from "../portfolio-hooks";
+import { downloadFile } from "../portfolio-export";
+import { PersonalInfoForm } from "../PersonalInfoForm";
+import ProjectTableForm from "../ProjectTableForm";
+import SkillTableForm from "../SkillTableForm";
 
 const ModernPortfolioEditor: React.FC = () => {
-  const { data, updatePersonalInfo, updateProject, updateSkill, addItem, removeItem } = usePortfolioData();
+  const {
+    data,
+    updatePersonalInfo,
+    updateProject,
+    updateSkill,
+    addItem,
+    removeItem,
+    importData,
+  } = usePortfolioData();
   const { exportToJSON, importFromJSON } = useDataExport();
-  const [activeSection, setActiveSection] = useState<'personal' | 'projects' | 'skills'>('personal');
+  const [activeSection, setActiveSection] = useState<
+    "personal" | "projects" | "skills"
+  >("personal");
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Helper para filtrar proyectos con título válido
-  const hasTitle = (p: { title?: string }) => !!p.title && p.title.trim().length > 0;
+  const hasTitle = (p: { title?: string }) =>
+    !!p.title && p.title.trim().length > 0;
 
   const handleExportJSON = () => {
     exportToJSON(data);
   };
 
   const handleImportJSON = () => {
-    if (typeof window === 'undefined' || typeof document === 'undefined') return;
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json,application/json";
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        const result = await importFromJSON(file);
-        if (result.success && result.data) {
-          window.location.reload();
-        } else {
-          alert('Error al importar: ' + result.message);
-        }
+      if (!file) return;
+
+      const result = await importFromJSON(file);
+      if (result.success && result.data) {
+        // Opcional: actualizar estado local inmediatamente
+        importData(result.data);
+        alert("Datos importados correctamente");
+        window.location.reload(); // asegura que el visor y todo el app tomen el nuevo estado
+      } else {
+        alert("Error al importar: " + result.message);
       }
     };
     input.click();
@@ -46,7 +59,7 @@ const ModernPortfolioEditor: React.FC = () => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${data.personalInfo.fullName || 'Portfolio'}</title>
+    <title>${data.personalInfo.fullName || "Portfolio"}</title>
     <style>
         body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
         .header { text-align: center; margin-bottom: 40px; }
@@ -59,41 +72,70 @@ const ModernPortfolioEditor: React.FC = () => {
 </head>
 <body>
     <header class="header">
-        <h1>${data.personalInfo.fullName || 'Tu Nombre'}</h1>
-        <p>${data.personalInfo.title || 'Tu Título'}</p>
-        ${data.personalInfo.summary ? `<p>${data.personalInfo.summary}</p>` : ''}
+        <h1>${data.personalInfo.fullName || "Tu Nombre"}</h1>
+        <p>${data.personalInfo.title || "Tu Título"}</p>
+        ${
+          data.personalInfo.summary ? `<p>${data.personalInfo.summary}</p>` : ""
+        }
     </header>
     
     <section>
         <h2>Proyectos</h2>
         <div class="projects">
-            ${data.projects.filter(hasTitle).map(project => `
+            ${data.projects
+              .filter(hasTitle)
+              .map(
+                (project) => `
                 <div class="project">
                     <h3>${project.title}</h3>
-                    <p>${project.description || ''}</p>
-                    ${project.technologies ? `<div class="skills">${project.technologies.split(',').map(tech => `<span class="skill">${tech.trim()}</span>`).join('')}</div>` : ''}
-                    ${project.link ? `<a href="${project.link}" target="_blank" rel="noopener noreferrer">Ver Proyecto</a>` : ''}
+                    <p>${project.description || ""}</p>
+                    ${
+                      project.technologies
+                        ? `<div class="skills">${project.technologies
+                            .split(",")
+                            .map(
+                              (tech) =>
+                                `<span class="skill">${tech.trim()}</span>`
+                            )
+                            .join("")}</div>`
+                        : ""
+                    }
+                    ${
+                      project.link
+                        ? `<a href="${project.link}" target="_blank" rel="noopener noreferrer">Ver Proyecto</a>`
+                        : ""
+                    }
                 </div>
-            `).join('')}
+            `
+              )
+              .join("")}
         </div>
     </section>
     
     <section>
         <h2>Habilidades</h2>
-        ${data.skills.filter(s => !!s.category && s.category.trim().length > 0).map(skill => `
+        ${data.skills
+          .filter((s) => !!s.category && s.category.trim().length > 0)
+          .map(
+            (skill) => `
             <div>
                 <h3>${skill.category}</h3>
-                <div class="skills">${skill.items.split(',').map(item => `<span class="skill">${item.trim()}</span>`).join('')}</div>
+                <div class="skills">${skill.items
+                  .split(",")
+                  .map((item) => `<span class="skill">${item.trim()}</span>`)
+                  .join("")}</div>
             </div>
-        `).join('')}
+        `
+          )
+          .join("")}
     </section>
 </body>
 </html>`;
-      
-      downloadFile(`${data.personalInfo.fullName || 'portfolio'}.html`, html);
-      alert('¡Portfolio HTML exportado exitosamente!');
+
+      downloadFile(`${data.personalInfo.fullName || "portfolio"}.html`, html);
+      alert("¡Portfolio HTML exportado exitosamente!");
     } catch (error) {
-      alert('Error al exportar HTML: ' + (error as Error).message);
+      alert("Error al exportar HTML: " + (error as Error).message);
     }
   };
 
@@ -161,11 +203,11 @@ const ModernPortfolioEditor: React.FC = () => {
       // Normaliza y quita diacríticos para slugs estables (soporta tildes/ñ)
       const createSlug = (title: string) => {
         return title
-          .normalize('NFD')
-          .replace(/\[\u0300-\ͯ]/g, '')
+          .normalize("NFD")
+          .replace(/\[\u0300-\ͯ]/g, "")
           .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)/g, '');
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "");
       };
 
       const projectsWithTitle = data.projects.filter(hasTitle);
@@ -176,79 +218,133 @@ const ModernPortfolioEditor: React.FC = () => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${data.personalInfo.fullName || 'Portfolio'}</title>
+    <title>${data.personalInfo.fullName || "Portfolio"}</title>
     <style>${tailwindCSS}</style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
     <div class="container">
         <header class="text-center mb-8">
-            <h1 class="text-4xl text-gray-900 mb-4">${data.personalInfo.fullName || 'Tu Nombre'}</h1>
-            <p class="text-xl text-gray-600 mb-6">${data.personalInfo.title || 'Tu Título'}</p>
-            ${data.personalInfo.summary ? `<p class="text-lg text-gray-600">${data.personalInfo.summary}</p>` : ''}
+            <h1 class="text-4xl text-gray-900 mb-4">${
+              data.personalInfo.fullName || "Tu Nombre"
+            }</h1>
+            <p class="text-xl text-gray-600 mb-6">${
+              data.personalInfo.title || "Tu Título"
+            }</p>
+            ${
+              data.personalInfo.summary
+                ? `<p class="text-lg text-gray-600">${data.personalInfo.summary}</p>`
+                : ""
+            }
         </header>
 
-        ${projectsWithTitle.length > 0 ? `
+        ${
+          projectsWithTitle.length > 0
+            ? `
         <section class="mb-8">
             <h2 class="text-2xl text-gray-900 mb-6 text-center">Proyectos</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                ${projectsWithTitle.map(project => `
+                ${projectsWithTitle
+                  .map(
+                    (project) => `
                     <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-lg text-gray-900 mb-4">${project.title}</h3>
-                        <p class="text-gray-600 mb-4">${project.description || ''}</p>
+                        <h3 class="text-lg text-gray-900 mb-4">${
+                          project.title
+                        }</h3>
+                        <p class="text-gray-600 mb-4">${
+                          project.description || ""
+                        }</p>
                         
-                        ${project.technologies ? `
+                        ${
+                          project.technologies
+                            ? `
                         <div class="mb-4">
                             <div class="flex flex-wrap gap-2">
-                                ${project.technologies.split(',').map(tech => `
+                                ${project.technologies
+                                  .split(",")
+                                  .map(
+                                    (tech) => `
                                     <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium bg-blue-100 text-blue-800">
                                         <span>⚡</span>${tech.trim()}
                                     </span>
-                                `).join('')}
+                                `
+                                  )
+                                  .join("")}
                             </div>
                         </div>
-                        ` : ''}
+                        `
+                            : ""
+                        }
 
                         <div class="flex gap-4 mt-4">
-                            <a href="proyecto-${createSlug(project.title!)}.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg no-underline hover:bg-blue-700">
+                            <a href="proyecto-${createSlug(
+                              project.title!
+                            )}.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg no-underline hover:bg-blue-700">
                                 Ver Detalles
                             </a>
-                            ${project.link ? `
+                            ${
+                              project.link
+                                ? `
                                 <a href="${project.link}" target="_blank" rel="noopener noreferrer" class="border px-4 py-2 rounded-lg text-gray-700 no-underline hover:bg-gray-50">
                                     Ver Proyecto
                                 </a>
-                            ` : ''}
+                            `
+                                : ""
+                            }
                         </div>
                     </div>
-                `).join('')}
+                `
+                  )
+                  .join("")}
             </div>
         </section>
-        ` : ''}
+        `
+            : ""
+        }
 
-        ${data.skills.filter(s => !!s.category && s.category.trim().length > 0).length > 0 ? `
+        ${
+          data.skills.filter(
+            (s) => !!s.category && s.category.trim().length > 0
+          ).length > 0
+            ? `
         <section class="mb-8">
             <h2 class="text-2xl text-gray-900 mb-6 text-center">Habilidades</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                ${data.skills.filter(s => !!s.category && s.category.trim().length > 0).map(skill => `
+                ${data.skills
+                  .filter((s) => !!s.category && s.category.trim().length > 0)
+                  .map(
+                    (skill) => `
                     <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-lg text-gray-900 mb-4">${skill.category}</h3>
+                        <h3 class="text-lg text-gray-900 mb-4">${
+                          skill.category
+                        }</h3>
                         <div class="flex flex-wrap gap-2">
-                            ${skill.items.split(',').filter(item => item.trim()).map(item => `
+                            ${skill.items
+                              .split(",")
+                              .filter((item) => item.trim())
+                              .map(
+                                (item) => `
                                 <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium bg-blue-100 text-blue-800">
                                     <span>⭐</span>${item.trim()}
                                 </span>
-                            `).join('')}
+                            `
+                              )
+                              .join("")}
                         </div>
                     </div>
-                `).join('')}
+                `
+                  )
+                  .join("")}
             </div>
         </section>
-        ` : ''}
+        `
+            : ""
+        }
     </div>
 </body>
 </html>`;
 
       // Descargar index.html
-      downloadFile('index.html', indexHtml);
+      downloadFile("index.html", indexHtml);
 
       // Crear páginas de detalle para cada proyecto
       projectsWithTitle.forEach((project, index) => {
@@ -258,7 +354,9 @@ const ModernPortfolioEditor: React.FC = () => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${project.title} - ${data.personalInfo.fullName || 'Portfolio'}</title>
+    <title>${project.title} - ${
+          data.personalInfo.fullName || "Portfolio"
+        }</title>
     <style>${tailwindCSS}</style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
@@ -267,70 +365,106 @@ const ModernPortfolioEditor: React.FC = () => {
         
         <header class="text-center mb-8">
             <h1 class="text-4xl text-gray-900 mb-4">${project.title}</h1>
-            <p class="text-xl text-gray-600">${project.description || ''}</p>
+            <p class="text-xl text-gray-600">${project.description || ""}</p>
         </header>
 
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            ${project.detailedDescription ? `
+            ${
+              project.detailedDescription
+                ? `
                 <div class="mb-6">
                     <h2 class="text-2xl text-gray-900 mb-4">Descripción Detallada</h2>
                     <p class="text-gray-600">${project.detailedDescription}</p>
                 </div>
-            ` : ''}
+            `
+                : ""
+            }
 
-            ${project.technologies ? `
+            ${
+              project.technologies
+                ? `
                 <div class="mb-6">
                     <h3 class="text-lg text-gray-900 mb-4">Tecnologías Utilizadas</h3>
                     <div class="flex flex-wrap gap-2">
-                        ${project.technologies.split(',').map(tech => `
+                        ${project.technologies
+                          .split(",")
+                          .map(
+                            (tech) => `
                             <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium bg-blue-100 text-blue-800">
                                 <span>⚡</span>${tech.trim()}
                             </span>
-                        `).join('')}
+                        `
+                          )
+                          .join("")}
                     </div>
                 </div>
-            ` : ''}
+            `
+                : ""
+            }
 
-            ${project.features ? `
+            ${
+              project.features
+                ? `
                 <div class="mb-6">
                     <h3 class="text-lg text-gray-900 mb-4">Características Principales</h3>
                     <ul class="text-gray-600">
-                        ${project.features.split(',').map(feature => `<li>• ${feature.trim()}</li>`).join('')}
+                        ${project.features
+                          .split(",")
+                          .map((feature) => `<li>• ${feature.trim()}</li>`)
+                          .join("")}
                     </ul>
                 </div>
-            ` : ''}
+            `
+                : ""
+            }
 
-            ${project.challenges ? `
+            ${
+              project.challenges
+                ? `
                 <div class="mb-6">
                     <h3 class="text-lg text-gray-900 mb-4">Desafíos y Soluciones</h3>
                     <p class="text-gray-600">${project.challenges}</p>
                 </div>
-            ` : ''}
+            `
+                : ""
+            }
 
-            ${project.instructions ? `
+            ${
+              project.instructions
+                ? `
                 <div class="mb-6">
                     <h3 class="text-lg text-gray-900 mb-4">Instrucciones de Uso</h3>
                     <pre class="bg-gray-100 p-4 rounded-lg text-gray-700 overflow-x-auto">${project.instructions}</pre>
                 </div>
-            ` : ''}
+            `
+                : ""
+            }
 
             <div class="flex gap-4 mt-6">
-                ${project.link ? `
+                ${
+                  project.link
+                    ? `
                     <a href="${project.link}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white px-4 py-2 rounded-lg no-underline hover:bg-blue-700">
                         🚀 Ver Proyecto Live
                     </a>
-                ` : ''}
-                ${project.github ? `
+                `
+                    : ""
+                }
+                ${
+                  project.github
+                    ? `
                     <a href="${project.github}" target="_blank" rel="noopener noreferrer" class="border px-4 py-2 rounded-lg text-gray-700 no-underline hover:bg-gray-50">
                         📁 Ver Código
                     </a>
-                ` : ''}
+                `
+                    : ""
+                }
             </div>
         </div>
     </div>
 </body>
 </html>`;
-        
+
         // Pequeño escalonado para que el navegador no bloquee múltiples descargas
         setTimeout(() => {
           downloadFile(`proyecto-${slug}.html`, projectHtml);
@@ -338,7 +472,9 @@ const ModernPortfolioEditor: React.FC = () => {
       });
 
       // README con instrucciones
-      const readme = `# ${data.personalInfo.fullName || 'Portfolio'} - Portfolio Completo
+      const readme = `# ${
+        data.personalInfo.fullName || "Portfolio"
+      } - Portfolio Completo
 
 Este portfolio incluye:
 - **index.html** - Página principal con todos los proyectos
@@ -359,26 +495,35 @@ Este portfolio incluye:
 
 ## 📁 Archivos incluidos
 
-${projectsWithTitle.map(project => 
-  `- proyecto-${createSlug(project.title!)}.html - ${project.title}`
-).join('\n')}
+${projectsWithTitle
+  .map(
+    (project) =>
+      `- proyecto-${createSlug(project.title!)}.html - ${project.title}`
+  )
+  .join("\n")}
 
 ¡Portfolio generado con Portfolio Generator!`;
 
       setTimeout(() => {
-        downloadFile('README.md', readme);
+        downloadFile("README.md", readme);
       }, (projectsWithTitle.length + 1) * 700);
 
-      alert(`¡Sitio web completo exportado! Se han generado ${1 + projectsWithTitle.length} páginas HTML con todas las vistas de detalle.`);
+      alert(
+        `¡Sitio web completo exportado! Se han generado ${
+          1 + projectsWithTitle.length
+        } páginas HTML con todas las vistas de detalle.`
+      );
     } catch (error) {
-      alert('Error al exportar sitio web: ' + (error as Error).message);
+      alert("Error al exportar sitio web: " + (error as Error).message);
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Editor de Portfolio</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Editor de Portfolio
+        </h1>
         <div className="relative">
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
@@ -388,25 +533,34 @@ ${projectsWithTitle.map(project =>
             Exportar
             <Icons.ChevronDown size={16} />
           </button>
-          
+
           {showExportMenu && (
             <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border z-50">
               <button
-                onClick={() => { handleExportJSON(); setShowExportMenu(false); }}
+                onClick={() => {
+                  handleExportJSON();
+                  setShowExportMenu(false);
+                }}
                 className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
               >
                 <Icons.FileDown size={16} />
                 Exportar JSON
               </button>
               <button
-                onClick={() => { handleExportHTML(); setShowExportMenu(false); }}
+                onClick={() => {
+                  handleExportHTML();
+                  setShowExportMenu(false);
+                }}
                 className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
               >
                 <Icons.Download size={16} />
                 Exportar HTML
               </button>
               <button
-                onClick={() => { handleExportWebsite(); setShowExportMenu(false); }}
+                onClick={() => {
+                  handleExportWebsite();
+                  setShowExportMenu(false);
+                }}
                 className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
               >
                 <Icons.ExternalLink size={16} />
@@ -414,7 +568,10 @@ ${projectsWithTitle.map(project =>
               </button>
               <hr className="my-1" />
               <button
-                onClick={() => { handleImportJSON(); setShowExportMenu(false); }}
+                onClick={() => {
+                  handleImportJSON();
+                  setShowExportMenu(false);
+                }}
                 className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
               >
                 <Icons.Upload size={16} />
@@ -427,17 +584,17 @@ ${projectsWithTitle.map(project =>
 
       <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
         {[
-          { id: 'personal' as const, label: 'Personal', icon: Icons.User },
-          { id: 'projects' as const, label: 'Proyectos', icon: Icons.Code },
-          { id: 'skills' as const, label: 'Habilidades', icon: Icons.Award },
+          { id: "personal" as const, label: "Personal", icon: Icons.User },
+          { id: "projects" as const, label: "Proyectos", icon: Icons.Code },
+          { id: "skills" as const, label: "Habilidades", icon: Icons.Award },
         ].map((section) => (
           <button
             key={section.id}
             onClick={() => setActiveSection(section.id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               activeSection === section.id
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? "bg-white text-blue-600 shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
             }`}
           >
             <section.icon size={16} />
@@ -447,25 +604,28 @@ ${projectsWithTitle.map(project =>
       </div>
 
       <div className="space-y-6">
-        {activeSection === 'personal' && (
-          <PersonalInfoForm data={data.personalInfo} onUpdate={updatePersonalInfo} />
-        )}
-
-        {activeSection === 'projects' && (
-          <ProjectTableForm
-            projects={data.projects}
-            onUpdate={updateProject}
-            onAdd={() => addItem('projects')}
-            onRemove={(index) => removeItem('projects', index)}
+        {activeSection === "personal" && (
+          <PersonalInfoForm
+            data={data.personalInfo}
+            onUpdate={updatePersonalInfo}
           />
         )}
 
-        {activeSection === 'skills' && (
+        {activeSection === "projects" && (
+          <ProjectTableForm
+            projects={data.projects}
+            onUpdate={updateProject}
+            onAdd={() => addItem("projects")}
+            onRemove={(index) => removeItem("projects", index)}
+          />
+        )}
+
+        {activeSection === "skills" && (
           <SkillTableForm
             skills={data.skills}
             onUpdate={updateSkill}
-            onAdd={() => addItem('skills')}
-            onRemove={(index) => removeItem('skills', index)}
+            onAdd={() => addItem("skills")}
+            onRemove={(index) => removeItem("skills", index)}
           />
         )}
       </div>
@@ -474,3 +634,4 @@ ${projectsWithTitle.map(project =>
 };
 
 export default ModernPortfolioEditor;
+

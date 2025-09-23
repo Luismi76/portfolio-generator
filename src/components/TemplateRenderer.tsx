@@ -478,3 +478,4 @@ export const TemplateRenderer: React.FC<Props> = ({ data, onOpenProject }) => {
     </TemplateTheme>
   );
 };
+

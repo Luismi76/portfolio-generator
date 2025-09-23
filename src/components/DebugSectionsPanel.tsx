@@ -212,3 +212,4 @@ export const DebugSectionsPanel: React.FC = () => {
     </div>
   );
 };
+

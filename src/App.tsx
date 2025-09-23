@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 
 // Componentes principales
 import ModernPortfolioEditor from './components/editor/ModernPortfolioEditor';
-import PortfolioViewer from './components/PorfolioViewer';
+import PortfolioViewer from "./components/PortfolioViewer'";
 import { TemplateSelector } from './components/TemplateSelector';
 import { TemplateCustomizer } from './components/TemplateCustomizer';
 import { useTemplates } from './components/use-templates';
@@ -345,3 +345,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+

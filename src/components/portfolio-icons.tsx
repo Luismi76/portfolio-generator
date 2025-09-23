@@ -96,3 +96,4 @@ export const DynamicIcon: React.FC<SimpleIconProps & { name: keyof typeof Icons 
   const IconComponent = Icons[name];
   return <IconComponent size={size} className={className} />;
 };
+

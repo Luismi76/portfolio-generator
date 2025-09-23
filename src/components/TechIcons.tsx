@@ -67,3 +67,4 @@ export const TechList: React.FC<TechListProps> = ({ technologies, variant = 'def
   );
 };
 
+
