@@ -25,12 +25,9 @@ const ModernPortfolioEditor: React.FC = () => {
   const [showExportMenu, setShowExportMenu] = useState(false);
   
   // ✅ Obtener templates con mejor debugging
-  const { selectedTemplate, config, selectTemplate, updateConfig } = useTemplates();
+  const { selectedTemplate, config, updateConfig } = useTemplates();
   const activeTemplate = selectedTemplate ?? getDefaultTemplate();
 
-  // Helper para filtrar proyectos con título válido
-  const hasTitle = (p: { title?: string }) =>
-    !!p.title && p.title.trim().length > 0;
 
   const handleExportJSON = () => {
     exportToJSON(data);
