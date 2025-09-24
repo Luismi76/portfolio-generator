@@ -296,10 +296,8 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Toggle de modo (solo en desarrollo) */}
-      {process.env.NODE_ENV === 'development' && (
-        <ModeToggle currentMode={appState.mode} onModeChange={switchMode} />
-      )}
+{/* Toggle de modo (siempre visible para demo) */}
+<ModeToggle currentMode={appState.mode} onModeChange={switchMode} />
 
       {/* Contenido principal */}
       {renderContent()}
