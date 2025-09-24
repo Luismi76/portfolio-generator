@@ -41,14 +41,31 @@ export const getTechIcon = (tech: string): string => {
   return '⚡';
 };
 
+// ✅ FUNCIÓN HELPER PARA MERGE PROFUNDO
+const deepMerge = (target: any, source: any): any => {
+  if (!source) return target;
+  
+  const result = { ...target };
+  
+  for (const key in source) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      result[key] = deepMerge(target[key] || {}, source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  
+  return result;
+};
+
 // ✅ FUNCIÓN AVANZADA: Generar CSS con personalización completa
 const generateAdvancedTemplateCSS = (template: Template, config?: TemplateConfig): string => {
-  // Combinar configuración base con personalizaciones
+  // Combinar configuración base con personalizaciones usando deep merge
   const customizations = config?.customizations || {};
   
-  const colors = { ...template.colors, ...customizations.colors };
-  const typography = { ...template.typography, ...customizations.typography };
-  const layout = { ...template.layout, ...customizations.layout };
+  const colors = deepMerge(template.colors, customizations.colors);
+  const typography = deepMerge(template.typography, customizations.typography);
+  const layout = deepMerge(template.layout, customizations.layout);
   
   return `
     /* Variables CSS personalizadas - Plantilla: ${template.name} */
@@ -473,18 +490,31 @@ const generateAdvancedTemplateCSS = (template: Template, config?: TemplateConfig
   `;
 };
 
-// ✅ FUNCIÓN: Obtener secciones ordenadas y habilitadas
+// ✅ FUNCIÓN CORREGIDA: Obtener secciones ordenadas y habilitadas
 const getEnabledSections = (template: Template, config?: TemplateConfig): TemplateSection[] => {
-  const sections = config?.customizations?.sections || template.sections;
-  return sections
-    .filter(section => section.enabled)
-    .sort((a, b) => a.order - b.order);
+  // PRIORIDAD: config personalizada > plantilla base
+  let sections: TemplateSection[];
+  
+  if (config?.customizations?.sections && Array.isArray(config.customizations.sections)) {
+    sections = config.customizations.sections;
+    console.log('🎯 Usando secciones personalizadas:', sections.map(s => `${s.id}:${s.enabled}`));
+  } else {
+    sections = template.sections;
+    console.log('📋 Usando secciones de plantilla:', sections.map(s => `${s.id}:${s.enabled}`));
+  }
+  
+  const enabledSections = sections.filter(section => section.enabled === true);
+  console.log('✅ Secciones habilitadas finales:', enabledSections.map(s => s.id));
+  
+  return enabledSections.sort((a, b) => a.order - b.order);
 };
 
-// ✅ FUNCIÓN: Verificar si "about" está habilitado como sección separada
 const isAboutSectionEnabled = (template: Template, config?: TemplateConfig): boolean => {
-  const enabledSections = getEnabledSections(template, config);
-  return enabledSections.some(section => section.id === 'about');
+  const sections = config?.customizations?.sections || template.sections;
+  const aboutSection = sections.find(section => section.id === 'about');
+  const aboutEnabled = aboutSection?.enabled ?? false;
+  console.log('🔍 About section enabled?', aboutEnabled);
+  return aboutEnabled;
 };
 
 // ✅ FUNCIÓN: Generar HTML para cada sección
@@ -498,7 +528,8 @@ const generateSectionHTML = (
   switch (sectionId) {
     case 'header':
       // Solo incluir summary en header si NO hay sección "about" habilitada
-      const includeAboutInHeader = !isAboutSectionEnabled(template!, config);
+      const includeAboutInHeader = data.personalInfo.summary && !isAboutSectionEnabled(template!, config);
+      console.log('📝 Header: includeAboutInHeader =', includeAboutInHeader);
       
       // Generar enlaces de contacto como en el portfolio real
       const contactLinks = [];
@@ -528,8 +559,6 @@ const generateSectionHTML = (
             <h1>${data.personalInfo.fullName || "Tu Nombre"}</h1>
             <p class="title">${data.personalInfo.title || "Tu Título"}</p>
             ${data.personalInfo.tagline ? `<p class="tagline">${data.personalInfo.tagline}</p>` : ''}
-            ${includeAboutInHeader && data.personalInfo.summary ? `<p class="summary">${data.personalInfo.summary}</p>` : ''}
-            
             ${contactLinks.length > 0 ? `
               <div class="contact-info">
                 ${contactLinks.join('')}
@@ -540,8 +569,13 @@ const generateSectionHTML = (
       `;
 
     case 'about':
-      // Solo mostrar si NO está ya incluido en el header
-      if (!data.personalInfo.summary) return '';
+      // Solo mostrar si NO está ya incluido en el header Y tiene contenido
+      if (!data.personalInfo.summary) {
+        console.log('❌ About: No summary content');
+        return '';
+      }
+      
+      console.log('✅ About: Section has content and is being rendered');
       return `
         <section class="section about-section">
           <h2>Sobre Mí</h2>
@@ -703,14 +737,25 @@ export class TemplateAwareSinglePageExporter {
   ) {}
 
   generate(): string {
+    console.log('🚀 Generando Single Page con config:', this.config);
+    
     const templateCSS = generateAdvancedTemplateCSS(this.template, this.config);
     const enabledSections = getEnabledSections(this.template, this.config);
     
+    console.log('📝 CSS Variables generadas. Longitud:', templateCSS.length);
+    console.log('📋 Secciones habilitadas:', enabledSections.map(s => s.id));
+    
     // Generar HTML de cada sección habilitada en el orden configurado
     const sectionsHTML = enabledSections
-      .map(section => generateSectionHTML(section.id, this.data, false, this.template, this.config))
+      .map(section => {
+        const html = generateSectionHTML(section.id, this.data, false, this.template, this.config);
+        console.log(`🔧 Sección ${section.id}: ${html.length > 0 ? 'Generada' : 'Vacía'}`);
+        return html;
+      })
       .filter(html => html.trim())
       .join('\n');
+
+    console.log('✅ HTML final generado. Secciones incluidas:', sectionsHTML.split('<section').length - 1);
 
     return `<!DOCTYPE html>
 <html lang="es">
@@ -750,7 +795,7 @@ export class TemplateAwareSinglePageExporter {
   }
 }
 
-// ✅ EXPORTADOR MEJORADO: Sitio web completo con plantilla personalizada
+// ✅ EXPORTADOR CORREGIDO: Sitio web completo con plantilla personalizada
 export class TemplateAwareMultiPageExporter {
   constructor(
     private data: PortfolioData, 
@@ -840,14 +885,25 @@ export class TemplateAwareMultiPageExporter {
   }
 
   private generateIndexPage(): string {
+    console.log('🚀 Generando Multi Page con config:', this.config);
+    
     const templateCSS = generateAdvancedTemplateCSS(this.template, this.config);
     const enabledSections = getEnabledSections(this.template, this.config);
     
+    console.log('📝 CSS Variables generadas. Longitud:', templateCSS.length);
+    console.log('📋 Secciones habilitadas:', enabledSections.map(s => s.id));
+    
     // Generar HTML de cada sección habilitada en el orden configurado
     const sectionsHTML = enabledSections
-      .map(section => generateSectionHTML(section.id, this.data, true, this.template, this.config))
+      .map(section => {
+        const html = generateSectionHTML(section.id, this.data, true, this.template, this.config);
+        console.log(`🔧 Sección ${section.id}: ${html.length > 0 ? 'Generada' : 'Vacía'}`);
+        return html;
+      })
       .filter(html => html.trim())
       .join('\n');
+
+    console.log('✅ HTML final generado. Secciones incluidas:', sectionsHTML.split('<section').length - 1);
 
     return `<!DOCTYPE html>
 <html lang="es">
@@ -928,59 +984,93 @@ ${Object.keys(files).map(file => `- \`${file}\``).join('\n')}
     return files;
   }
 
+  // ✅ FUNCIÓN EXPORT CORREGIDA - Evita descargas múltiples
   export(): { success: boolean; message: string; files?: { [filename: string]: string } } {
     try {
       const files = this.generateFiles();
       
+      // Crear un archivo ZIP simulado en texto
+      const allFilesContent = Object.entries(files)
+        .map(([filename, content]) => {
+          return `
+═══════════════════════════════════════════════════════════════
+📁 ARCHIVO: ${filename}
+═══════════════════════════════════════════════════════════════
+
+${content}
+
+`;
+        })
+        .join('\n');
+
       // Instrucciones mejoradas
-      const instructions = `# 🎯 Instrucciones para GitHub Pages
+      const instructions = `# 🎯 INSTRUCCIONES PARA GITHUB PAGES
 
-¡Portfolio generado con plantilla "${this.template.name}"!
+¡Portfolio generado exitosamente con plantilla "${this.template.name}"!
 
-## 📦 Archivos generados:
-${Object.keys(files).map(file => `✓ ${file}`).join('\n')}
+## 📦 ARCHIVOS GENERADOS (${Object.keys(files).length} archivos):
 
-## 🚀 Pasos para publicar:
+${Object.keys(files).map((file, index) => `${index + 1}. ✓ ${file}`).join('\n')}
 
-1. **Crear repositorio en GitHub** (debe ser público)
-2. **Subir archivos**: Arrastra todos los archivos a tu repo
-3. **Configurar Pages**: 
-   - Settings → Pages → Deploy from branch → main → / (root)
-4. **Acceder**: https://tu-usuario.github.io/nombre-repo
+## 🚀 PASOS PARA PUBLICAR:
 
-## 🎨 Personalización aplicada
+### Opción 1: Descarga individual de archivos
+1. Ve al final de este archivo para ver todos los códigos
+2. Copia cada archivo y guárdalo con su nombre correspondiente
+3. Sube los archivos a tu repositorio de GitHub
 
-Tu portfolio usa la plantilla "${this.template.name}" con:
-- Colores: ${this.template.colors.primary} (primario)
-- Tipografía: ${this.template.typography.fontFamily.primary}
-- Ancho máximo: ${this.config?.customizations?.layout?.maxWidth || this.template.layout.maxWidth}
-- Estilo: ${this.template.category}
+### Opción 2: GitHub Pages directo
+1. **Crear repositorio**: Ve a GitHub → New Repository
+2. **Configurar**: Nombre: "mi-portfolio" (público)
+3. **Subir**: Arrastra TODOS los archivos generados
+4. **Activar Pages**: Settings → Pages → Deploy from branch → main → / (root)
+5. **Acceder**: https://tu-usuario.github.io/mi-portfolio
 
-## 📞 Soporte
+## 🎨 CONFIGURACIÓN APLICADA:
 
-Si tienes problemas, revisa la documentación de GitHub Pages.
+- **Plantilla**: ${this.template.name}
+- **Descripción**: ${this.template.description}
+- **Colores principales**: ${this.template.colors.primary}
+- **Tipografía**: ${this.template.typography.fontFamily.primary}
+- **Ancho máximo**: ${this.config?.customizations?.layout?.maxWidth || this.template.layout.maxWidth}
+- **Categoría**: ${this.template.category}
 
-¡Tu portfolio se verá increíble! 🌟`;
-      
-      // Descargar instrucciones primero
-      downloadFile('📖_INSTRUCCIONES_GITHUB_PAGES.txt', instructions);
-      
-      // Descargar cada archivo con delay
-      Object.entries(files).forEach(([filename, content], index) => {
-        setTimeout(() => {
-          downloadFile(filename.replace('/', '-'), content);
-        }, index * 500);
-      });
+## 📞 SOPORTE:
+
+Si tienes problemas:
+- Revisa la documentación de GitHub Pages
+- Verifica que todos los archivos estén subidos
+- Asegúrate de que el repositorio sea público
+
+## ⚠️ IMPORTANTE:
+
+- Mantén la estructura de archivos tal como se muestra
+- No modifiques los nombres de archivo
+- El archivo index.html debe estar en la raíz
+
+¡Tu portfolio se verá increíble! 🌟
+
+═══════════════════════════════════════════════════════════════
+📁 CÓDIGOS DE ARCHIVOS A CONTINUACIÓN:
+═══════════════════════════════════════════════════════════════
+
+${allFilesContent}`;
+
+      // Descargar solo UN archivo con todo el contenido
+      downloadFile(
+        `🌟_PORTFOLIO_COMPLETO_${this.data.personalInfo.fullName?.replace(/\s+/g, '_') || 'PORTFOLIO'}.txt`,
+        instructions
+      );
 
       return {
         success: true,
-        message: `Sitio web completo exportado con plantilla "${this.template.name}" y personalización aplicada`,
+        message: `✅ Sitio web completo exportado con plantilla "${this.template.name}". Se descargó 1 archivo con todo el contenido y las instrucciones.`,
         files
       };
     } catch (error) {
       return {
         success: false,
-        message: `Error al exportar: ${error instanceof Error ? error.message : 'Error desconocido'}`
+        message: `❌ Error al exportar: ${error instanceof Error ? error.message : 'Error desconocido'}`
       };
     }
   }

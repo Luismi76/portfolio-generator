@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 
 // Componentes principales
 import ModernPortfolioEditor from './components/editor/ModernPortfolioEditor';
-import PortfolioViewer from "./components/PortfolioViewer'";
+import PortfolioViewer from './components/PortfolioViewer'
 import { TemplateSelector } from './components/TemplateSelector';
 import { TemplateCustomizer } from './components/TemplateCustomizer';
 import { useTemplates } from './components/use-templates';
@@ -186,14 +186,7 @@ const App: React.FC = () => {
     initializeApp();
   }, []);
 
-  // Handler para errores
-  const handleError = (error: Error) => {
-    console.error('App Error:', error);
-    setAppState((prev) => ({
-      ...prev,
-      error: error.message,
-    }));
-  };
+
 
   // Limpiar error
   const clearError = () => {
@@ -312,7 +305,7 @@ const App: React.FC = () => {
       {renderContent()}
 
       {/* Indicador de shortcuts (solo en desarrollo) */}
-      {process.env.NODE_ENV === 'development' && (
+{/*       {process.env.NODE_ENV === 'development' && (
         <div className="fixed bottom-4 left-4 bg-gray-900 text-white px-4 py-3 rounded-lg text-sm z-40 shadow-lg">
           <div className="font-semibold">Portfolio Generator v2.0</div>
           <div className="flex items-center gap-2 mt-1">
@@ -339,7 +332,7 @@ const App: React.FC = () => {
             <div>Ctrl+T: Plantillas | Ctrl+P: Portfolio</div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

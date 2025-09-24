@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Icons } from "../portfolio-icons";
 import { usePortfolioData, useDataExport } from "../portfolio-hooks";
-import { downloadFile } from "../portfolio-export";
+import { downloadFile, createTemplateAwareExporter } from "../portfolio-export";
 import { PersonalInfoForm } from "../PersonalInfoForm";
 import ProjectTableForm from "../ProjectTableForm";
 import SkillTableForm from "../SkillTableForm";
+import { useTemplates } from "../use-templates";
+import { getDefaultTemplate } from "../built-in-templates";
 
 const ModernPortfolioEditor: React.FC = () => {
   const {
@@ -18,9 +20,13 @@ const ModernPortfolioEditor: React.FC = () => {
   } = usePortfolioData();
   const { exportToJSON, importFromJSON } = useDataExport();
   const [activeSection, setActiveSection] = useState<
-    "personal" | "projects" | "skills"
+    "personal" | "projects" | "skills" | "templates"
   >("personal");
   const [showExportMenu, setShowExportMenu] = useState(false);
+  
+  // ✅ Obtener templates con mejor debugging
+  const { selectedTemplate, config, selectTemplate, updateConfig } = useTemplates();
+  const activeTemplate = selectedTemplate ?? getDefaultTemplate();
 
   // Helper para filtrar proyectos con título válido
   const hasTitle = (p: { title?: string }) =>
@@ -40,10 +46,9 @@ const ModernPortfolioEditor: React.FC = () => {
 
       const result = await importFromJSON(file);
       if (result.success && result.data) {
-        // Opcional: actualizar estado local inmediatamente
         importData(result.data);
         alert("Datos importados correctamente");
-        window.location.reload(); // asegura que el visor y todo el app tomen el nuevo estado
+        window.location.reload();
       } else {
         alert("Error al importar: " + result.message);
       }
@@ -51,471 +56,149 @@ const ModernPortfolioEditor: React.FC = () => {
     input.click();
   };
 
+  // ✅ FUNCIÓN CORREGIDA con debugging completo
   const handleExportHTML = () => {
-    try {
-      // HTML básico sin template complejo (con CSS corregido)
-      const html = `<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${data.personalInfo.fullName || "Portfolio"}</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; margin-bottom: 40px; }
-        .projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .project { border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
-        .skills { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
-        .skill { background: #f0f0f0; padding: 5px 10px; border-radius: 20px; font-size: 14px; }
-        .project a { display: inline-block; margin-top: 12px; }
-    </style>
-</head>
-<body>
-    <header class="header">
-        <h1>${data.personalInfo.fullName || "Tu Nombre"}</h1>
-        <p>${data.personalInfo.title || "Tu Título"}</p>
-        ${
-          data.personalInfo.summary ? `<p>${data.personalInfo.summary}</p>` : ""
-        }
-    </header>
+    console.log('🔍 DEBUG - Estado actual:');
+    console.log('- selectedTemplate:', selectedTemplate?.name);
+    console.log('- activeTemplate:', activeTemplate?.name);
+    console.log('- config:', config);
+    console.log('- config?.customizations?.sections:', config?.customizations?.sections);
     
-    <section>
-        <h2>Proyectos</h2>
-        <div class="projects">
-            ${data.projects
-              .filter(hasTitle)
-              .map(
-                (project) => `
-                <div class="project">
-                    <h3>${project.title}</h3>
-                    <p>${project.description || ""}</p>
-                    ${
-                      project.technologies
-                        ? `<div class="skills">${project.technologies
-                            .split(",")
-                            .map(
-                              (tech) =>
-                                `<span class="skill">${tech.trim()}</span>`
-                            )
-                            .join("")}</div>`
-                        : ""
-                    }
-                    ${
-                      project.link
-                        ? `<a href="${project.link}" target="_blank" rel="noopener noreferrer">Ver Proyecto</a>`
-                        : ""
-                    }
-                </div>
-            `
-              )
-              .join("")}
-        </div>
-    </section>
-    
-    <section>
-        <h2>Habilidades</h2>
-        ${data.skills
-          .filter((s) => !!s.category && s.category.trim().length > 0)
-          .map(
-            (skill) => `
-            <div>
-                <h3>${skill.category}</h3>
-                <div class="skills">${skill.items
-                  .split(",")
-                  .map((item) => `<span class="skill">${item.trim()}</span>`)
-                  .join("")}</div>
-            </div>
-        `
-          )
-          .join("")}
-    </section>
-</body>
-</html>`;
+    if (config?.customizations?.sections) {
+      console.log('📋 Secciones personalizadas:');
+      config.customizations.sections.forEach(section => {
+        console.log(`  ${section.id}: ${section.enabled ? 'HABILITADA' : 'DESHABILITADA'}`);
+      });
+    } else {
+      console.log('⚠️ No hay secciones personalizadas, usando plantilla base');
+      if (activeTemplate?.sections) {
+        console.log('📋 Secciones de plantilla base:');
+        activeTemplate.sections.forEach(section => {
+          console.log(`  ${section.id}: ${section.enabled ? 'HABILITADA' : 'DESHABILITADA'}`);
+        });
+      }
+    }
 
-      downloadFile(`${data.personalInfo.fullName || "portfolio"}.html`, html);
-      alert("¡Portfolio HTML exportado exitosamente!");
-    } catch (error) {
-      alert("Error al exportar HTML: " + (error as Error).message);
+    try {
+      const exporter = createTemplateAwareExporter(
+        data,
+        activeTemplate,
+        "single",
+        config || undefined
+      );
+      const res = exporter.export();
+      
+      console.log('✅ Resultado de exportación:', res);
+      alert(res.message);
+    } catch (e: any) {
+      console.error('❌ Error en exportación:', e);
+      alert("Error al exportar HTML: " + (e?.message || e));
     }
   };
 
+  // ✅ FUNCIÓN CORREGIDA con debugging completo
   const handleExportWebsite = () => {
-    try {
-      const tailwindCSS = `
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-        .min-h-screen { min-height: 100vh; }
-        .bg-gradient-to-br { background-image: linear-gradient(to bottom right, var(--tw-gradient-stops)); }
-        .from-slate-50 { --tw-gradient-from: #f8fafc; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(248, 250, 252, 0)); }
-        .to-gray-100 { --tw-gradient-to: #f3f4f6; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
-        .text-center { text-align: center; }
-        .text-4xl { font-size: 2.25rem; font-weight: 700; }
-        .text-2xl { font-size: 1.5rem; font-weight: 700; }
-        .text-xl { font-size: 1.25rem; }
-        .text-lg { font-size: 1.125rem; font-weight: 600; }
-        .text-gray-900 { color: #111827; }
-        .text-gray-600 { color: #4b5563; }
-        .text-gray-700 { color: #374151; }
-        .text-blue-600 { color: #2563eb; }
-        .text-white { color: #ffffff; }
-        .grid { display: grid; }
-        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-        .md\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .lg\\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .gap-6 { gap: 1.5rem; }
-        .bg-white { background-color: #ffffff; }
-        .bg-blue-600 { background-color: #2563eb; }
-        .bg-blue-100 { background-color: #dbeafe; }
-        .text-blue-800 { color: #1e40af; }
-        .rounded-lg { border-radius: 0.5rem; }
-        .rounded-full { border-radius: 9999px; }
-        .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .p-6 { padding: 1.5rem; }
-        .px-3 { padding: 0 0.75rem; }
-        .px-4 { padding: 0 1rem; }
-        .py-1 { padding: 0.25rem 0; }
-        .py-2 { padding: 0.5rem 0; }
-        .mb-4 { margin-bottom: 1rem; }
-        .mb-6 { margin-bottom: 1.5rem; }
-        .mb-8 { margin-bottom: 2rem; }
-        .mt-4 { margin-top: 1rem; }
-        .flex { display: flex; }
-        .flex-wrap { flex-wrap: wrap; }
-        .items-center { align-items: center; }
-        .gap-2 { gap: 0.5rem; }
-        .gap-4 { gap: 1rem; }
-        .space-x-4 > :not([hidden]) ~ :not([hidden]) { margin-left: 1rem; }
-        .inline-flex { display: inline-flex; }
-        .font-medium { font-weight: 500; }
-        .border { border: 1px solid #d1d5db; }
-        .no-underline { text-decoration: none; }
-        .transition-colors { transition: background-color 0.15s, color 0.15s; }
-        .hover\\:bg-blue-700:hover { background-color: #1d4ed8; }
-        .hover\\:bg-gray-50:hover { background-color: #f9fafb; }
-        .hover\\:bg-blue-200:hover { background-color: #bfdbfe; }
-        .back-link { color: #2563eb; text-decoration: none; margin-bottom: 20px; display: inline-block; }
-        .back-link:hover { text-decoration: underline; }
-        @media (min-width: 768px) { .md\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-        @media (min-width: 1024px) { .lg\\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-      `;
-
-      // Normaliza y quita diacríticos para slugs estables (soporta tildes/ñ)
-      const createSlug = (title: string) => {
-        return title
-          .normalize("NFD")
-          .replace(/\[\u0300-\ͯ]/g, "")
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "");
-      };
-
-      const projectsWithTitle = data.projects.filter(hasTitle);
-
-      // Página principal (index.html)
-      const indexHtml = `<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${data.personalInfo.fullName || "Portfolio"}</title>
-    <style>${tailwindCSS}</style>
-</head>
-<body class="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
-    <div class="container">
-        <header class="text-center mb-8">
-            <h1 class="text-4xl text-gray-900 mb-4">${
-              data.personalInfo.fullName || "Tu Nombre"
-            }</h1>
-            <p class="text-xl text-gray-600 mb-6">${
-              data.personalInfo.title || "Tu Título"
-            }</p>
-            ${
-              data.personalInfo.summary
-                ? `<p class="text-lg text-gray-600">${data.personalInfo.summary}</p>`
-                : ""
-            }
-        </header>
-
-        ${
-          projectsWithTitle.length > 0
-            ? `
-        <section class="mb-8">
-            <h2 class="text-2xl text-gray-900 mb-6 text-center">Proyectos</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                ${projectsWithTitle
-                  .map(
-                    (project) => `
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-lg text-gray-900 mb-4">${
-                          project.title
-                        }</h3>
-                        <p class="text-gray-600 mb-4">${
-                          project.description || ""
-                        }</p>
-                        
-                        ${
-                          project.technologies
-                            ? `
-                        <div class="mb-4">
-                            <div class="flex flex-wrap gap-2">
-                                ${project.technologies
-                                  .split(",")
-                                  .map(
-                                    (tech) => `
-                                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium bg-blue-100 text-blue-800">
-                                        <span>⚡</span>${tech.trim()}
-                                    </span>
-                                `
-                                  )
-                                  .join("")}
-                            </div>
-                        </div>
-                        `
-                            : ""
-                        }
-
-                        <div class="flex gap-4 mt-4">
-                            <a href="proyecto-${createSlug(
-                              project.title!
-                            )}.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg no-underline hover:bg-blue-700">
-                                Ver Detalles
-                            </a>
-                            ${
-                              project.link
-                                ? `
-                                <a href="${project.link}" target="_blank" rel="noopener noreferrer" class="border px-4 py-2 rounded-lg text-gray-700 no-underline hover:bg-gray-50">
-                                    Ver Proyecto
-                                </a>
-                            `
-                                : ""
-                            }
-                        </div>
-                    </div>
-                `
-                  )
-                  .join("")}
-            </div>
-        </section>
-        `
-            : ""
-        }
-
-        ${
-          data.skills.filter(
-            (s) => !!s.category && s.category.trim().length > 0
-          ).length > 0
-            ? `
-        <section class="mb-8">
-            <h2 class="text-2xl text-gray-900 mb-6 text-center">Habilidades</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                ${data.skills
-                  .filter((s) => !!s.category && s.category.trim().length > 0)
-                  .map(
-                    (skill) => `
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-lg text-gray-900 mb-4">${
-                          skill.category
-                        }</h3>
-                        <div class="flex flex-wrap gap-2">
-                            ${skill.items
-                              .split(",")
-                              .filter((item) => item.trim())
-                              .map(
-                                (item) => `
-                                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium bg-blue-100 text-blue-800">
-                                    <span>⭐</span>${item.trim()}
-                                </span>
-                            `
-                              )
-                              .join("")}
-                        </div>
-                    </div>
-                `
-                  )
-                  .join("")}
-            </div>
-        </section>
-        `
-            : ""
-        }
-    </div>
-</body>
-</html>`;
-
-      // Descargar index.html
-      downloadFile("index.html", indexHtml);
-
-      // Crear páginas de detalle para cada proyecto
-      projectsWithTitle.forEach((project, index) => {
-        const slug = createSlug(project.title!);
-        const projectHtml = `<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${project.title} - ${
-          data.personalInfo.fullName || "Portfolio"
-        }</title>
-    <style>${tailwindCSS}</style>
-</head>
-<body class="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
-    <div class="container">
-        <a href="index.html" class="back-link">← Volver al Portfolio</a>
-        
-        <header class="text-center mb-8">
-            <h1 class="text-4xl text-gray-900 mb-4">${project.title}</h1>
-            <p class="text-xl text-gray-600">${project.description || ""}</p>
-        </header>
-
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            ${
-              project.detailedDescription
-                ? `
-                <div class="mb-6">
-                    <h2 class="text-2xl text-gray-900 mb-4">Descripción Detallada</h2>
-                    <p class="text-gray-600">${project.detailedDescription}</p>
-                </div>
-            `
-                : ""
-            }
-
-            ${
-              project.technologies
-                ? `
-                <div class="mb-6">
-                    <h3 class="text-lg text-gray-900 mb-4">Tecnologías Utilizadas</h3>
-                    <div class="flex flex-wrap gap-2">
-                        ${project.technologies
-                          .split(",")
-                          .map(
-                            (tech) => `
-                            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full font-medium bg-blue-100 text-blue-800">
-                                <span>⚡</span>${tech.trim()}
-                            </span>
-                        `
-                          )
-                          .join("")}
-                    </div>
-                </div>
-            `
-                : ""
-            }
-
-            ${
-              project.features
-                ? `
-                <div class="mb-6">
-                    <h3 class="text-lg text-gray-900 mb-4">Características Principales</h3>
-                    <ul class="text-gray-600">
-                        ${project.features
-                          .split(",")
-                          .map((feature) => `<li>• ${feature.trim()}</li>`)
-                          .join("")}
-                    </ul>
-                </div>
-            `
-                : ""
-            }
-
-            ${
-              project.challenges
-                ? `
-                <div class="mb-6">
-                    <h3 class="text-lg text-gray-900 mb-4">Desafíos y Soluciones</h3>
-                    <p class="text-gray-600">${project.challenges}</p>
-                </div>
-            `
-                : ""
-            }
-
-            ${
-              project.instructions
-                ? `
-                <div class="mb-6">
-                    <h3 class="text-lg text-gray-900 mb-4">Instrucciones de Uso</h3>
-                    <pre class="bg-gray-100 p-4 rounded-lg text-gray-700 overflow-x-auto">${project.instructions}</pre>
-                </div>
-            `
-                : ""
-            }
-
-            <div class="flex gap-4 mt-6">
-                ${
-                  project.link
-                    ? `
-                    <a href="${project.link}" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white px-4 py-2 rounded-lg no-underline hover:bg-blue-700">
-                        🚀 Ver Proyecto Live
-                    </a>
-                `
-                    : ""
-                }
-                ${
-                  project.github
-                    ? `
-                    <a href="${project.github}" target="_blank" rel="noopener noreferrer" class="border px-4 py-2 rounded-lg text-gray-700 no-underline hover:bg-gray-50">
-                        📁 Ver Código
-                    </a>
-                `
-                    : ""
-                }
-            </div>
-        </div>
-    </div>
-</body>
-</html>`;
-
-        // Pequeño escalonado para que el navegador no bloquee múltiples descargas
-        setTimeout(() => {
-          downloadFile(`proyecto-${slug}.html`, projectHtml);
-        }, (index + 1) * 700);
+    console.log('🔍 DEBUG - Estado actual:');
+    console.log('- selectedTemplate:', selectedTemplate?.name);
+    console.log('- activeTemplate:', activeTemplate?.name);
+    console.log('- config:', config);
+    console.log('- config?.customizations?.sections:', config?.customizations?.sections);
+    
+    if (config?.customizations?.sections) {
+      console.log('📋 Secciones personalizadas:');
+      config.customizations.sections.forEach(section => {
+        console.log(`  ${section.id}: ${section.enabled ? 'HABILITADA' : 'DESHABILITADA'}`);
       });
-
-      // README con instrucciones
-      const readme = `# ${
-        data.personalInfo.fullName || "Portfolio"
-      } - Portfolio Completo
-
-Este portfolio incluye:
-- **index.html** - Página principal con todos los proyectos
-- **proyecto-*.html** - Páginas de detalle para cada proyecto
-
-## 🚀 Desplegar en GitHub Pages
-
-1. Crea un nuevo repositorio público en GitHub
-2. Sube **TODOS** los archivos HTML a la raíz del repositorio
-3. Ve a Settings → Pages → Deploy from branch → main
-4. Tu portfolio estará en: https://tu-usuario.github.io/nombre-repo
-
-## 🌐 Otras opciones de despliegue
-
-- **Netlify**: Arrastra todos los archivos HTML a netlify.com/drop
-- **Vercel**: Conecta tu repositorio a vercel.com
-- **Hosting tradicional**: Sube todos los archivos a tu servidor web
-
-## 📁 Archivos incluidos
-
-${projectsWithTitle
-  .map(
-    (project) =>
-      `- proyecto-${createSlug(project.title!)}.html - ${project.title}`
-  )
-  .join("\n")}
-
-¡Portfolio generado con Portfolio Generator!`;
-
-      setTimeout(() => {
-        downloadFile("README.md", readme);
-      }, (projectsWithTitle.length + 1) * 700);
-
-      alert(
-        `¡Sitio web completo exportado! Se han generado ${
-          1 + projectsWithTitle.length
-        } páginas HTML con todas las vistas de detalle.`
-      );
-    } catch (error) {
-      alert("Error al exportar sitio web: " + (error as Error).message);
+    } else {
+      console.log('⚠️ No hay secciones personalizadas, usando plantilla base');
+      if (activeTemplate?.sections) {
+        console.log('📋 Secciones de plantilla base:');
+        activeTemplate.sections.forEach(section => {
+          console.log(`  ${section.id}: ${section.enabled ? 'HABILITADA' : 'DESHABILITADA'}`);
+        });
+      }
     }
+
+    try {
+      const exporter = createTemplateAwareExporter(
+        data,
+        activeTemplate,
+        "multi",
+        config || undefined
+      );
+
+      const res = exporter.export();
+      console.log('✅ Resultado de exportación:', res);
+
+      if (!res.success) {
+        alert(res.message);
+        return;
+      }
+
+      if ("files" in res && (res as any).files) {
+        const files = (res as any).files as Record<string, string>;
+        const entries = Object.entries(files);
+
+        if (entries.length === 0) {
+          alert(`${res.message}\nNo se recibieron archivos para descargar.`);
+          return;
+        }
+
+        entries.forEach(([filename, content], idx) => {
+          setTimeout(() => downloadFile(filename, content), idx * 600);
+        });
+
+        alert(`${res.message}\nSe han generado ${entries.length} archivos.`);
+      } else {
+        alert(
+          `${res.message}\nEl exportador actual no expone 'files'. Usa "Exportar HTML" (single) o actualiza el exportador para devolver { files } en modo "multi".`
+        );
+      }
+    } catch (e: any) {
+      console.error('❌ Error en exportación:', e);
+      alert("Error al exportar sitio: " + (e?.message || e));
+    }
+  };
+
+  // ✅ FUNCIÓN PARA TESTING - Simular desmarcar "about"
+  const handleTestDisableAbout = () => {
+    if (!activeTemplate) return;
+    
+    console.log('🧪 TEST: Desmarcando sección "about"');
+    
+    // Crear copia de las secciones de la plantilla
+    const updatedSections = activeTemplate.sections.map(section => ({
+      ...section,
+      enabled: section.id === 'about' ? false : section.enabled
+    }));
+    
+    // Actualizar configuración
+    updateConfig({
+      customizations: {
+        ...config?.customizations,
+        sections: updatedSections
+      }
+    });
+    
+    console.log('✅ Sección "about" desmarcada. Nueva config:', {
+      sections: updatedSections
+    });
+  };
+
+  // ✅ FUNCIÓN PARA TESTING - Restablecer secciones
+  const handleTestRestoreSections = () => {
+    if (!activeTemplate) return;
+    
+    console.log('🔄 TEST: Restaurando secciones por defecto');
+    
+    updateConfig({
+      customizations: {
+        ...config?.customizations,
+        sections: undefined // Esto hará que use las secciones de la plantilla base
+      }
+    });
+    
+    console.log('✅ Secciones restauradas');
   };
 
   return (
@@ -582,11 +265,42 @@ ${projectsWithTitle
         </div>
       </div>
 
+      {/* ✅ PANEL DE DEBUGGING TEMPORAL */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+        <h3 className="font-medium text-yellow-800 mb-2">🧪 Panel de Testing</h3>
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={handleTestDisableAbout}
+            className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+          >
+            Desmarcar "About"
+          </button>
+          <button
+            onClick={handleTestRestoreSections}
+            className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+          >
+            Restaurar Secciones
+          </button>
+          <button
+            onClick={() => console.log('Estado actual:', { selectedTemplate, config })}
+            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+          >
+            Ver Estado
+          </button>
+        </div>
+        <div className="text-sm text-yellow-700">
+          <strong>Plantilla:</strong> {activeTemplate?.name}<br />
+          <strong>Config:</strong> {config ? 'Presente' : 'Nulo'}<br />
+          <strong>Secciones personalizadas:</strong> {config?.customizations?.sections ? 'Sí' : 'No'}
+        </div>
+      </div>
+
       <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
         {[
           { id: "personal" as const, label: "Personal", icon: Icons.User },
           { id: "projects" as const, label: "Proyectos", icon: Icons.Code },
           { id: "skills" as const, label: "Habilidades", icon: Icons.Award },
+          { id: "templates" as const, label: "Plantillas", icon: Icons.Settings },
         ].map((section) => (
           <button
             key={section.id}
@@ -628,10 +342,66 @@ ${projectsWithTitle
             onRemove={(index) => removeItem("skills", index)}
           />
         )}
+
+        {activeSection === "templates" && (
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h2 className="text-xl font-semibold mb-4">Configuración de Plantillas</h2>
+            
+            {/* Selector básico de plantillas */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Plantilla Actual: <strong>{activeTemplate?.name}</strong>
+              </label>
+              <p className="text-sm text-gray-600 mb-4">
+                {activeTemplate?.description}
+              </p>
+            </div>
+
+            {/* Control de secciones */}
+            <div>
+              <h3 className="text-lg font-medium mb-3">Secciones del Portfolio</h3>
+              <div className="space-y-2">
+                {activeTemplate?.sections.map((section) => {
+                  const isCustomized = !!config?.customizations?.sections;
+                  const currentSection = isCustomized 
+                    ? config.customizations.sections?.find(s => s.id === section.id) 
+                    : section;
+                  
+                  return (
+                    <label key={section.id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={currentSection?.enabled ?? section.enabled}
+                        onChange={(e) => {
+                          const updatedSections = (config?.customizations?.sections || activeTemplate.sections).map(s => 
+                            s.id === section.id 
+                              ? { ...s, enabled: e.target.checked }
+                              : s
+                          );
+                          
+                          updateConfig({
+                            customizations: {
+                              ...config?.customizations,
+                              sections: updatedSections
+                            }
+                          });
+                        }}
+                        className="mr-3"
+                      />
+                      <span className="text-sm">
+                        {section.name} 
+                        <span className="text-gray-500">({section.id})</span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default ModernPortfolioEditor;
-
