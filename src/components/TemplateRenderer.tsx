@@ -1,645 +1,719 @@
-// TemplateRenderer.tsx - COMPLETO Y FUNCIONAL
-import React, { useState, useEffect } from 'react';
-import { Template, TemplateConfig } from '../types/template-types';
-import { PortfolioData } from '../types/portfolio-types';
-import ProjectDetail from './ProjectDetail';
+// src/components/TemplateRenderer.tsx
+import React, { useMemo } from "react";
+import type { PortfolioData, Project } from "../types/portfolio-types";
+import type { TemplateSection } from "../types/template-types";
+import { useTemplates } from "./use-templates";
+import { TemplateTheme } from "./TemplateTheme";
+import { TechList } from "./TechIcons";
+import { getDefaultTemplate } from "./built-in-templates";
+import { Icons } from "./portfolio-icons";
+import ProjectDetailsModal from "./portfolio/ProjectDetailsModal";
 
-interface TemplateRendererProps {
-  template: Template;
-  config: TemplateConfig;
-  portfolioData: PortfolioData;
-  mode?: 'preview' | 'export' | 'full';
-}
-
-// Componente TechList con iconos completos
-const TechList: React.FC<{ 
-  technologies: string; 
-  variant?: 'default' | 'outlined'; 
-  template?: Template;
-  colors?: any;
-}> = ({ technologies, variant = 'default', template, colors }) => {
-  if (!technologies) return null;
-  
-  const techs = technologies.split(',').map(tech => tech.trim()).filter(tech => tech);
-  
-  const getTechIcon = (tech: string): string => {
-    const techLower = tech.toLowerCase();
-    
-    // Frontend Frameworks
-    if (techLower.includes('react')) return '⚛️';
-    if (techLower.includes('vue')) return '💚';
-    if (techLower.includes('angular')) return '🅰️';
-    if (techLower.includes('svelte')) return '🧡';
-    if (techLower.includes('next')) return '▲';
-    if (techLower.includes('nuxt')) return '💚';
-    
-    // Languages
-    if (techLower.includes('javascript') || techLower.includes('js')) return '💛';
-    if (techLower.includes('typescript') || techLower.includes('ts')) return '💙';
-    if (techLower.includes('python')) return '🐍';
-    if (techLower.includes('java')) return '☕';
-    if (techLower.includes('php')) return '🐘';
-    if (techLower.includes('c#') || techLower.includes('csharp')) return '💜';
-    if (techLower.includes('go') || techLower.includes('golang')) return '🐹';
-    if (techLower.includes('rust')) return '🦀';
-    if (techLower.includes('swift')) return '🍎';
-    if (techLower.includes('kotlin')) return '🟣';
-    
-    // Styling
-    if (techLower.includes('css')) return '🎨';
-    if (techLower.includes('sass') || techLower.includes('scss')) return '💗';
-    if (techLower.includes('tailwind')) return '🌊';
-    if (techLower.includes('bootstrap')) return '🅱️';
-    if (techLower.includes('material')) return '🎯';
-    
-    // Backend
-    if (techLower.includes('node')) return '💚';
-    if (techLower.includes('express')) return '🚀';
-    if (techLower.includes('django')) return '🎸';
-    if (techLower.includes('flask')) return '🌶️';
-    if (techLower.includes('laravel')) return '🔴';
-    if (techLower.includes('spring')) return '🍃';
-    if (techLower.includes('nestjs')) return '🐱';
-    
-    // Databases
-    if (techLower.includes('mongodb') || techLower.includes('mongo')) return '🍃';
-    if (techLower.includes('postgresql') || techLower.includes('postgres')) return '🐘';
-    if (techLower.includes('mysql')) return '🐬';
-    if (techLower.includes('redis')) return '🔴';
-    if (techLower.includes('sqlite')) return '💾';
-    if (techLower.includes('firebase')) return '🔥';
-    if (techLower.includes('supabase')) return '⚡';
-    
-    // DevOps & Tools
-    if (techLower.includes('docker')) return '🐳';
-    if (techLower.includes('kubernetes') || techLower.includes('k8s')) return '⚙️';
-    if (techLower.includes('aws')) return '☁️';
-    if (techLower.includes('azure')) return '☁️';
-    if (techLower.includes('gcp') || techLower.includes('google cloud')) return '☁️';
-    if (techLower.includes('git')) return '📦';
-    if (techLower.includes('github')) return '🐙';
-    if (techLower.includes('gitlab')) return '🦊';
-    if (techLower.includes('jenkins')) return '👨‍💼';
-    if (techLower.includes('linux')) return '🐧';
-    if (techLower.includes('nginx')) return '🌐';
-    if (techLower.includes('apache')) return '🪶';
-    
-    // Testing
-    if (techLower.includes('jest')) return '🃏';
-    if (techLower.includes('cypress')) return '🌲';
-    if (techLower.includes('selenium')) return '🔍';
-    if (techLower.includes('playwright')) return '🎭';
-    
-    // Mobile
-    if (techLower.includes('react native')) return '📱';
-    if (techLower.includes('flutter')) return '💙';
-    if (techLower.includes('ionic')) return '⚡';
-    
-    // Others
-    if (techLower.includes('graphql')) return '🔺';
-    if (techLower.includes('rest') || techLower.includes('api')) return '🔌';
-    if (techLower.includes('websocket')) return '🔄';
-    if (techLower.includes('ci/cd')) return '🔄';
-    if (techLower.includes('stripe')) return '💳';
-    if (techLower.includes('paypal')) return '💰';
-    
-    return '⚡';
-  };
-
-  const getStyle = () => {
-    if (variant === 'outlined') {
-      return {
-        backgroundColor: 'white',
-        border: `1px solid ${colors?.primary || '#3B82F6'}40`,
-        color: colors?.primary || '#3B82F6'
-      };
-    } else {
-      return {
-        backgroundColor: `${colors?.primary || '#3B82F6'}20`,
-        color: colors?.primary || '#3B82F6'
-      };
-    }
-  };
-  
-  return (
-    <>
-      {techs.map((tech, index) => (
-        <span
-          key={index}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105"
-          style={getStyle()}
-        >
-          <span className="text-base">{getTechIcon(tech)}</span>
-          {tech}
-        </span>
-      ))}
-    </>
-  );
+type Props = {
+  data: PortfolioData;
+  onOpenProject?: (p: Project) => void;
 };
 
-const TemplateRenderer: React.FC<TemplateRendererProps> = ({
-  template,
-  config,
-  portfolioData,
-  mode = 'preview'
-}) => {
-  // Estados para navegación de proyectos
-  const [currentView, setCurrentView] = useState<'portfolio' | 'project'>('portfolio');
-  const [currentProjectSlug, setCurrentProjectSlug] = useState<string>('');
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-
-  // Merge template colors with customizations
-  const colors = {
-    ...template.colors,
-    ...config.customizations?.colors
-  };
-  
-  const typography = {
-    ...template.typography,
-    fontFamily: {
-      ...template.typography.fontFamily,
-      ...config.customizations?.typography?.fontFamily
-    },
-    fontSize: {
-      ...template.typography.fontSize,
-      ...config.customizations?.typography?.fontSize
-    },
-    fontWeight: {
-      ...template.typography.fontWeight,
-      ...config.customizations?.typography?.fontWeight
-    }
-  };
-  
-  const layout = {
-    ...template.layout,
-    ...config.customizations?.layout
-  };
-
-  // Función para generar slug
-  const generateSlug = (title: string): string => {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-  };
-
-  // Navegación a proyecto individual
-  const navigateToProject = (projectSlug: string) => {
-    setCurrentProjectSlug(projectSlug);
-    setCurrentView('project');
-    if (mode === 'full') {
-      window.history.pushState({}, '', `?project=${projectSlug}`);
-    }
-  };
-
-  const navigateToPortfolio = () => {
-    setCurrentView('portfolio');
-    setCurrentProjectSlug('');
-    if (mode === 'full') {
-      window.history.pushState({}, '', window.location.pathname);
-    }
-  };
-
-  // Manejar navegación del browser
-  useEffect(() => {
-    if (mode !== 'full') return;
-
-    const handlePopState = () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const projectParam = urlParams.get('project');
-      
-      if (projectParam) {
-        setCurrentView('project');
-        setCurrentProjectSlug(projectParam);
-      } else {
-        setCurrentView('portfolio');
-        setCurrentProjectSlug('');
-      }
-    };
-
-    // Inicializar vista basada en URL actual
-    const urlParams = new URLSearchParams(window.location.search);
-    const projectParam = urlParams.get('project');
-    if (projectParam) {
-      setCurrentView('project');
-      setCurrentProjectSlug(projectParam);
-    }
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [mode]);
-
-  // Función para obtener ilustración por defecto para proyectos
-  const getDefaultIllustration = (title: string, description: string) => {
-    const titleLower = title.toLowerCase();
-    const descLower = description.toLowerCase();
-    
-    if (titleLower.includes('ecommerce') || titleLower.includes('shop') || titleLower.includes('store') || 
-        descLower.includes('comercio') || descLower.includes('tienda') || descLower.includes('venta')) {
-      return { gradient: 'from-purple-500 via-pink-500 to-red-500', emoji: '🛒' };
-    }
-    
-    if (titleLower.includes('task') || titleLower.includes('todo') || titleLower.includes('management') ||
-        descLower.includes('tareas') || descLower.includes('productividad') || descLower.includes('gestión')) {
-      return { gradient: 'from-blue-500 via-cyan-500 to-teal-500', emoji: '✅' };
-    }
-    
-    if (titleLower.includes('social') || titleLower.includes('chat') || titleLower.includes('message') ||
-        descLower.includes('social') || descLower.includes('chat') || descLower.includes('comunicación')) {
-      return { gradient: 'from-green-500 via-emerald-500 to-teal-500', emoji: '💬' };
-    }
-    
-    if (titleLower.includes('portfolio') || titleLower.includes('personal') || titleLower.includes('cv') ||
-        descLower.includes('portfolio') || descLower.includes('personal') || descLower.includes('currículum')) {
-      return { gradient: 'from-indigo-500 via-purple-500 to-pink-500', emoji: '👨‍💻' };
-    }
-    
-    if (titleLower.includes('blog') || titleLower.includes('cms') || titleLower.includes('content') ||
-        descLower.includes('blog') || descLower.includes('contenido') || descLower.includes('artículos')) {
-      return { gradient: 'from-orange-500 via-red-500 to-pink-500', emoji: '📝' };
-    }
-    
-    if (titleLower.includes('dashboard') || titleLower.includes('analytics') || titleLower.includes('admin') ||
-        descLower.includes('dashboard') || descLower.includes('analíticas') || descLower.includes('administración')) {
-      return { gradient: 'from-gray-600 via-gray-700 to-gray-900', emoji: '📊' };
-    }
-    
-    if (titleLower.includes('game') || titleLower.includes('juego') || titleLower.includes('entertainment') ||
-        descLower.includes('juego') || descLower.includes('entretenimiento') || descLower.includes('diversión')) {
-      return { gradient: 'from-yellow-500 via-orange-500 to-red-500', emoji: '🎮' };
-    }
-    
-    if (titleLower.includes('finance') || titleLower.includes('bank') || titleLower.includes('money') ||
-        descLower.includes('financ') || descLower.includes('banco') || descLower.includes('dinero')) {
-      return { gradient: 'from-green-600 via-emerald-600 to-teal-700', emoji: '💰' };
-    }
-    
-    if (titleLower.includes('api') || titleLower.includes('backend') || titleLower.includes('server')) {
-      return { gradient: 'from-slate-600 via-slate-700 to-slate-800', emoji: '🔌' };
-    }
-    
-    if (titleLower.includes('mobile') || titleLower.includes('app')) {
-      return { gradient: 'from-blue-600 via-indigo-600 to-purple-600', emoji: '📱' };
-    }
-    
-    return { gradient: 'from-cyan-500 via-blue-500 to-indigo-500', emoji: '🌐' };
-  };
-
-if (currentView === 'project') {
-  return (
-    <ProjectDetail
-      projectSlug={currentProjectSlug}
-      onBack={navigateToPortfolio}
-      portfolioData={portfolioData}
-    />
-  );
-}
-
-  // Generate CSS variables
-  const cssVariables = {
-    '--color-primary': colors.primary,
-    '--color-secondary': colors.secondary,
-    '--color-accent': colors.accent,
-    '--color-background': colors.background,
-    '--color-surface': colors.surface,
-    '--color-text-primary': colors.text.primary,
-    '--color-text-secondary': colors.text.secondary,
-    '--color-text-accent': colors.text.accent,
-    '--font-primary': typography.fontFamily.primary,
-    '--font-heading': typography.fontFamily.heading,
-    '--max-width': layout.maxWidth,
-    ...(colors.gradient && {
-      '--gradient-primary': `linear-gradient(${colors.gradient.direction || '135deg'}, ${colors.gradient.from}, ${colors.gradient.to})`
-    })
-  } as React.CSSProperties;
-
-  // Obtener configuración de secciones
-  const sections = config?.customizations?.sections || [
-    { id: 'header', name: 'Encabezado', enabled: true, order: 1 },
-    { id: 'about', name: 'Sobre mí', enabled: true, order: 2 },
-    { id: 'projects', name: 'Proyectos', enabled: true, order: 3 },
-    { id: 'skills', name: 'Habilidades', enabled: true, order: 4 }
-  ];
-
-  // Filtrar y ordenar secciones habilitadas
-  const enabledSections = sections
-    .filter(section => section.enabled)
-    .sort((a, b) => a.order - b.order);
-
-  // Funciones de renderizado para cada sección
-  const renderSection = (sectionId: string) => {
-    switch (sectionId) {
-      case 'header':
-        return (
-          <header 
-            key="header"
-            className="py-16 text-white text-center"
-            style={{
-              background: colors.gradient 
-                ? `linear-gradient(${colors.gradient.direction || '135deg'}, ${colors.gradient.from}, ${colors.gradient.to})`
-                : `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`
-            }}
+const Skeleton: React.FC = () => (
+  <div className="animate-pulse">
+    <div className="h-48 w-full bg-gray-200" />
+    <div className="max-w-5xl mx-auto p-6 space-y-4">
+      <div className="h-6 w-64 bg-gray-200 rounded" />
+      <div className="h-4 w-80 bg-gray-200 rounded" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className="bg-white rounded-lg shadow border p-4 space-y-2"
           >
-            <div style={{ maxWidth: layout.maxWidth, margin: '0 auto', padding: '0 1rem' }}>
-              <h1 
-                className="text-4xl font-bold mb-4"
-                style={{ fontFamily: typography.fontFamily.heading }}
-              >
-                {portfolioData.personalInfo.fullName}
-              </h1>
-              {portfolioData.personalInfo.tagline && (
-                <p className="text-xl opacity-90 mb-6">
-                  {portfolioData.personalInfo.tagline}
-                </p>
-              )}
-              <div className="flex justify-center gap-4 flex-wrap">
-                {portfolioData.personalInfo.email && (
-                  <a 
-                    href={`mailto:${portfolioData.personalInfo.email}`}
-                    className="bg-white bg-opacity-20 px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all"
-                  >
-                    📧 Email
-                  </a>
-                )}
-                {portfolioData.personalInfo.linkedin && (
-                  <a 
-                    href={portfolioData.personalInfo.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-white bg-opacity-20 px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all"
-                  >
-                    💼 LinkedIn
-                  </a>
-                )}
-                {portfolioData.personalInfo.github && (
-                  <a 
-                    href={portfolioData.personalInfo.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-white bg-opacity-20 px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all"
-                  >
-                    🐙 GitHub
-                  </a>
-                )}
-              </div>
-            </div>
-          </header>
-        );
+            <div className="h-32 bg-gray-100 rounded" />
+            <div className="h-5 w-40 bg-gray-200 rounded" />
+            <div className="h-4 w-56 bg-gray-100 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
-      case 'about':
-        return portfolioData.personalInfo.summary ? (
-          <section key="about" className="py-12" style={{ backgroundColor: colors.background }}>
-            <div style={{ maxWidth: layout.maxWidth, margin: '0 auto', padding: '0 1rem' }}>
-              <h2 
-                className="text-3xl font-bold text-center mb-8"
-                style={{ color: colors.text.primary, fontFamily: typography.fontFamily.heading }}
-              >
-                Sobre mí
-              </h2>
-              <div 
-                className="max-w-3xl mx-auto text-lg leading-relaxed"
-                style={{ color: colors.text.secondary }}
-              >
-                <p>{portfolioData.personalInfo.summary}</p>
-              </div>
-            </div>
-          </section>
-        ) : null;
+export const TemplateRenderer: React.FC<Props> = ({ data, onOpenProject }) => {
+  const { selectedTemplate, config } = useTemplates();
+  const safeTemplate = selectedTemplate ?? getDefaultTemplate();
+  const [selected, setSelected] = React.useState<Project | null>(null);
 
-      case 'skills':
-        return portfolioData.skills?.filter(s => s.category?.trim()).length > 0 ? (
-          <section key="skills" className="py-12" style={{ backgroundColor: colors.surface }}>
-            <div style={{ maxWidth: layout.maxWidth, margin: '0 auto', padding: '0 1rem' }}>
-              <h2 
-                className="text-3xl font-bold text-center mb-8"
-                style={{ color: colors.text.primary, fontFamily: typography.fontFamily.heading }}
-              >
-                Habilidades Técnicas
-              </h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {portfolioData.skills.filter(s => s.category?.trim()).map((skill, index) => (
-                  <div 
-                    key={index}
-                    className="p-6 rounded-lg shadow-md"
-                    style={{ 
-                      backgroundColor: colors.background,
-                      borderRadius: layout.borderRadius.lg
-                    }}
-                  >
-                    <h3 
-                      className="font-semibold mb-4"
-                      style={{ color: colors.text.primary }}
-                    >
-                      {skill.category}
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      <TechList 
-                        technologies={(skill as any).technologies || (skill as any).items || ''}
-                        variant="outlined"
-                        template={template}
-                        colors={colors}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        ) : null;
 
-      case 'projects':
-        return portfolioData.projects?.filter(p => p.title?.trim()).length > 0 ? (
-          <section key="projects" className="py-12" style={{ backgroundColor: colors.background }}>
-            <div style={{ maxWidth: layout.maxWidth, margin: '0 auto', padding: '0 1rem' }}>
-              <h2 
-                className="text-3xl font-bold text-center mb-8"
-                style={{ color: colors.text.primary, fontFamily: typography.fontFamily.heading }}
-              >
-                Proyectos Destacados
-              </h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {portfolioData.projects.filter(p => p.title?.trim()).map((project, index) => {
-                  const defaultIllustration = getDefaultIllustration(project.title, project.description);
-                  const hasCustomImage = project.image && project.image.trim();
-                  
-                  return (
-                    <div 
-                      key={index}
-                      className="rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group"
-                      style={{ 
-                        backgroundColor: colors.surface,
-                        borderRadius: layout.borderRadius.lg
-                      }}
-                    >
-                      {/* Imagen del proyecto o ilustración por defecto */}
-                      <div className="relative h-48 overflow-hidden">
-                        {hasCustomImage ? (
-                          <img 
-                            src={project.image} 
-                            alt={project.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div className={`w-full h-full bg-gradient-to-br ${defaultIllustration.gradient} flex items-center justify-center relative`}>
-                            <div className="absolute inset-0 opacity-10">
-                              <div className="absolute top-4 left-4 text-2xl">✨</div>
-                              <div className="absolute top-8 right-6 text-xl">⚡</div>
-                              <div className="absolute bottom-6 left-8 text-xl">💎</div>
-                              <div className="absolute bottom-4 right-4 text-2xl">🚀</div>
-                            </div>
-                            <div className="relative z-10 text-6xl group-hover:scale-110 transition-transform duration-300">
-                              {defaultIllustration.emoji}
-                            </div>
-                          </div>
-                        )}
-                        
-                        <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-gray-800 text-xs px-3 py-1 rounded-full font-medium shadow-lg">
-                          {hasCustomImage ? '📸 Proyecto' : '🎨 Demo'}
-                        </div>
-                      </div>
-                      
-                      <div className="p-6">
-                        <h3 
-                          className="text-xl font-semibold mb-2"
-                          style={{ color: colors.text.primary }}
-                        >
-                          {project.title}
-                        </h3>
-                        <p 
-                          className="mb-4"
-                          style={{ color: colors.text.secondary }}
-                        >
-                          {project.description}
-                        </p>
-                        {project.technologies && (
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            <TechList 
-                              technologies={project.technologies}
-                              template={template}
-                              colors={colors}
-                            />
-                          </div>
-                        )}
-                        <div className="flex gap-3 flex-wrap">
-                          <button
-                            onClick={() => navigateToProject(project.slug || generateSlug(project.title))}
-                            className="px-4 py-2 rounded transition-all text-white"
-                            style={{ 
-                              backgroundColor: colors.primary,
-                              borderRadius: layout.borderRadius.md
-                            }}
-                          >
-                            👁️ Ver Detalles
-                          </button>
-                          
-                          {project.liveUrl && (
-                            <a 
-                              href={project.liveUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-4 py-2 rounded transition-all text-white"
-                              style={{ 
-                                backgroundColor: colors.accent,
-                                borderRadius: layout.borderRadius.md
-                              }}
-                            >
-                              🚀 Ver Live
-                            </a>
-                          )}
-                          {project.repoUrl && (
-                            <a 
-                              href={project.repoUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-4 py-2 rounded border transition-all"
-                              style={{ 
-                                borderColor: colors.primary, 
-                                color: colors.primary,
-                                borderRadius: layout.borderRadius.md
-                              }}
-                            >
-                              📁 Código
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        ) : null;
+  // Nota: 'mergedForVars' se usa indirectamente por <TemplateTheme>, no lo borres
 
-      default:
-        return null;
+  // Fuente de secciones: prioridad a config.customizations.sections si existe
+  // Fuente de secciones con memo: prioriza config.customizations.sections si existe
+  const sectionsSource: TemplateSection[] = useMemo(() => {
+    const fromConfig = config?.customizations?.sections;
+    return (
+      (fromConfig && fromConfig.length ? fromConfig : safeTemplate.sections) ??
+      []
+    );
+  }, [safeTemplate, config?.customizations?.sections]);
+  
+  const normalizeSectionId = (raw?: string): string => {
+  const v = (raw || "").toLowerCase().trim();
+  if (v === "footer") return "contact";
+  if (v === "sobre-mi" || v === "aboutme" || v === "about-me" || v === "profile") return "about";
+  return v;
+};
+
+const isEnabled = (raw: unknown): boolean => {
+  if (raw === false || raw === 0 || raw === null) return false;
+  if (typeof raw === "string") {
+    const s = raw.trim().toLowerCase();
+    if (s === "false" || s === "0" || s === "no" || s === "off" || s === "disabled") return false;
+  }
+  // por defecto ON si no se especifica
+  return true;
+};
+
+
+  // Normalizar ids equivalentes y DEDUPLICAR (contact/footer) SIN perder 'props'
+  const sections: TemplateSection[] = useMemo(() => {
+  const map = new Map<string, TemplateSection>();
+
+  for (const s of sectionsSource) {
+    if (!s) continue;
+    if (!isEnabled((s as any).enabled)) continue;
+
+    const normId = normalizeSectionId(s.id);
+    const candidate: TemplateSection = {
+      ...s,
+      id: normId,
+      props: s.props ?? {},
+      order: typeof s.order === "number" ? s.order : 0,
+    };
+
+    const current = map.get(normId);
+    if (!current) {
+      map.set(normId, candidate);
+    } else {
+      map.set(normId, candidate.order < current.order ? candidate : current);
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) => a.order - b.order);
+}, [sectionsSource]);
+
+  const noUsableSections = sections.length === 0;
+
+  // ===== Renderers de secciones =====
+
+  const renderHeader = () => {
+  const handleProjectsClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
+    const el = document.getElementById("projects");
+    if (el) {
+      e.preventDefault();
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
+  const name = data.personalInfo.fullName || "Tu Portfolio";
+  const subtitle = data.personalInfo.title?.trim() || "";
+
   return (
-    <div 
-      className="min-h-screen"
-      style={{ 
-        ...cssVariables,
-        fontFamily: typography.fontFamily.primary,
-        backgroundColor: colors.background
+    <header
+      className="tpl-header tpl-header-bg"
+      aria-label="Encabezado del portafolio"
+      style={{
+        position: "relative",
+        isolation: "isolate",     // <- evita que el fondo/ola “sangre” a lo siguiente
+        overflow: "hidden",
+        paddingTop: "16px",
+        paddingBottom: "28px",   // altura reservada para la ola
+        marginBottom: "var(--sp-md)", // separación visual con la siguiente sección
       }}
     >
-      {/* Apply custom CSS if provided */}
-      {(config.customizations?.customCSS || template.customCSS) && (
-        <style>
-          {config.customizations?.customCSS || template.customCSS}
-        </style>
-      )}
-      
-      {/* Renderizar secciones según configuración */}
-      {enabledSections.map(section => renderSection(section.id))}
-      
-{/*       <footer 
-        className="py-8 text-center"
-        style={{ backgroundColor: colors.surface, color: colors.text.secondary }}
+      <div
+        className="tpl-container"
+        style={{ position: "relative", zIndex: 1, display: "grid", gap: "10px" }}
       >
-        <div style={{ maxWidth: layout.maxWidth, margin: '0 auto', padding: '0 1rem' }}>
-          <p>&copy; 2025 {portfolioData.personalInfo.fullName}. Todos los derechos reservados.</p>
-          <p className="mt-2 text-sm">
-            Portfolio con plantilla "{template.name}" • Creado con Portfolio Generator
-          </p>
-        </div>
-      </footer> */}
-      
-      {/* Modal para imagen ampliada */}
-      {selectedImage && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedImage(null)}
-        >
-          <div className="max-w-4xl max-h-full relative">
-            <img
-              src={selectedImage}
-              alt="Imagen ampliada"
-              className="max-w-full max-h-full object-contain"
-            />
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedImage(null);
+        {/* Títulos */}
+        <div style={{ display: "grid", gap: "6px" }}>
+          <h1
+            className="tpl-heading"
+            style={{
+              fontSize: "var(--fs-3xl)",
+              fontWeight: "var(--fw-bold)",
+              lineHeight: 1.1,
+              letterSpacing: "-0.02em",
+              color: "var(--text-on-primary, #fff)",
+              textShadow: "0 1px 1px rgb(0 0 0 / 0.15)",
+              margin: 0,
+            }}
+          >
+            {name}
+          </h1>
+
+          {subtitle && (
+            <p
+              className="tpl-subtext"
+              style={{
+                fontSize: "var(--fs-lg)",
+                opacity: 0.95,
+                color: "var(--text-on-primary, #fff)",
+                margin: 0,
               }}
-              className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300 bg-black bg-opacity-50 rounded-full w-8 h-8 flex items-center justify-center"
             >
-              ✕
-            </button>
-          </div>
+              {subtitle}
+            </p>
+          )}
         </div>
-      )}
-    </div>
+
+        {/* CTAs */}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: "6px" }}>
+          {data.personalInfo.email && (
+            <a
+              href={`mailto:${data.personalInfo.email}`}
+              className="tpl-btn-primary"
+              aria-label="Enviar email"
+            >
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <Icons.Mail size={16} aria-hidden />
+                <span>Contactar</span>
+              </span>
+            </a>
+          )}
+
+          <a
+            href="#projects"
+            onClick={handleProjectsClick}
+            className="tpl-btn-outline"
+            aria-label="Ir a proyectos"
+            style={{ borderColor: "var(--color-accent)" }}
+          >
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <Icons.Code size={16} aria-hidden />
+              <span>Ver proyectos</span>
+            </span>
+          </a>
+        </div>
+
+        {/* Redes */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: "6px" }}>
+          {data.personalInfo.github && (
+            <a
+              href={data.personalInfo.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tpl-chip"
+              aria-label="GitHub"
+              title="GitHub"
+            >
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <Icons.Github size={14} aria-hidden />
+                <span>GitHub</span>
+              </span>
+            </a>
+          )}
+          {data.personalInfo.linkedin && (
+            <a
+              href={data.personalInfo.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tpl-chip"
+              aria-label="LinkedIn"
+              title="LinkedIn"
+            >
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <Icons.Linkedin size={14} aria-hidden />
+                <span>LinkedIn</span>
+              </span>
+            </a>
+          )}
+          {data.personalInfo.website && (
+            <a
+              href={data.personalInfo.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tpl-chip"
+              aria-label="Sitio web"
+              title="Sitio web"
+            >
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <Icons.Globe size={14} aria-hidden />
+                <span>Web</span>
+              </span>
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* OLA (queda detrás gracias al z-index) */}
+      <svg
+        role="presentation"
+        aria-hidden="true"
+        viewBox="0 0 1440 120"
+        preserveAspectRatio="none"
+        style={{
+          position: "absolute",
+          left: 0,
+          bottom: 0,
+          width: "100%",
+          height: 32,
+          opacity: 0.15,
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      >
+        <path
+          d="M0,64 C240,128 480,0 720,32 C960,64 1200,176 1440,96 L1440,160 L0,160 Z"
+          fill="currentColor"
+        />
+      </svg>
+    </header>
   );
 };
 
-export default TemplateRenderer;
+
+  const renderAbout = () => {
+  const { summary } = data.personalInfo;
+  if (!summary) return null;
+
+  return (
+    <section
+      id="about"
+      style={{
+        position: "relative",
+        zIndex: 1,                       // <- asegura que esté por ENCIMA del header
+        background: "var(--surface, #fff)", // <- fuerza fondo de la sección
+        paddingTop: "var(--sp-lg)",
+        paddingBottom: "var(--sp-lg)",
+      }}
+    >
+      <div className="tpl-container">
+        <h2 className="tpl-heading" style={{ fontSize: "var(--fs-2xl)", marginBottom: "var(--sp-md)" }}>
+          Sobre mí
+        </h2>
+      </div>
+      <div className="tpl-container">
+        <div className="tpl-surface" style={{ padding: "var(--sp-md)" }}>
+          <p className="tpl-subtext" style={{ fontSize: "var(--fs-base)" }}>{summary}</p>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+
+  const renderProjects = () => {
+    if (!data.projects.some((p) => p.title?.trim())) return null;
+
+    const projectsSection = sections.find((s) => s.id === "projects");
+    const gridCols: number = Math.max(
+      2,
+      Math.min(4, Number(projectsSection?.props?.gridCols ?? 3))
+    );
+
+    return (
+      <section
+        id="projects"
+        style={{ paddingTop: "var(--sp-lg)", paddingBottom: "var(--sp-lg)" }}
+        aria-labelledby="projects-title"
+      >
+        <div className="tpl-container">
+          <h2
+            id="projects-title"
+            className="tpl-heading"
+            style={{ fontSize: "var(--fs-2xl)", marginBottom: "var(--sp-md)" }}
+          >
+            Proyectos
+          </h2>
+
+          <div
+            className="projects-grid"
+            style={{
+              display: "grid",
+              gap: "var(--sp-md)",
+              gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
+              alignItems: "stretch", // estira las tarjetas
+            }}
+          >
+            {data.projects
+              .filter((p) => p.title?.trim())
+              .map((p, idx) => (
+                <article
+                  key={idx}
+                  className="tpl-card"
+                  style={{
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%", // asegura tarjeta a toda la altura disponible
+                  }}
+                >
+                  {/* Media 16:9 */}
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      paddingTop: "56.25%",
+                      background: "var(--card-media-bg, rgba(0,0,0,.05))",
+                      flex: "0 0 auto",
+                    }}
+                  >
+                    {p.image ? (
+                      <img
+                        src={p.image}
+                        alt={p.title}
+                        loading="lazy"
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          display: "grid",
+                          placeItems: "center",
+                          fontSize: "var(--fs-lg)",
+                          opacity: 0.5,
+                        }}
+                        aria-hidden="true"
+                      >
+                        {p.title?.slice(0, 1) ?? "•"}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Contenido (ocupa el resto, botones al fondo) */}
+                  <div
+                    style={{
+                      padding: "var(--sp-md)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "var(--sp-sm)",
+                      flex: 1, // ocupa todo el alto restante
+                      minHeight: 0,
+                    }}
+                  >
+                    {/* Título debajo */}
+                    <h3
+                      className="tpl-heading"
+                      style={{ margin: 0, fontSize: "var(--fs-lg)" }}
+                    >
+                      {p.title}
+                    </h3>
+
+                    {/* Descripción */}
+                    {p.description && (
+                      <p
+                        className="tpl-subtext"
+                        style={{
+                          fontSize: "var(--fs-base)",
+                          margin: 0,
+                        }}
+                      >
+                        {p.description}
+                      </p>
+                    )}
+
+                    {/* Tech list */}
+                    {p.technologies && (
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 8,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <TechList
+                          technologies={p.technologies
+                            .split(",")
+                            .slice(0, 4)
+                            .join(",")}
+                          variant="minimal"
+                        />
+                      </div>
+                    )}
+
+                    {/* Botonera pegada abajo */}
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 8,
+                        flexWrap: "wrap",
+                        marginTop: "auto", // <-- clave: empuja a la parte baja
+                      }}
+                    >
+                      {onOpenProject && (
+                        <button
+                          className="tpl-btn-primary"
+                          onClick={() => setSelected(p)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            fontWeight: 600,
+                            lineHeight: 1.1,
+                          }}
+                        >
+                          <Icons.Code size={16} aria-hidden />
+                          <span>Ver detalles</span>
+                        </button>
+                      )}
+
+                      {p.link && (
+                        <a
+                          className="tpl-btn-outline"
+                          href={p.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            fontWeight: 600,
+                            lineHeight: 1.1,
+                            textDecoration: "none",
+                          }}
+                        >
+                          <Icons.Globe size={16} aria-hidden />
+                          <span>Live</span>
+                        </a>
+                      )}
+
+                      {p.github && (
+                        <a
+                          className="tpl-btn-outline"
+                          href={p.github}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            fontWeight: 600,
+                            lineHeight: 1.1,
+                            textDecoration: "none",
+                          }}
+                        >
+                          <Icons.Github size={16} aria-hidden />
+                          <span>Código</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))}
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  const renderSkills = () => {
+    if (!data.skills.some((s) => s.category.trim())) return null;
+
+    return (
+      <section
+        style={{ paddingTop: "var(--sp-lg)", paddingBottom: "var(--sp-lg)" }}
+      >
+        <div className="tpl-container">
+          <h2
+            className="tpl-heading"
+            style={{ fontSize: "var(--fs-2xl)", marginBottom: "var(--sp-md)" }}
+          >
+            Habilidades
+          </h2>
+
+          <div
+            style={{
+              display: "grid",
+              gap: "var(--sp-md)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              alignItems: "start",
+            }}
+          >
+            {data.skills
+              .filter((s) => s.category.trim())
+              .map((s, i) => (
+                <div
+                  key={i}
+                  className="tpl-surface"
+                  style={{
+                    padding: "var(--sp-md)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "var(--sp-sm)",
+                  }}
+                >
+                  <h3
+                    className="tpl-heading"
+                    style={{ fontSize: "var(--fs-lg)", margin: 0 }}
+                  >
+                    {s.category}
+                  </h3>
+
+                  {/* Usa tu TechList para que salgan los iconos de cada tecnología */}
+                  <TechList
+                    technologies={s.items}
+                    variant="minimal" // outlined | minimal | default
+                  />
+                </div>
+              ))}
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  const renderExperience = () => (
+    <section
+      style={{ paddingTop: "var(--sp-lg)", paddingBottom: "var(--sp-lg)" }}
+    >
+      <div className="tpl-container">
+        <h2
+          className="tpl-heading"
+          style={{ fontSize: "var(--fs-2xl)", marginBottom: "var(--sp-md)" }}
+        >
+          Experiencia
+        </h2>
+        <div className="tpl-surface" style={{ padding: "var(--sp-md)" }}>
+          <p className="tpl-subtext" style={{ fontSize: "var(--fs-base)" }}>
+            Añade tu experiencia profesional desde el editor.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+
+  // Pie de página — para 'contact' y 'footer' (ya deduplicados a 'contact')
+  const renderFooterLike = () => (
+    <footer
+      style={{
+        paddingTop: "var(--sp-lg)",
+        paddingBottom: "var(--sp-lg)",
+        background: "var(--color-primary)",
+        color: "white",
+      }}
+    >
+      <div className="tpl-container">
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          {data.personalInfo.email && (
+            <a
+              href={`mailto:${data.personalInfo.email}`}
+              className="tpl-btn-outline"
+              style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}
+            >
+              Email
+            </a>
+          )}
+          {data.personalInfo.github && (
+            <a
+              href={data.personalInfo.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tpl-btn-outline"
+              style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}
+            >
+              GitHub
+            </a>
+          )}
+          {data.personalInfo.linkedin && (
+            <a
+              href={data.personalInfo.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tpl-btn-outline"
+              style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}
+            >
+              LinkedIn
+            </a>
+          )}
+          {data.personalInfo.website && (
+            <a
+              href={data.personalInfo.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tpl-btn-outline"
+              style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}
+            >
+              Web
+            </a>
+          )}
+        </div>
+        <p
+          style={{
+            marginTop: "var(--sp-sm)",
+            opacity: 0.9,
+            fontSize: "var(--fs-sm)",
+          }}
+        >
+          © {new Date().getFullYear()}{" "}
+          {data.personalInfo.fullName || "Portfolio"}
+        </p>
+      </div>
+    </footer>
+  );
+
+  const renderUnknown = (name: string) => (
+    <section
+      style={{ paddingTop: "var(--sp-lg)", paddingBottom: "var(--sp-lg)" }}
+    >
+      <div className="tpl-container">
+        <h2
+          className="tpl-heading"
+          style={{ fontSize: "var(--fs-xl)", marginBottom: "var(--sp-sm)" }}
+        >
+          {name}
+        </h2>
+        <div className="tpl-surface" style={{ padding: "var(--sp-md)" }}>
+          <p className="tpl-subtext" style={{ fontSize: "var(--fs-base)" }}>
+            Esta sección no tiene un renderer específico aún. Puedes añadirlo
+            más tarde.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+
+  const renderById = (id: string, name: string) => {
+    switch (id) {
+      case "header":
+        return renderHeader();
+      case "about":
+        return renderAbout();
+      case "projects":
+        return renderProjects();
+      case "skills":
+        return renderSkills();
+      case "experience":
+        return renderExperience();
+      case "contact": // 'footer' ya se normaliza a 'contact'
+        return renderFooterLike();
+      default:
+        return renderUnknown(name);
+    }
+  };
+
+  return (
+    <TemplateTheme template={safeTemplate} config={config ?? undefined}>
+      {noUsableSections ? (
+        <Skeleton />
+      ) : (
+        sections.map((s) => (
+          <React.Fragment key={s.id}>{renderById(s.id, s.name)}</React.Fragment>
+        ))
+      )}
+      <ProjectDetailsModal project={selected} onClose={() => setSelected(null)} />
+
+    </TemplateTheme>
+  );
+};

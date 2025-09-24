@@ -1,318 +1,245 @@
-// Solo funciones TypeScript puras (sin JSX) - VERSIÓN COMPLETA DE ICONOS
-import { TECH_ICONS_CONFIG } from '../types/portfolio-types';
+// src/components/TechIcons.tsx
+import React from "react";
+// Logos de marcas (Simple Icons)
+import {
+  SiAstro,
+  SiBluetooth,
+  SiEspressif,
+  SiReact,
+  SiTailwindcss,
+} from "react-icons/si";
+// Iconos genéricos (lucide-react)
+import { Link2, Feather, Lightbulb, BarChart2 } from "lucide-react";
 
-// Configuración completa de iconos (expandida)
-const COMPLETE_TECH_ICONS: Record<string, { emoji: string; color?: string }> = {
-  // Frontend
-  'react': { emoji: '⚛️', color: '#61DAFB' },
-  'vue': { emoji: '💚', color: '#4FC08D' },
-  'angular': { emoji: '🅰️', color: '#DD0031' },
-  'html': { emoji: '🟧', color: '#E34F26' },
-  'html5': { emoji: '🟧', color: '#E34F26' },
-  'css': { emoji: '🎨', color: '#1572B6' },
-  'css3': { emoji: '🎨', color: '#1572B6' },
-  'javascript': { emoji: '💛', color: '#F7DF1E' },
-  'js': { emoji: '💛', color: '#F7DF1E' },
-  'typescript': { emoji: '💙', color: '#3178C6' },
-  'ts': { emoji: '💙', color: '#3178C6' },
-  'tailwind': { emoji: '🌊', color: '#06B6D4' },
-  'tailwindcss': { emoji: '🌊', color: '#06B6D4' },
-  'bootstrap': { emoji: '🅱️', color: '#7952B3' },
-  'sass': { emoji: '💗', color: '#CC6699' },
-  'scss': { emoji: '💗', color: '#CC6699' },
-  'less': { emoji: '💙', color: '#1D365D' },
-  'svelte': { emoji: '🧡', color: '#FF3E00' },
-  'nextjs': { emoji: '⚫', color: '#000000' },
-  'next': { emoji: '⚫', color: '#000000' },
-  'nuxt': { emoji: '💚', color: '#00DC82' },
-  'nuxtjs': { emoji: '💚', color: '#00DC82' },
-  'vite': { emoji: '⚡', color: '#646CFF' },
-  'webpack': { emoji: '📦', color: '#8DD6F9' },
-  'jquery': { emoji: '💙', color: '#0769AD' },
-  
-  // Backend
-  'nodejs': { emoji: '💚', color: '#339933' },
-  'node': { emoji: '💚', color: '#339933' },
-  'express': { emoji: '🚂', color: '#000000' },
-  'expressjs': { emoji: '🚂', color: '#000000' },
-  'python': { emoji: '🐍', color: '#3776AB' },
-  'java': { emoji: '☕', color: '#ED8B00' },
-  'php': { emoji: '🐘', color: '#777BB4' },
-  'csharp': { emoji: '#️⃣', color: '#239120' },
-  'c#': { emoji: '#️⃣', color: '#239120' },
-  'go': { emoji: '🐹', color: '#00ADD8' },
-  'golang': { emoji: '🐹', color: '#00ADD8' },
-  'rust': { emoji: '🦀', color: '#000000' },
-  'ruby': { emoji: '💎', color: '#CC342D' },
-  'cpp': { emoji: '⚙️', color: '#00599C' },
-  'c++': { emoji: '⚙️', color: '#00599C' },
-  'c': { emoji: '🔧', color: '#A8B9CC' },
-  'kotlin': { emoji: '🟣', color: '#7F52FF' },
-  'swift': { emoji: '🐦', color: '#FA7343' },
-  'scala': { emoji: '🔴', color: '#DC322F' },
-  'perl': { emoji: '🐪', color: '#39457E' },
-  'r': { emoji: '📊', color: '#276DC3' },
-  
-  // Frameworks
-  'laravel': { emoji: '🔴', color: '#FF2D20' },
-  'django': { emoji: '💚', color: '#092E20' },
-  'flask': { emoji: '🌶️', color: '#000000' },
-  'fastapi': { emoji: '⚡', color: '#009688' },
-  'spring': { emoji: '🌱', color: '#6DB33F' },
-  'springboot': { emoji: '🌱', color: '#6DB33F' },
-  'hibernate': { emoji: '🛠️', color: '#59666C' },
-  'dotnet': { emoji: '🔵', color: '#512BD4' },
-  '.net': { emoji: '🔵', color: '#512BD4' },
-  'rails': { emoji: '🚂', color: '#CC0000' },
-  'ember': { emoji: '🔥', color: '#E04E39' },
-  'meteor': { emoji: '☄️', color: '#DE4F4F' },
-  
-  // Databases
-  'mongodb': { emoji: '🍃', color: '#47A248' },
-  'mongo': { emoji: '🍃', color: '#47A248' },
-  'mysql': { emoji: '🐬', color: '#4479A1' },
-  'postgresql': { emoji: '🐘', color: '#336791' },
-  'postgres': { emoji: '🐘', color: '#336791' },
-  'redis': { emoji: '🔴', color: '#DC382D' },
-  'sqlite': { emoji: '💾', color: '#003B57' },
-  'sqlserver': { emoji: '🗄️', color: '#CC2927' },
-  'sql server': { emoji: '🗄️', color: '#CC2927' },
-  'oracle': { emoji: '🔶', color: '#F80000' },
-  'cassandra': { emoji: '🔸', color: '#1287B1' },
-  'elasticsearch': { emoji: '🔍', color: '#005571' },
-  'dynamodb': { emoji: '🛢️', color: '#4053D6' },
-  'firebase': { emoji: '🔥', color: '#FFCA28' },
-  'supabase': { emoji: '🟢', color: '#3ECF8E' },
-  
-  // Cloud & DevOps
-  'aws': { emoji: '☁️', color: '#FF9900' },
-  'azure': { emoji: '💙', color: '#0078D4' },
-  'gcp': { emoji: '☁️', color: '#4285F4' },
-  'google cloud': { emoji: '☁️', color: '#4285F4' },
-  'heroku': { emoji: '💜', color: '#430098' },
-  'vercel': { emoji: '▲', color: '#000000' },
-  'netlify': { emoji: '💚', color: '#00C7B7' },
-  'docker': { emoji: '🐳', color: '#2496ED' },
-  'kubernetes': { emoji: '☸️', color: '#326CE5' },
-  'k8s': { emoji: '☸️', color: '#326CE5' },
-  'jenkins': { emoji: '👨‍🔧', color: '#D33833' },
-  'github actions': { emoji: '🚀', color: '#2088FF' },
-  'gitlab ci': { emoji: '🦊', color: '#FCA326' },
-  'circleci': { emoji: '⭕', color: '#343434' },
-  'terraform': { emoji: '🏗️', color: '#623CE4' },
-  'ansible': { emoji: '🔴', color: '#EE0000' },
-  'vagrant': { emoji: '📦', color: '#1563FF' },
-  'nginx': { emoji: '🟢', color: '#009639' },
-  'apache': { emoji: '🪶', color: '#D22128' },
-  
-  // Version Control & Tools
-  'git': { emoji: '📝', color: '#F05032' },
-  'github': { emoji: '🐙', color: '#181717' },
-  'gitlab': { emoji: '🦊', color: '#FCA326' },
-  'bitbucket': { emoji: '💙', color: '#0052CC' },
-  'svn': { emoji: '📚', color: '#809CC9' },
-  'mercurial': { emoji: '☿️', color: '#999999' },
-  
-  // Testing
-  'jest': { emoji: '🃏', color: '#C21325' },
-  'mocha': { emoji: '☕', color: '#8D6748' },
-  'cypress': { emoji: '🌲', color: '#17202C' },
-  'selenium': { emoji: '🕷️', color: '#43B02A' },
-  'puppeteer': { emoji: '🎭', color: '#40B5A4' },
-  'playwright': { emoji: '🎭', color: '#2EAD33' },
-  'junit': { emoji: '☕', color: '#25A162' },
-  'pytest': { emoji: '🐍', color: '#0A9EDC' },
-  
-  // API & Communication
-  'rest': { emoji: '🔗', color: '#FF6C37' },
-  'rest api': { emoji: '🔗', color: '#FF6C37' },
-  'api': { emoji: '🔗', color: '#FF6C37' },
-  'graphql': { emoji: '💗', color: '#E10098' },
-  'websocket': { emoji: '🔌', color: '#000000' },
-  'grpc': { emoji: '🚀', color: '#244c5a' },
-  'soap': { emoji: '🧼', color: '#003366' },
-  'postman': { emoji: '📮', color: '#FF6C37' },
-  'insomnia': { emoji: '😴', color: '#4000BF' },
-  
-  // Mobile Development
-  'android': { emoji: '🤖', color: '#3DDC84' },
-  'ios': { emoji: '🍎', color: '#000000' },
-  'flutter': { emoji: '💙', color: '#02569B' },
-  'react native': { emoji: '⚛️', color: '#61DAFB' },
-  'xamarin': { emoji: '💙', color: '#3199DC' },
-  'ionic': { emoji: '⚡', color: '#3880FF' },
-  'cordova': { emoji: '📱', color: '#E8E8E8' },
-  
-  // Machine Learning & Data Science
-  'tensorflow': { emoji: '🧠', color: '#FF6F00' },
-  'pytorch': { emoji: '🔥', color: '#EE4C2C' },
-  'pandas': { emoji: '🐼', color: '#150458' },
-  'numpy': { emoji: '🔢', color: '#013243' },
-  'sklearn': { emoji: '🧠', color: '#F7931E' },
-  'scikit-learn': { emoji: '🧠', color: '#F7931E' },
-  'jupyter': { emoji: '📓', color: '#F37626' },
-  'matplotlib': { emoji: '📊', color: '#11557c' },
-  'seaborn': { emoji: '📈', color: '#4C72B0' },
-  'plotly': { emoji: '📊', color: '#3F4F75' },
-  'opencv': { emoji: '👁️', color: '#5C3EE8' },
-  'keras': { emoji: '🧠', color: '#D00000' },
-  
-  // Design & UI Tools
-  'figma': { emoji: '🎨', color: '#F24E1E' },
-  'sketch': { emoji: '💎', color: '#F7B500' },
-  'photoshop': { emoji: '🖼️', color: '#31A8FF' },
-  'illustrator': { emoji: '🎨', color: '#FF9A00' },
-  'xd': { emoji: '💜', color: '#FF61F6' },
-  'canva': { emoji: '🎨', color: '#00C4CC' },
-  'zeplin': { emoji: '🎯', color: '#F5A623' },
-  'invision': { emoji: '💗', color: '#FF3366' },
-  
-  // Business Intelligence & Analytics
-  'powerbi': { emoji: '📊', color: '#F2C811' },
-  'power bi': { emoji: '📊', color: '#F2C811' },
-  'tableau': { emoji: '📈', color: '#E97627' },
-  'excel': { emoji: '📗', color: '#217346' },
-  'google analytics': { emoji: '📊', color: '#E37400' },
-  'looker': { emoji: '👀', color: '#4285F4' },
-  'qlik': { emoji: '📊', color: '#009845' },
-  'databricks': { emoji: '🧱', color: '#FF3621' },
-  'snowflake': { emoji: '❄️', color: '#29B5E8' },
-  
-  // Game Development
-  'unity': { emoji: '🎮', color: '#000000' },
-  'unreal': { emoji: '🎮', color: '#0E1128' },
-  'godot': { emoji: '🎮', color: '#478CBF' },
-  'pygame': { emoji: '🐍', color: '#3776AB' },
-  'phaser': { emoji: '🎮', color: '#6A4C93' },
-  
-  // CMS & E-commerce
-  'wordpress': { emoji: '📝', color: '#21759B' },
-  'drupal': { emoji: '💧', color: '#0678BE' },
-  'joomla': { emoji: '🔵', color: '#5091CD' },
-  'shopify': { emoji: '🛒', color: '#7AB55C' },
-  'magento': { emoji: '🛒', color: '#EE672F' },
-  'woocommerce': { emoji: '🛒', color: '#96588A' },
-  'strapi': { emoji: '🚀', color: '#2E7EEA' },
-  'contentful': { emoji: '📄', color: '#2478CC' },
-  
-  // Other Tools & Technologies
-  'vscode': { emoji: '💙', color: '#007ACC' },
-  'vim': { emoji: '💚', color: '#019733' },
-  'intellij': { emoji: '🧠', color: '#000000' },
-  'atom': { emoji: '⚛️', color: '#66595C' },
-  'sublime': { emoji: '🎨', color: '#FF9800' },
-  'slack': { emoji: '💬', color: '#4A154B' },
-  'discord': { emoji: '💬', color: '#5865F2' },
-  'zoom': { emoji: '📹', color: '#2D8CFF' },
-  'notion': { emoji: '📝', color: '#000000' },
-  'confluence': { emoji: '💙', color: '#172B4D' },
-  'jira': { emoji: '💙', color: '#0052CC' },
-  'trello': { emoji: '📋', color: '#0079BF' },
-  'asana': { emoji: '🎯', color: '#F06A6A' },
-  'linear': { emoji: '📈', color: '#5E6AD2' },
-  
-  // Blockchain & Web3
-  'solidity': { emoji: '💎', color: '#363636' },
-  'ethereum': { emoji: '💎', color: '#627EEA' },
-  'bitcoin': { emoji: '₿', color: '#F7931A' },
-  'web3': { emoji: '🌐', color: '#F16822' },
-  'ipfs': { emoji: '🌐', color: '#65C2CB' },
-  'metamask': { emoji: '🦊', color: '#F6851B' },
-  
-  // Hardware & IoT
-  'esp32-c3': { emoji: '🔧', color: '#FF6600' },
-  'esp32': { emoji: '🔧', color: '#FF6600' },
-  'bl': { emoji: '📡', color: '#0066CC' },
-  'bluetooth': { emoji: '📡', color: '#0066CC' },
-  'tof vl53l1x': { emoji: '📏', color: '#666666' },
-  'vl53l1x': { emoji: '📏', color: '#666666' },
-  'tof': { emoji: '📏', color: '#666666' },
-  'ws2812': { emoji: '🌈', color: '#FF0080' },
-  'lipo': { emoji: '🔋', color: '#00AA00' },
-  'tp4056': { emoji: '⚡', color: '#FF4400' },
-  'impresión 3d': { emoji: '🖨️', color: '#FF6600' },
-  '3d printing': { emoji: '🖨️', color: '#FF6600' },
-  'arduino': { emoji: '🔧', color: '#00979D' },
-  'esp-idf': { emoji: '⚙️', color: '#E7352C' },
-  'idf': { emoji: '⚙️', color: '#E7352C' },
-  
-  // UI/Component Libraries específicas
-  'shadcn/ui': { emoji: '🎨', color: '#000000' },
-  'shadcn': { emoji: '🎨', color: '#000000' },
-  'lucide-react': { emoji: '✨', color: '#F56565' },
-  'lucide': { emoji: '✨', color: '#F56565' },
-  'livekit': { emoji: '📹', color: '#0055FF' },
-  'recharts': { emoji: '📊', color: '#8884D8' },
-  'proxmox': { emoji: '☁️', color: '#E57000' },
-  'websockets': { emoji: '🔌', color: '#010101' },
-  
-  // Protocolos & Standards
-  'http': { emoji: '🌐', color: '#005A9C' },
-  'https': { emoji: '🔒', color: '#00AA00' },
-  'tcp/ip': { emoji: '📡', color: '#0066CC' },
-  'mqtt': { emoji: '📡', color: '#660066' },
-  'i2c': { emoji: '🔌', color: '#666666' },
-  'spi': { emoji: '🔌', color: '#666666' },
-  'uart': { emoji: '📡', color: '#666666' },
-  'can': { emoji: '🚗', color: '#FF6600' },
-  'modbus': { emoji: '🏭', color: '#0066CC' },
-  
-  // Default fallback
-  'default': { emoji: '⚡', color: '#6366F1' },
+/* --------------------------- Normalización ES5-safe --------------------------- */
+const DIACRITICS_RE = /[\u0300-\u036f]/g;
+
+const normalizeTech = (raw: string): string => {
+  const safeNormalize = (s: string) =>
+    typeof (s as any).normalize === "function" ? s.normalize("NFD") : s;
+
+  let s = safeNormalize((raw || "").toLowerCase())
+    .replace(DIACRITICS_RE, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // aliases comunes
+  s = s.replace(/^node\.?\s*js$/, "nodejs");
+  s = s.replace(/^js$/, "javascript");
+  s = s.replace(/^ts$/, "typescript");
+  s = s.replace(/^postgres(?:ql)?$/, "postgresql");
+  s = s.replace(/^sql\s*server$/, "sqlserver");
+  s = s.replace(/^maria\s*db$/, "mariadb");
+  s = s.replace(/^spring\s*boot$/, "spring");
+  s = s.replace(/^c\+{2}$/, "cpp");
+  s = s.replace(/^c#$/, "csharp");
+  s = s.replace(/^express\.?js$/, "express");
+  s = s.replace(/^amazon web services|aws cloud$/, "aws");
+
+  // nuevos aliases
+  s = s.replace(/^astro\.?js$/, "astro");
+  s = s.replace(/^power\s*bi$/, "powerbi");
+  s = s.replace(/^(api\s*rest|rest\s*api|rest)$/, "restapi");
+
+  s = s.replace(/^bluetooth(\s*low\s*energy)?$|^ble$/, "bluetooth");
+  s = s.replace(/^esp32(?:-c3)?$/, "esp32");
+  s = s.replace(/^esp8266$/, "esp8266");
+  s = s.replace(/^espressif$/, "espressif");
+  s = s.replace(/^ws2812b?$/, "ws2812");
+  s = s.replace(/^tof(\s*vl53l1x)?$|^vl53l1x$/, "vl53l1x");
+
+  s = s.replace(/^tailwind\s*css$/, "tailwindcss");
+  s = s.replace(/^shadcn(?:\/ui)?$/, "shadcnui");
+  s = s.replace(/^lucide(?:-react)?$/, "lucide");
+
+  return s;
 };
 
-// Funciones originales para tecnologías (usando la configuración expandida)
+/* ------------------------------- Emojis fallback ------------------------------ */
+const TECH_EMOJI: Record<string, string> = {
+  // Web base
+  html: "🟧",
+  css: "🎨",
+  javascript: "💛",
+  typescript: "💙",
+  sass: "🎀",
+  tailwindcss: "🌊",
+  bootstrap: "🅱️",
+
+  // Frameworks / libs
+  react: "⚛️",
+  vue: "💚",
+  angular: "🅰️",
+  nodejs: "💚",
+  express: "🚂",
+
+  // Lenguajes
+  python: "🐍",
+  java: "☕",
+  php: "🐘",
+  cpp: "➕",
+  csharp: "♯",
+
+  // Bases de datos
+  mysql: "🐬",
+  mariadb: "🦭",
+  postgresql: "🐘",
+  sqlite: "🗃️",
+  redis: "🔴",
+  sqlserver: "🗄️",
+  mongodb: "🍃",
+
+  // DevOps / Sistemas
+  git: "📦",
+  docker: "🐳",
+  linux: "🐧",
+  nginx: "🚦",
+  grafana: "📊",
+  zabbix: "📈",
+  aws: "☁️",
+  spring: "🍃",
+  flask: "🧪",
+
+  // Nuevos / hardware / ui
+  astro: "🪐",
+  powerbi: "📈",
+  restapi: "🔗",
+  bluetooth: "🟦",
+  esp32: "📶",
+  esp8266: "📶",
+  espressif: "📶",
+  ws2812: "💡",
+  vl53l1x: "📡",
+  shadcnui: "🧩",
+  lucide: "✒️",
+
+  default: "⚡",
+};
+
+/* ----------------------------- Adaptadores de icono ----------------------------- */
+// Tipo compatible con ambas librerías
+type IconComp = (props: { size?: number | string; className?: string }) => JSX.Element;
+
+// Envoltorio para un componente de icono cualquiera (lucide o react-icons)
+const wrapIcon =
+  (C: any): IconComp =>
+  ({ size = 14, className }) =>
+    <C size={size as any} className={className} />;
+
+/* ----------------------------- SVGs (si disponibles) ----------------------------- */
+const TECH_SVG: Record<string, IconComp> = {
+  astro: wrapIcon(SiAstro),
+  powerbi: wrapIcon(BarChart2), // fallback estable
+  restapi: wrapIcon(Link2),
+
+  // marcas nuevas
+  bluetooth: wrapIcon(SiBluetooth),
+  espressif: wrapIcon(SiEspressif), // para esp32/espressif
+  esp32: wrapIcon(SiEspressif),
+  react: wrapIcon(SiReact),
+  tailwindcss: wrapIcon(SiTailwindcss),
+  lucide: wrapIcon(Feather),
+  ws2812: wrapIcon(Lightbulb),
+  // vl53l1x -> sin marca; dejará emoji 📡
+};
+
+/* ------------------------------- API pública -------------------------------- */
 export const getSimpleTechIcon = (tech: string): string => {
-  const normalized = tech.toLowerCase().trim()
-    .replace(/\s+/g, ' ')
-    .replace(/\.js$/, '')
-    .replace(/\.net$/, 'dotnet');
-  
-  const iconConfig = COMPLETE_TECH_ICONS[normalized] || 
-                    TECH_ICONS_CONFIG[normalized] || 
-                    COMPLETE_TECH_ICONS.default;
-  
-  return iconConfig.emoji;
+  const key = normalizeTech(tech);
+  return TECH_EMOJI[key] || TECH_EMOJI.default;
 };
 
 export const renderTechBadge = (tech: string): string => {
-  const icon = getSimpleTechIcon(tech);
-  const cleanTech = tech.trim();
-  
-  return `<span class="tech-badge">${icon} ${cleanTech}</span>`;
+  return `<span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+    <span>${getSimpleTechIcon(tech)}</span>
+    ${tech.trim()}
+  </span>`;
 };
 
 export const renderTechList = (technologies: string): string => {
-  if (!technologies) return '';
-  
+  if (!technologies) return "";
   return technologies
-    .split(',')
-    .filter(tech => tech.trim())
-    .map(tech => renderTechBadge(tech))
-    .join('');
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .map((t) => renderTechBadge(t))
+    .join(" ");
 };
 
-// Funciones para habilidades
+/* --------- (Opcional) habilidades “blandas” con emoji por nombre ---------- */
 export const getSkillIcon = (skill: string): string => {
-  const normalized = skill.toLowerCase().trim();
-  const iconConfig = TECH_ICONS_CONFIG[normalized];
-  
-  return iconConfig ? iconConfig.emoji : TECH_ICONS_CONFIG.default.emoji;
+  const s = normalizeTech(skill);
+  const skillIcons: Record<string, string> = {
+    comunicacion: "💬",
+    liderazgo: "🧭",
+    "trabajo en equipo": "👥",
+    programacion: "💻",
+    creatividad: "🎨",
+    organizacion: "📋",
+    default: "⭐",
+  };
+  return skillIcons[s] || skillIcons.default;
 };
 
 export const renderSkillBadge = (skill: string): string => {
-  const icon = getSkillIcon(skill);
-  const cleanSkill = skill.trim();
-  
-  return `<span class="skill-badge">${icon} ${cleanSkill}</span>`;
+  return `<span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+    <span>${getSkillIcon(skill)}</span>
+    ${skill.trim()}
+  </span>`;
 };
 
 export const renderSkillList = (skills: string): string => {
-  if (!skills) return '';
-  
+  if (!skills) return "";
   return skills
-    .split(',')
-    .filter(skill => skill.trim())
-    .map(skill => renderSkillBadge(skill))
-    .join('');
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => renderSkillBadge(s))
+    .join(" ");
+};
+
+interface TechListProps {
+  technologies: string;
+  variant?: "default" | "outlined" | "minimal";
+  className?: string;
+}
+
+/* ------------------------- Lista React con icono SVG ------------------------ */
+export const TechList: React.FC<TechListProps> = ({
+  technologies,
+  variant = "default",
+  className = "",
+}) => {
+  if (!technologies) return null;
+  const techs = technologies
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  const base =
+    variant === "outlined" || variant === "minimal"
+      ? "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+      : "bg-blue-100 text-blue-800 hover:bg-blue-200";
+
+  return (
+    <div className={`flex flex-wrap gap-2 ${className}`}>
+      {techs.map((tech, i) => {
+        const key = normalizeTech(tech);
+        const Svg = TECH_SVG[key];
+        return (
+          <span
+            key={`${key}-${i}`}
+            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors ${base}`}
+          >
+            {Svg ? (
+              <Svg size={14} className="shrink-0" />
+            ) : (
+              <span className="shrink-0">{getSimpleTechIcon(tech)}</span>
+            )}
+            {tech}
+          </span>
+        );
+      })}
+    </div>
+  );
 };
