@@ -22,20 +22,20 @@ interface Props {
 
 type CustomizerTab = 'layout' | 'colors' | 'typography' | 'sections' | 'advanced';
 
-const AREA_KEYS: LayoutArea[] = ['header','sidebar-left','sidebar-right','main','footer','floating'];
+const AREA_KEYS: LayoutArea[] = ['header', 'sidebar-left', 'sidebar-right', 'main', 'footer', 'floating'];
 
-// merge local sólo para previsualizar dentro del customizer
+// ===== mergeLayoutStructure (seguro) =====
 function mergeLayoutStructure(
   base: TemplateLayoutStructure,
   custom?: TemplateLayoutStructurePatch
 ): TemplateLayoutStructure {
-  const baseAreas = (base.areas ?? {}) as Required<TemplateLayoutStructure>['areas'];
+  const baseAreas = (base?.areas ?? {}) as Required<TemplateLayoutStructure>['areas'];
   const mergedAreas = AREA_KEYS.reduce((acc, key) => {
-    acc[key] = { ...baseAreas[key], ...(custom?.areas?.[key] ?? {}) };
+    acc[key] = { ...(baseAreas?.[key] ?? {}), ...(custom?.areas?.[key] ?? {}) };
     return acc;
   }, {} as Required<TemplateLayoutStructure>['areas']);
 
-  const baseResp = base.responsive ?? { mobile: 'stack', tablet: 'full' as const };
+  const baseResp = base?.responsive ?? ({ mobile: 'stack', tablet: 'full' } as const);
   const responsive = custom?.responsive
     ? {
         mobile: custom.responsive.mobile ?? baseResp.mobile,
@@ -44,14 +44,14 @@ function mergeLayoutStructure(
     : baseResp;
 
   return {
-    ...base,
-    type: custom?.type ?? base.type,
+    ...(base ?? {}),
+    type: custom?.type ?? base?.type,
     areas: mergedAreas,
     responsive,
   };
 }
 
-// ColorPicker
+// ===== ColorPicker =====
 const ColorPicker: React.FC<{
   label: string;
   value: string;
@@ -63,8 +63,19 @@ const ColorPicker: React.FC<{
     <div className="space-y-2">
       <label className="block text-xs font-medium text-gray-700">{label}</label>
       <div className="flex items-center gap-2">
-        <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="w-8 h-8 rounded border border-gray-300 cursor-pointer" />
-        <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className="flex-1 px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500" placeholder="#000000" />
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-8 h-8 rounded border border-gray-300 cursor-pointer"
+        />
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1 px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="#000000"
+        />
         {presets && (
           <button onClick={() => setShowPresets(!showPresets)} className="p-1 text-gray-400 hover:text-gray-600">
             <Icons.ChevronDown size={14} />
@@ -74,7 +85,13 @@ const ColorPicker: React.FC<{
       {showPresets && presets && (
         <div className="grid grid-cols-6 gap-1 p-2 border rounded bg-gray-50">
           {presets.map((preset) => (
-            <button key={preset} onClick={() => onChange(preset)} className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform" style={{ backgroundColor: preset }} title={preset} />
+            <button
+              key={preset}
+              onClick={() => onChange(preset)}
+              className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
+              style={{ backgroundColor: preset }}
+              title={preset}
+            />
           ))}
         </div>
       )}
@@ -82,7 +99,7 @@ const ColorPicker: React.FC<{
   );
 };
 
-// TypographyControls
+// ===== TypographyControls =====
 const TypographyControls: React.FC<{
   typography: any;
   onChange: (typography: any) => void;
@@ -102,21 +119,29 @@ const TypographyControls: React.FC<{
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Fuente Principal</label>
           <select
-            value={typography.fontFamilies?.primary || ''}
-            onChange={(e) => onChange({ ...typography, fontFamilies: { ...typography.fontFamilies, primary: e.target.value } })}
+            value={typography?.fontFamilies?.primary || ''}
+            onChange={(e) => onChange({ ...typography, fontFamilies: { ...(typography?.fontFamilies ?? {}), primary: e.target.value } })}
             className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
           >
-            {fontFamilies.map((font) => <option key={font.value} value={font.value}>{font.name}</option>)}
+            {fontFamilies.map((font) => (
+              <option key={font.value} value={font.value}>
+                {font.name}
+              </option>
+            ))}
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Fuente de Títulos</label>
           <select
-            value={typography.fontFamilies?.heading || ''}
-            onChange={(e) => onChange({ ...typography, fontFamilies: { ...typography.fontFamilies, heading: e.target.value } })}
+            value={typography?.fontFamilies?.heading || ''}
+            onChange={(e) => onChange({ ...typography, fontFamilies: { ...(typography?.fontFamilies ?? {}), heading: e.target.value } })}
             className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
           >
-            {fontFamilies.map((font) => <option key={font.value} value={font.value}>{font.name}</option>)}
+            {fontFamilies.map((font) => (
+              <option key={font.value} value={font.value}>
+                {font.name}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -129,8 +154,8 @@ const TypographyControls: React.FC<{
               <label className="block text-xs text-gray-600 mb-1">{size}</label>
               <input
                 type="text"
-                value={typography.fontSizes?.[size] || ''}
-                onChange={(e) => onChange({ ...typography, fontSizes: { ...typography.fontSizes, [size]: e.target.value } })}
+                value={typography?.fontSizes?.[size] || ''}
+                onChange={(e) => onChange({ ...typography, fontSizes: { ...(typography?.fontSizes ?? {}), [size]: e.target.value } })}
                 className="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-blue-500"
                 placeholder="1rem"
               />
@@ -142,6 +167,79 @@ const TypographyControls: React.FC<{
   );
 };
 
+// ===== SpacingControls =====
+const SpacingControls: React.FC<{
+  spacing: any;
+  onChange: (spacing: any) => void;
+}> = ({ spacing, onChange }) => {
+  const keys = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'] as const;
+
+  const parseLen = (v?: string): { num: number; unit: 'px' | 'rem' } => {
+    if (!v) return { num: 0, unit: 'px' };
+    const s = String(v).trim().toLowerCase();
+    if (s.endsWith('rem')) {
+      const n = parseFloat(s.slice(0, -3));
+      return { num: isNaN(n) ? 0 : n, unit: 'rem' };
+    }
+    if (s.endsWith('px')) {
+      const n = parseFloat(s.slice(0, -2));
+      return { num: isNaN(n) ? 0 : n, unit: 'px' };
+    }
+    const n = parseFloat(s);
+    return { num: isNaN(n) ? 0 : n, unit: 'px' };
+  };
+
+  const formatLen = (num: number, unit: 'px' | 'rem') => (unit === 'rem' ? `${Number(num.toFixed(2))}rem` : `${Math.round(num)}px`);
+
+  return (
+    <div className="space-y-3">
+      <h4 className="text-sm font-medium text-gray-700">Espaciado</h4>
+
+      <div className="space-y-4">
+        {keys.map((k) => {
+          const raw = spacing?.[k];
+          const { num, unit } = parseLen(raw);
+
+          const min = unit === 'rem' ? 0.25 : 0;
+          const max = unit === 'rem' ? 6 : 64;
+          const step = unit === 'rem' ? 0.05 : 1;
+
+          return (
+            <div key={k} className="grid grid-cols-6 items-center gap-3">
+              <label className="col-span-1 block text-xs text-gray-600">{k}</label>
+
+              <input
+                type="range"
+                aria-label={`Espaciado ${k}`}
+                className="col-span-4 w-full"
+                min={min}
+                max={max}
+                step={step}
+                value={num}
+                onChange={(e) => {
+                  const nextNum = parseFloat(e.target.value);
+                  const next = {
+                    ...(spacing ?? {}),
+                    [k]: formatLen(nextNum, unit),
+                  };
+                  onChange(next);
+                }}
+              />
+
+              <div className="col-span-1 text-right text-xs text-gray-600 tabular-nums">{formatLen(num, unit)}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-[11px] text-gray-500 mt-1">
+        El control deslizante mantiene la <b>unidad actual</b> de cada tamaño (<code>px</code> o <code>rem</code>). Si no hay unidad, se asume <code>px</code>.
+      </p>
+    </div>
+  );
+};
+
+// ===== Componente principal =====
 export const AdvancedTemplateCustomizer: React.FC<Props> = ({
   template,
   config,
@@ -154,41 +252,66 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
   const [activeTab, setActiveTab] = useState<CustomizerTab>('layout');
   const [hasChanges, setHasChanges] = useState(false);
 
-  const currentConfig = useMemo(() => ({
-    ...config,
-    customizations: {
-      ...config.customizations,
-      colors: { ...template.colors, ...config.customizations.colors },
-      typography: { ...template.typography, ...config.customizations.typography },
-      sections: config.customizations.sections || template.sections,
-    }
-  }), [config, template]);
-
-  const updateConfig = useCallback((updates: Partial<AdvancedTemplateConfig['customizations']>) => {
-    const newConfig: AdvancedTemplateConfig = {
-      ...currentConfig,
+  const currentConfig = useMemo(
+    () => ({
+      ...config,
       customizations: {
-        ...currentConfig.customizations,
-        ...updates,
+        ...config.customizations,
+        layout: { ...(template?.layout ?? {}), ...(config?.customizations?.layout ?? {}) },
+        colors: { ...(template?.colors ?? {}), ...(config?.customizations?.colors ?? {}) },
+        typography: { ...(template?.typography ?? {}), ...(config?.customizations?.typography ?? {}) },
+        sections: config?.customizations?.sections ?? (template?.sections ?? []),
       },
-      lastModified: new Date().toISOString(),
-    };
-    onConfigChange(newConfig);
-    setHasChanges(true);
-  }, [currentConfig, onConfigChange]);
+    }),
+    [config, template]
+  );
 
-  const updateColors = useCallback((colorUpdates: any) => {
-    updateConfig({ colors: { ...currentConfig.customizations.colors, ...colorUpdates } });
-  }, [currentConfig.customizations.colors, updateConfig]);
+  const updateConfig = useCallback(
+    (updates: Partial<AdvancedTemplateConfig['customizations']>) => {
+      const newConfig: AdvancedTemplateConfig = {
+        ...currentConfig,
+        customizations: {
+          ...currentConfig.customizations,
+          ...updates,
+        },
+        lastModified: new Date().toISOString(),
+      };
+      onConfigChange(newConfig);
+      setHasChanges(true);
+    },
+    [currentConfig, onConfigChange]
+  );
 
-  const updateSections = useCallback((sections: Section[]) => {
-    updateConfig({ sections });
-  }, [updateConfig]);
+  const updateColors = useCallback(
+    (colorUpdates: any) => {
+      updateConfig({ colors: { ...(currentConfig.customizations.colors ?? {}), ...(colorUpdates ?? {}) } });
+    },
+    [currentConfig.customizations.colors, updateConfig]
+  );
+
+  const updateSections = useCallback(
+    (sections: Section[]) => {
+      updateConfig({ sections });
+    },
+    [updateConfig]
+  );
 
   // Estructura efectiva para el tab "layout"
-  const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
-    return mergeLayoutStructure(template.layoutStructure, currentConfig.customizations.layoutStructure);
-  }, [template.layoutStructure, currentConfig.customizations.layoutStructure]);
+const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
+  const baseLS: TemplateLayoutStructure =
+    template?.layoutStructure ??
+    {
+      type: 'grid' as TemplateLayoutStructure['type'],
+      areas: {} as TemplateLayoutStructure['areas'],
+      responsive: {
+        mobile: 'stack',
+        tablet: 'full',
+      } as TemplateLayoutStructure['responsive'],
+    };
+
+  return mergeLayoutStructure(baseLS, currentConfig.customizations.layoutStructure);
+}, [template?.layoutStructure, currentConfig.customizations.layoutStructure]);
+
 
   const colorPresets = ['#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#EF4444', '#F59E0B', '#10B981', '#06B6D4', '#84CC16', '#6B7280'];
 
@@ -197,19 +320,35 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
     { id: 'colors', label: 'Colores', icon: Icons.Palette },
     { id: 'typography', label: 'Tipografía', icon: Icons.Type },
     { id: 'sections', label: 'Secciones', icon: Icons.Settings },
-    { id: 'advanced', label: 'Avanzado', icon: Icons.Advanced },
+    { id: 'advanced', label: 'Avanzado', icon: Icons.Settings }, // reemplazo de Advanced
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'layout':
         return (
-          <AdvancedLayoutBuilder
-            template={{ ...template, layoutStructure: effectiveLayoutStructure }}
-            sections={currentConfig.customizations.sections || []}
-            onSectionsChange={updateSections}
-            onLayoutChange={(structure) => updateConfig({ layoutStructure: structure as TemplateLayoutStructurePatch })}
-          />
+          <>
+            <AdvancedLayoutBuilder
+              template={{ ...template, layoutStructure: effectiveLayoutStructure }}
+              sections={currentConfig.customizations.sections || []}
+              onSectionsChange={updateSections}
+              onLayoutChange={(structure) => updateConfig({ layoutStructure: structure as TemplateLayoutStructurePatch })}
+            />
+
+            <div className="mt-6">
+              <SpacingControls
+                spacing={currentConfig.customizations.layout?.spacing ?? template?.layout?.spacing ?? {}}
+                onChange={(spacing) =>
+                  updateConfig({
+                    layout: {
+                      ...(currentConfig.customizations.layout ?? {}),
+                      spacing,
+                    },
+                  })
+                }
+              />
+            </div>
+          </>
         );
 
       case 'colors':
@@ -218,24 +357,62 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-3">
                 <h3 className="font-medium text-gray-800">Colores Principales</h3>
-                <ColorPicker label="Primario" value={currentConfig.customizations.colors?.primary || template.colors.primary} onChange={(c) => updateColors({ primary: c })} presets={colorPresets} />
-                <ColorPicker label="Secundario" value={currentConfig.customizations.colors?.secondary || template.colors.secondary} onChange={(c) => updateColors({ secondary: c })} presets={colorPresets} />
-                <ColorPicker label="Acento" value={currentConfig.customizations.colors?.accent || template.colors.accent} onChange={(c) => updateColors({ accent: c })} presets={colorPresets} />
+                <ColorPicker
+                  label="Primario"
+                  value={currentConfig.customizations.colors?.primary || template?.colors?.primary || '#3B82F6'}
+                  onChange={(c) => updateColors({ primary: c })}
+                  presets={colorPresets}
+                />
+                <ColorPicker
+                  label="Secundario"
+                  value={currentConfig.customizations.colors?.secondary || template?.colors?.secondary || '#6366F1'}
+                  onChange={(c) => updateColors({ secondary: c })}
+                  presets={colorPresets}
+                />
+                <ColorPicker
+                  label="Acento"
+                  value={currentConfig.customizations.colors?.accent || template?.colors?.accent || '#EF4444'}
+                  onChange={(c) => updateColors({ accent: c })}
+                  presets={colorPresets}
+                />
               </div>
+
               <div className="space-y-3">
                 <h3 className="font-medium text-gray-800">Superficies</h3>
-                <ColorPicker label="Fondo" value={currentConfig.customizations.colors?.background || template.colors.background} onChange={(c) => updateColors({ background: c })} />
-                <ColorPicker label="Superficie" value={currentConfig.customizations.colors?.surface || template.colors.surface} onChange={(c) => updateColors({ surface: c })} />
-                <ColorPicker label="Superficie Variante" value={currentConfig.customizations.colors?.surfaceVariant || template.colors.surfaceVariant} onChange={(c) => updateColors({ surfaceVariant: c })} />
+                <ColorPicker
+                  label="Fondo"
+                  value={currentConfig.customizations.colors?.background || template?.colors?.background || '#ffffff'}
+                  onChange={(c) => updateColors({ background: c })}
+                />
+                <ColorPicker
+                  label="Superficie"
+                  value={currentConfig.customizations.colors?.surface || template?.colors?.surface || '#f7f7f9'}
+                  onChange={(c) => updateColors({ surface: c })}
+                />
+                <ColorPicker
+                  label="Superficie Variante"
+                  value={currentConfig.customizations.colors?.surfaceVariant || template?.colors?.surfaceVariant || '#eeeeee'}
+                  onChange={(c) => updateColors({ surfaceVariant: c })}
+                />
               </div>
+
               <div className="space-y-3">
                 <h3 className="font-medium text-gray-800">Texto</h3>
-                <ColorPicker label="Texto Principal" value={currentConfig.customizations.colors?.text?.primary || template.colors.text.primary}
-                  onChange={(c) => updateColors({ text: { ...currentConfig.customizations.colors?.text, primary: c } })} />
-                <ColorPicker label="Texto Secundario" value={currentConfig.customizations.colors?.text?.secondary || template.colors.text.secondary}
-                  onChange={(c) => updateColors({ text: { ...currentConfig.customizations.colors?.text, secondary: c } })} />
-                <ColorPicker label="Texto de Acento" value={currentConfig.customizations.colors?.text?.accent || template.colors.text.accent}
-                  onChange={(c) => updateColors({ text: { ...currentConfig.customizations.colors?.text, accent: c } })} />
+                <ColorPicker
+                  label="Texto Principal"
+                  value={currentConfig.customizations.colors?.text?.primary || template?.colors?.text?.primary || '#0f172a'}
+                  onChange={(c) => updateColors({ text: { ...(currentConfig.customizations.colors?.text ?? {}), primary: c } })}
+                />
+                <ColorPicker
+                  label="Texto Secundario"
+                  value={currentConfig.customizations.colors?.text?.secondary || template?.colors?.text?.secondary || '#64748b'}
+                  onChange={(c) => updateColors({ text: { ...(currentConfig.customizations.colors?.text ?? {}), secondary: c } })}
+                />
+                <ColorPicker
+                  label="Texto de Acento"
+                  value={currentConfig.customizations.colors?.text?.accent || template?.colors?.text?.accent || '#ffffff'}
+                  onChange={(c) => updateColors({ text: { ...(currentConfig.customizations.colors?.text ?? {}), accent: c } })}
+                />
               </div>
             </div>
 
@@ -244,11 +421,31 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium text-gray-700">Gradiente Primario</h4>
-                  <div className="flex gap-2">
-                    <ColorPicker label="Desde" value={currentConfig.customizations.colors?.gradients?.primary?.from || ''}
-                      onChange={(c) => updateColors({ gradients: { ...currentConfig.customizations.colors?.gradients, primary: { ...currentConfig.customizations.colors?.gradients?.primary, from: c } } })} />
-                    <ColorPicker label="Hacia" value={currentConfig.customizations.colors?.gradients?.primary?.to || ''}
-                      onChange={(c) => updateColors({ gradients: { ...currentConfig.customizations.colors?.gradients, primary: { ...currentConfig.customizations.colors?.gradients?.primary, to: c } } })} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <ColorPicker
+                      label="Desde"
+                      value={currentConfig.customizations.colors?.gradients?.primary?.from || ''}
+                      onChange={(c) =>
+                        updateColors({
+                          gradients: {
+                            ...(currentConfig.customizations.colors?.gradients ?? {}),
+                            primary: { ...(currentConfig.customizations.colors?.gradients?.primary ?? {}), from: c },
+                          },
+                        })
+                      }
+                    />
+                    <ColorPicker
+                      label="Hacia"
+                      value={currentConfig.customizations.colors?.gradients?.primary?.to || ''}
+                      onChange={(c) =>
+                        updateColors({
+                          gradients: {
+                            ...(currentConfig.customizations.colors?.gradients ?? {}),
+                            primary: { ...(currentConfig.customizations.colors?.gradients?.primary ?? {}), to: c },
+                          },
+                        })
+                      }
+                    />
                   </div>
                 </div>
               </div>
@@ -259,7 +456,7 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
       case 'typography':
         return (
           <TypographyControls
-            typography={currentConfig.customizations.typography || template.typography}
+            typography={currentConfig.customizations.typography || template?.typography || {}}
             onChange={(typography) => updateConfig({ typography })}
           />
         );
@@ -269,7 +466,7 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
           <div className="space-y-4">
             <h3 className="font-medium text-gray-800">Configuración de Secciones</h3>
             <div className="space-y-3">
-              {(currentConfig.customizations.sections || template.sections).map((section) => (
+              {(currentConfig.customizations.sections || template?.sections || []).map((section) => (
                 <div key={section.id} className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -279,9 +476,9 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
                     <label className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        checked={section.enabled}
+                        checked={!!section.enabled}
                         onChange={(e) => {
-                          const updated = (currentConfig.customizations.sections || template.sections).map(s =>
+                          const updated = (currentConfig.customizations.sections || template?.sections || []).map((s) =>
                             s.id === section.id ? { ...s, enabled: e.target.checked } : s
                           );
                           updateSections(updated);
@@ -295,10 +492,10 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Variante</label>
                       <select
-                        value={section.config.variant || 'default'}
+                        value={(section?.config?.variant as any) || 'default'}
                         onChange={(e) => {
-                          const updated = (currentConfig.customizations.sections || template.sections).map(s =>
-                            s.id === section.id ? { ...s, config: { ...s.config, variant: e.target.value as any } } : s
+                          const updated = (currentConfig.customizations.sections || template?.sections || []).map((s) =>
+                            s.id === section.id ? { ...s, config: { ...(s.config ?? {}), variant: e.target.value as any } } : s
                           );
                           updateSections(updated);
                         }}
@@ -314,10 +511,10 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Columnas</label>
                       <select
-                        value={section.config.columns || 1}
+                        value={(section?.config?.columns as any) || 1}
                         onChange={(e) => {
-                          const updated = (currentConfig.customizations.sections || template.sections).map(s =>
-                            s.id === section.id ? { ...s, config: { ...s.config, columns: Number(e.target.value) as any } } : s
+                          const updated = (currentConfig.customizations.sections || template?.sections || []).map((s) =>
+                            s.id === section.id ? { ...s, config: { ...(s.config ?? {}), columns: Number(e.target.value) as any } } : s
                           );
                           updateSections(updated);
                         }}
@@ -349,7 +546,7 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
                     <input
                       type="checkbox"
                       checked={currentConfig.customizations.animations?.enabled || false}
-                      onChange={(e) => updateConfig({ animations: { ...currentConfig.customizations.animations, enabled: e.target.checked } })}
+                      onChange={(e) => updateConfig({ animations: { ...(currentConfig.customizations.animations ?? {}), enabled: e.target.checked } })}
                     />
                     <span className="text-sm">Habilitar animaciones</span>
                   </label>
@@ -359,7 +556,7 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
                       <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de animación</label>
                       <select
                         value={currentConfig.customizations.animations?.type || 'subtle'}
-                        onChange={(e) => updateConfig({ animations: { ...currentConfig.customizations.animations, enabled: true, type: e.target.value as any } })}
+                        onChange={(e) => updateConfig({ animations: { ...(currentConfig.customizations.animations ?? {}), enabled: true, type: e.target.value as any } })}
                         className="w-full px-3 py-2 border rounded-lg"
                       >
                         <option value="none">Sin animaciones</option>
@@ -379,7 +576,11 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
                     <input
                       type="checkbox"
                       checked={currentConfig.customizations.darkMode?.enabled || false}
-                      onChange={(e) => updateConfig({ darkMode: { ...currentConfig.customizations.darkMode, enabled: e.target.checked, auto: currentConfig.customizations.darkMode?.auto || false } })}
+                      onChange={(e) =>
+                        updateConfig({
+                          darkMode: { ...(currentConfig.customizations.darkMode ?? {}), enabled: e.target.checked, auto: currentConfig.customizations.darkMode?.auto || false },
+                        })
+                      }
                     />
                     <span className="text-sm">Soportar modo oscuro</span>
                   </label>
@@ -389,7 +590,7 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
                       <input
                         type="checkbox"
                         checked={currentConfig.customizations.darkMode?.auto || false}
-                        onChange={(e) => updateConfig({ darkMode: { ...currentConfig.customizations.darkMode, enabled: true, auto: e.target.checked } })}
+                        onChange={(e) => updateConfig({ darkMode: { ...(currentConfig.customizations.darkMode ?? {}), enabled: true, auto: e.target.checked } })}
                       />
                       <span className="text-sm">Detección automática</span>
                     </label>
@@ -426,7 +627,7 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
                 <Icons.ArrowLeft size={20} />
               </button>
               <div>
-                <h1 className="text-xl font-bold text-gray-800">Personalizar {template.name}</h1>
+                <h1 className="text-xl font-bold text-gray-800">Personalizar {template?.name}</h1>
                 <p className="text-sm text-gray-600">{hasChanges ? '• Cambios sin guardar' : 'Configuración actual'}</p>
               </div>
             </div>
@@ -453,7 +654,9 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
                   <button
                     key={t.id}
                     onClick={() => setActiveTab(t.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${activeTab === t.id ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}`}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                      activeTab === t.id ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'
+                    }`}
                   >
                     <t.icon size={18} />
                     {t.label}
@@ -463,12 +666,11 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
             </div>
           </div>
 
-          <div className="flex-1 bg-white rounded-lg border p-6">
-            {renderTabContent()}
-          </div>
+          <div className="flex-1 bg-white rounded-lg border p-6">{renderTabContent()}</div>
         </div>
       </div>
     </div>
   );
 };
+
 export default AdvancedTemplateCustomizer;

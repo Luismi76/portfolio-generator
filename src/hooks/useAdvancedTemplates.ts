@@ -590,3 +590,48 @@ export const useAdvancedTemplates = (
     validationErrors,
   };
 };
+// --- utilidades de tema (inyectar CSS vars en :root) ---
+export function applyTemplateToDOM(tpl: AdvancedTemplate | null) {
+  if (!tpl) return;
+
+  const root = document.documentElement;
+
+  // Colores principales / superficies / texto
+  root.style.setProperty('--primary', tpl.colors.primary);
+  root.style.setProperty('--secondary', tpl.colors.secondary);
+  root.style.setProperty('--accent', tpl.colors.accent);
+  root.style.setProperty('--background', tpl.colors.background);
+  root.style.setProperty('--surface', tpl.colors.surface);
+  root.style.setProperty('--surface-variant', tpl.colors.surfaceVariant);
+
+  root.style.setProperty('--text-primary', tpl.colors.text.primary);
+  root.style.setProperty('--text-secondary', tpl.colors.text.secondary);
+  root.style.setProperty('--text-accent', tpl.colors.text.accent);
+  root.style.setProperty('--text-muted', tpl.colors.text.muted);
+  root.style.setProperty('--text-inverse', tpl.colors.text.inverse);
+
+  // Estados
+  root.style.setProperty('--success', tpl.colors.success);
+  root.style.setProperty('--warning', tpl.colors.warning);
+  root.style.setProperty('--error', tpl.colors.error);
+  root.style.setProperty('--info', tpl.colors.info);
+
+  // Tipografía principal
+  const ff = tpl.typography.fontFamilies;
+  root.style.setProperty('--font-primary', ff.primary);
+  root.style.setProperty('--font-heading', ff.heading);
+  if (ff.monospace) root.style.setProperty('--font-mono', ff.monospace);
+
+  const fs = tpl.typography.fontSizes;
+  Object.entries(fs).forEach(([k, v]) => root.style.setProperty(`--font-${k}`, v));
+
+  // Layout básicos
+  root.style.setProperty('--container-max', tpl.layout.maxWidth);
+  Object.entries(tpl.layout.spacing).forEach(([k, v]) => root.style.setProperty(`--space-${k}`, v));
+
+  // (Opcional) modo oscuro flag
+  root.classList.toggle('theme-dark', !!tpl.darkMode?.enabled);
+}
+
+// Export default del hook por si lo importas como default
+export default useAdvancedTemplates;
