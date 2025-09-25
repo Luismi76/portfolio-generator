@@ -21,8 +21,9 @@ import type {
 type Props = {
   data: PortfolioData;
   onOpenProject?: (p: Project) => void;
+  template?: AdvancedTemplate;
+  config?: AdvancedTemplateConfig;
 };
-
 /* ---------------- helpers ---------------- */
 
 const normalizeSectionId = (raw?: string): string => {
@@ -162,9 +163,14 @@ function buildAdvancedCSSVars(
 
 /* ---------------- component ---------------- */
 
-export const TemplateRenderer: React.FC<Props> = ({ data, onOpenProject }) => {
+export const TemplateRenderer: React.FC<Props> = ({ data, onOpenProject, template: effectiveTemplate, config }) => {
   // Avanzado
-  const { effectiveTemplate, config } = useAdvancedTemplates();
+ type Props = {
+  data: PortfolioData;
+  onOpenProject?: (p: Project) => void;
+  template?: AdvancedTemplate;  // ✅ AÑADIR
+  config?: AdvancedTemplateConfig;  // ✅ AÑADIR
+};
 
   // Template base que copia los colores activos (para que TemplateTheme calcule el header)
   const themeTemplate: Template = useMemo(() => {
@@ -189,6 +195,8 @@ export const TemplateRenderer: React.FC<Props> = ({ data, onOpenProject }) => {
       },
     };
   }, [effectiveTemplate]);
+
+  
 
   const [selected, setSelected] = useState<Project | null>(null);
 
@@ -231,6 +239,9 @@ export const TemplateRenderer: React.FC<Props> = ({ data, onOpenProject }) => {
       : `minmax(0,1fr)`;
 
   /* ===== Renderers de secciones ===== */
+console.log('🔍 advancedSections:', advancedSections);
+console.log('📦 byArea:', byArea);
+console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
 
   const renderHeader = () => {
     // Si no hay secciones en header, no pintamos cabecera
@@ -267,6 +278,7 @@ export const TemplateRenderer: React.FC<Props> = ({ data, onOpenProject }) => {
     const name = data.personalInfo.fullName || "Tu Portfolio";
     const subtitle = data.personalInfo.title?.trim() || "";
 
+    
     return (
       <header
         className="tpl-header tpl-header-bg"

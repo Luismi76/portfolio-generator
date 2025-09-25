@@ -6,7 +6,10 @@ import { PersonalInfoForm } from "../PersonalInfoForm";
 import ProjectTableForm from "../ProjectTableForm";
 import SkillTableForm from "../SkillTableForm";
 import { useTemplates } from "../use-templates";
-import { getDefaultTemplate } from "../built-in-templates";
+import { AdvancedTemplateSelector } from "../AdvancedTemplateSelector";
+import { AdvancedTemplate } from "../../types/advanced-template-types";
+import { ADVANCED_BUILT_IN_TEMPLATES } from "../advanced-built-in-templates";
+//import { Section } from '../../types/advanced-template-types';
 
 const ModernPortfolioEditor: React.FC = () => {
   const {
@@ -23,11 +26,12 @@ const ModernPortfolioEditor: React.FC = () => {
     "personal" | "projects" | "skills" | "templates"
   >("personal");
   const [showExportMenu, setShowExportMenu] = useState(false);
-  
+
   // ✅ Obtener templates con mejor debugging
   const { selectedTemplate, config, updateConfig } = useTemplates();
-  const activeTemplate = selectedTemplate ?? getDefaultTemplate();
-
+  const activeTemplate: any =
+    selectedTemplate ?? ADVANCED_BUILT_IN_TEMPLATES[0];
+  // Convertir Template simple a AdvancedTemplate
 
   const handleExportJSON = () => {
     exportToJSON(data);
@@ -55,23 +59,32 @@ const ModernPortfolioEditor: React.FC = () => {
 
   // ✅ FUNCIÓN CORREGIDA con debugging completo
   const handleExportHTML = () => {
-    console.log('🔍 DEBUG - Estado actual:');
-    console.log('- selectedTemplate:', selectedTemplate?.name);
-    console.log('- activeTemplate:', activeTemplate?.name);
-    console.log('- config:', config);
-    console.log('- config?.customizations?.sections:', config?.customizations?.sections);
-    
+    console.log("🔍 DEBUG - Estado actual:");
+    console.log("- selectedTemplate:", selectedTemplate?.name);
+    console.log("- activeTemplate:", activeTemplate?.name);
+    console.log("- config:", config);
+    console.log(
+      "- config?.customizations?.sections:",
+      config?.customizations?.sections
+    );
+
     if (config?.customizations?.sections) {
-      console.log('📋 Secciones personalizadas:');
-      config.customizations.sections.forEach(section => {
-        console.log(`  ${section.id}: ${section.enabled ? 'HABILITADA' : 'DESHABILITADA'}`);
+      console.log("📋 Secciones personalizadas:");
+      config.customizations.sections.forEach((section) => {
+        console.log(
+          `  ${section.id}: ${section.enabled ? "HABILITADA" : "DESHABILITADA"}`
+        );
       });
     } else {
-      console.log('⚠️ No hay secciones personalizadas, usando plantilla base');
+      console.log("⚠️ No hay secciones personalizadas, usando plantilla base");
       if (activeTemplate?.sections) {
-        console.log('📋 Secciones de plantilla base:');
-        activeTemplate.sections.forEach(section => {
-          console.log(`  ${section.id}: ${section.enabled ? 'HABILITADA' : 'DESHABILITADA'}`);
+        console.log("📋 Secciones de plantilla base:");
+        activeTemplate.sections.forEach((section: any) => {
+          console.log(
+            `  ${section.id}: ${
+              section.enabled ? "HABILITADA" : "DESHABILITADA"
+            }`
+          );
         });
       }
     }
@@ -84,34 +97,43 @@ const ModernPortfolioEditor: React.FC = () => {
         config || undefined
       );
       const res = exporter.export();
-      
-      console.log('✅ Resultado de exportación:', res);
+
+      console.log("✅ Resultado de exportación:", res);
       alert(res.message);
     } catch (e: any) {
-      console.error('❌ Error en exportación:', e);
+      console.error("❌ Error en exportación:", e);
       alert("Error al exportar HTML: " + (e?.message || e));
     }
   };
 
   // ✅ FUNCIÓN CORREGIDA con debugging completo
   const handleExportWebsite = () => {
-    console.log('🔍 DEBUG - Estado actual:');
-    console.log('- selectedTemplate:', selectedTemplate?.name);
-    console.log('- activeTemplate:', activeTemplate?.name);
-    console.log('- config:', config);
-    console.log('- config?.customizations?.sections:', config?.customizations?.sections);
-    
+    console.log("🔍 DEBUG - Estado actual:");
+    console.log("- selectedTemplate:", selectedTemplate?.name);
+    console.log("- activeTemplate:", activeTemplate?.name);
+    console.log("- config:", config);
+    console.log(
+      "- config?.customizations?.sections:",
+      config?.customizations?.sections
+    );
+
     if (config?.customizations?.sections) {
-      console.log('📋 Secciones personalizadas:');
-      config.customizations.sections.forEach(section => {
-        console.log(`  ${section.id}: ${section.enabled ? 'HABILITADA' : 'DESHABILITADA'}`);
+      console.log("📋 Secciones personalizadas:");
+      config.customizations.sections.forEach((section) => {
+        console.log(
+          `  ${section.id}: ${section.enabled ? "HABILITADA" : "DESHABILITADA"}`
+        );
       });
     } else {
-      console.log('⚠️ No hay secciones personalizadas, usando plantilla base');
+      console.log("⚠️ No hay secciones personalizadas, usando plantilla base");
       if (activeTemplate?.sections) {
-        console.log('📋 Secciones de plantilla base:');
-        activeTemplate.sections.forEach(section => {
-          console.log(`  ${section.id}: ${section.enabled ? 'HABILITADA' : 'DESHABILITADA'}`);
+        console.log("📋 Secciones de plantilla base:");
+        activeTemplate.sections.forEach((section: any) => {
+          console.log(
+            `  ${section.id}: ${
+              section.enabled ? "HABILITADA" : "DESHABILITADA"
+            }`
+          );
         });
       }
     }
@@ -125,7 +147,7 @@ const ModernPortfolioEditor: React.FC = () => {
       );
 
       const res = exporter.export();
-      console.log('✅ Resultado de exportación:', res);
+      console.log("✅ Resultado de exportación:", res);
 
       if (!res.success) {
         alert(res.message);
@@ -152,11 +174,48 @@ const ModernPortfolioEditor: React.FC = () => {
         );
       }
     } catch (e: any) {
-      console.error('❌ Error en exportación:', e);
+      console.error("❌ Error en exportación:", e);
       alert("Error al exportar sitio: " + (e?.message || e));
     }
   };
 
+  // Añade estas funciones DENTRO del componente, después de handleExportWebsite
+
+  const handleDuplicateTemplate = (template: AdvancedTemplate) => {
+    const newName = prompt(
+      `Duplicar "${template.name}" como:`,
+      `${template.name} (Copia)`
+    );
+    if (newName) {
+      alert(
+        `Plantilla "${newName}" duplicada (por implementar en useTemplates)`
+      );
+    }
+  };
+
+  const handleExportTemplate = (template: AdvancedTemplate) => {
+    const json = JSON.stringify(template, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `template-${template.name
+      .toLowerCase()
+      .replace(/\s+/g, "-")}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    alert(`✓ Plantilla "${template.name}" exportada`);
+  };
+
+  const handleDeleteTemplate = (template: AdvancedTemplate) => {
+    if (template.isBuiltIn) {
+      alert("No puedes eliminar plantillas predefinidas");
+      return;
+    }
+    if (window.confirm(`¿Eliminar plantilla "${template.name}"?`)) {
+      alert("Eliminar plantilla (por implementar en useTemplates)");
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -227,7 +286,11 @@ const ModernPortfolioEditor: React.FC = () => {
           { id: "personal" as const, label: "Personal", icon: Icons.User },
           { id: "projects" as const, label: "Proyectos", icon: Icons.Code },
           { id: "skills" as const, label: "Habilidades", icon: Icons.Award },
-          { id: "templates" as const, label: "Plantillas", icon: Icons.Settings },
+          {
+            id: "templates" as const,
+            label: "Plantillas",
+            icon: Icons.Settings,
+          },
         ].map((section) => (
           <button
             key={section.id}
@@ -271,60 +334,30 @@ const ModernPortfolioEditor: React.FC = () => {
         )}
 
         {activeSection === "templates" && (
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-xl font-semibold mb-4">Configuración de Plantillas</h2>
-            
-            {/* Selector básico de plantillas */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Plantilla Actual: <strong>{activeTemplate?.name}</strong>
-              </label>
-              <p className="text-sm text-gray-600 mb-4">
-                {activeTemplate?.description}
-              </p>
-            </div>
-
-            {/* Control de secciones */}
-            <div>
-              <h3 className="text-lg font-medium mb-3">Secciones del Portfolio</h3>
-              <div className="space-y-2">
-                {activeTemplate?.sections.map((section) => {
-                  const isCustomized = !!config?.customizations?.sections;
-                  const currentSection = isCustomized 
-                    ? config.customizations.sections?.find(s => s.id === section.id) 
-                    : section;
-                  
-                  return (
-                    <label key={section.id} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={currentSection?.enabled ?? section.enabled}
-                        onChange={(e) => {
-                          const updatedSections = (config?.customizations?.sections || activeTemplate.sections).map(s => 
-                            s.id === section.id 
-                              ? { ...s, enabled: e.target.checked }
-                              : s
-                          );
-                          
-                          updateConfig({
-                            customizations: {
-                              ...config?.customizations,
-                              sections: updatedSections
-                            }
-                          });
-                        }}
-                        className="mr-3"
-                      />
-                      <span className="text-sm">
-                        {section.name} 
-                        <span className="text-gray-500">({section.id})</span>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+          <AdvancedTemplateSelector
+            templates={ADVANCED_BUILT_IN_TEMPLATES} // <-- USA LAS PLANTILLAS REALES
+            selectedTemplate={ADVANCED_BUILT_IN_TEMPLATES[0]}
+            onTemplateSelect={(advTemplate) => {
+              // Simplemente actualizar con el ID de la plantilla avanzada
+              if (updateConfig) {
+                updateConfig({ templateId: advTemplate.id });
+              }
+              console.log("Plantilla seleccionada:", advTemplate.name);
+            }}
+            onCustomize={(template) => {
+              window.alert(
+                `Personalizar "${template.name}" - Editor visual por implementar`
+              );
+            }}
+            onPreview={(template) => {
+              window.alert(
+                `Vista previa de "${template.name}" - Por implementar`
+              );
+            }}
+            onDuplicate={handleDuplicateTemplate}
+            onExport={handleExportTemplate}
+            onDelete={handleDeleteTemplate}
+          />
         )}
       </div>
     </div>

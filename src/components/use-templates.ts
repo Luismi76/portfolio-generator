@@ -7,6 +7,7 @@ import type {
   UseTemplatesReturn 
 } from '../types/template-types';
 import { BUILT_IN_TEMPLATES, getDefaultTemplate, getTemplateById } from './built-in-templates';
+import { ADVANCED_BUILT_IN_TEMPLATES } from './advanced-built-in-templates';
 
 // deep merge de customizations (por keys conocidas)
 function mergeCustomizations(a: TemplateConfig['customizations'], b?: TemplateConfig['customizations']) {
@@ -28,8 +29,8 @@ export const useTemplates = (options: UseTemplatesOptions = {}): UseTemplatesRet
   } = options;
 
   // Estado principal
-  const [templates, setTemplates] = useState<Template[]>(BUILT_IN_TEMPLATES);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [templates, setTemplates] = useState<any[]>(BUILT_IN_TEMPLATES as any[]);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [config, setConfig] = useState<TemplateConfig | null>(null);
 
   // Inicializar con plantilla por defecto (built-in)
@@ -48,7 +49,7 @@ export const useTemplates = (options: UseTemplatesOptions = {}): UseTemplatesRet
       const validCustomTemplates = customTemplates.filter(t =>
         t && t.name && t.colors && t.typography && t.layout
       );
-      const mergedTemplates = [...BUILT_IN_TEMPLATES, ...validCustomTemplates];
+     const mergedTemplates = [...ADVANCED_BUILT_IN_TEMPLATES, ...validCustomTemplates];
       setTemplates(mergedTemplates);
 
       // 2) cargar config

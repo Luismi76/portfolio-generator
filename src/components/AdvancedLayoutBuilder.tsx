@@ -1,23 +1,24 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import {
-  AdvancedTemplate,
-  Section,
-  LayoutArea,
-  DragDropConfig,
-  TemplateLayoutStructure,
-} from '../types/advanced-template-types';
-import { Icons } from './portfolio-icons';
+import { Eye, EyeOff, Settings, Menu, Plus, X } from 'lucide-react';
+import type { Section } from '../types/advanced-template-types';
 
-interface AdvancedLayoutBuilderProps {
-  template: AdvancedTemplate;
-  sections: Section[];
-  onSectionsChange: (sections: Section[]) => void;
-  onLayoutChange: (structure: any) => void;
-  /** opcional: estructura ya mergeada que llega desde el Customizer */
-  layoutStructure?: TemplateLayoutStructure;
+// Types - Extendemos el tipo Section original
+type LayoutArea = 'header' | 'sidebar-left' | 'main' | 'sidebar-right' | 'footer' | 'floating';
+type SectionPlacement = 'unplaced' | 'placed';
+
+interface SectionWithPlacement extends Section {
+  placement: SectionPlacement;
 }
 
-/* ===================== helpers ===================== */
+interface AreaConfig {
+  enabled: boolean;
+}
+
+interface DragConfig {
+  draggedItem: SectionWithPlacement | null;
+  dragOverArea: LayoutArea | null;
+  dragOverIndex: number | null;
+}
 
 const AREA_ORDER: LayoutArea[] = [
   'header',
@@ -28,8 +29,18 @@ const AREA_ORDER: LayoutArea[] = [
   'floating',
 ];
 
-function reassignOrdersByArea(all: Section[]): Section[] {
-  const next: Section[] = [];
+const DEFAULT_AREAS: Record<LayoutArea, AreaConfig> = {
+  header: { enabled: true },
+  'sidebar-left': { enabled: false },
+  'sidebar-right': { enabled: false },
+  main: { enabled: true },
+  footer: { enabled: true },
+  floating: { enabled: false },
+};
+
+// Helper functions
+function reassignOrdersByArea(all: SectionWithPlacement[]): SectionWithPlacement[] {
+  const next: SectionWithPlacement[] = [];
   for (const area of AREA_ORDER) {
     const areaItems = all
       .filter((s) => s.area === area)
@@ -37,22 +48,19 @@ function reassignOrdersByArea(all: Section[]): Section[] {
       .map((s, i) => ({ ...s, order: i + 1 }));
     next.push(...areaItems);
   }
-  const leftovers = all.filter((s) => !AREA_ORDER.includes(s.area));
-  next.push(...leftovers);
   return next;
 }
 
 function moveSection(
-  sections: Section[],
+  sections: SectionWithPlacement[],
   draggedId: string,
   targetArea: LayoutArea,
   insertIndex: number | null
-): Section[] {
+): SectionWithPlacement[] {
   const dragged = sections.find((s) => s.id === draggedId);
   if (!dragged) return sections;
 
   const withoutDragged = sections.filter((s) => s.id !== draggedId);
-
   const targetList = withoutDragged
     .filter((s) => s.area === targetArea)
     .sort((a, b) => a.order - b.order);
@@ -62,7 +70,12 @@ function moveSection(
       ? targetList.length
       : Math.max(0, Math.min(insertIndex, targetList.length));
 
-  const draggedUpdated: Section = { ...dragged, area: targetArea };
+  const draggedUpdated: SectionWithPlacement = { 
+    ...dragged, 
+    area: targetArea,
+    enabled: true,
+    placement: 'placed'
+  };
 
   const others = withoutDragged.filter((s) => s.area !== targetArea);
   const newTarget = [...targetList];
@@ -71,39 +84,14 @@ function moveSection(
   return reassignOrdersByArea([...others, ...newTarget]);
 }
 
-/** ====== NUEVO: normalización local de areas para evitar undefined ====== */
-type Areas = NonNullable<TemplateLayoutStructure['areas']>;
-const DEFAULT_AREAS: Areas = {
-  header: { enabled: true },
-  'sidebar-left': { enabled: false },
-  'sidebar-right': { enabled: false },
-  main: { enabled: true },
-  footer: { enabled: true },
-  floating: { enabled: false },
-};
-
-function ensureAreas(areas?: TemplateLayoutStructure['areas']): Areas {
-  return {
-    header:        { ...DEFAULT_AREAS.header,        ...(areas?.header ?? {}) },
-    'sidebar-left':{ ...DEFAULT_AREAS['sidebar-left'],...(areas?.['sidebar-left'] ?? {}) },
-    'sidebar-right':{...DEFAULT_AREAS['sidebar-right'],...(areas?.['sidebar-right'] ?? {}) },
-    main:          { ...DEFAULT_AREAS.main,          ...(areas?.main ?? {}) },
-    footer:        { ...DEFAULT_AREAS.footer,        ...(areas?.footer ?? {}) },
-    floating:      { ...DEFAULT_AREAS.floating,      ...(areas?.floating ?? {}) },
-  };
-}
-/* ======================================================================= */
-
-/* ================== UI subcomponents ================== */
-
+// UI Components
 const AvailableSectionCard: React.FC<{
-  section: Section;
+  section: SectionWithPlacement;
   isDragging: boolean;
-  onDragStart: (e: React.DragEvent, section: Section) => void;
+  onDragStart: (e: React.DragEvent, section: SectionWithPlacement) => void;
   onDragEnd: () => void;
-  onToggle: (id: string, enabled: boolean) => void;
-  onConfigure: (section: Section) => void;
-}> = ({ section, isDragging, onDragStart, onDragEnd, onToggle, onConfigure }) => (
+  onConfigure: (section: SectionWithPlacement) => void;
+}> = ({ section, isDragging, onDragStart, onDragEnd, onConfigure }) => (
   <div
     draggable
     onDragStart={(e) => onDragStart(e, section)}
@@ -111,8 +99,7 @@ const AvailableSectionCard: React.FC<{
     className={`
       bg-white rounded-lg border-2 border-dashed p-3 cursor-move transition-all
       ${isDragging ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}
-      ${section.enabled ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}
-      hover:border-blue-400 hover:shadow-md
+      border-gray-200 hover:border-blue-400 hover:shadow-md
     `}
   >
     <div className="flex items-center justify-between">
@@ -120,38 +107,30 @@ const AvailableSectionCard: React.FC<{
         <span className="text-lg">{section.icon}</span>
         <div>
           <div className="font-medium text-sm">{section.name}</div>
-          <div className="text-xs text-gray-500">
-            {section.area} • Orden: {section.order}
-          </div>
+          <div className="text-xs text-gray-500">Sin colocar</div>
         </div>
       </div>
 
       <div className="flex items-center gap-1">
-        <button
-          onClick={() => onToggle(section.id, !section.enabled)}
-          className={`p-1 rounded ${
-            section.enabled ? 'text-green-600 hover:bg-green-100' : 'text-gray-400 hover:bg-gray-100'
-          }`}
-        >
-          <Icons.Eye size={14} />
-        </button>
         <button onClick={() => onConfigure(section)} className="p-1 text-gray-600 hover:bg-gray-100 rounded">
-          <Icons.Settings size={14} />
+          <Settings size={14} />
         </button>
-        <Icons.Menu size={16} className="text-gray-400" />
+        <Menu size={16} className="text-gray-400" />
       </div>
     </div>
   </div>
 );
 
 const AreaSectionRow: React.FC<{
-  section: Section;
+  section: SectionWithPlacement;
   isDragOverBefore: boolean;
   isDragOverAfter: boolean;
-  onDragStart: (e: React.DragEvent, section: Section) => void;
+  onDragStart: (e: React.DragEvent, section: SectionWithPlacement) => void;
   onDragEnd: () => void;
-  onDragOverRow: (e: React.DragEvent, section: Section) => void;
+  onDragOverRow: (e: React.DragEvent, section: SectionWithPlacement) => void;
   onDragLeaveRow: () => void;
+  onRemove: (id: string) => void;
+  onToggle: (id: string, enabled: boolean) => void;
 }> = ({
   section,
   isDragOverBefore,
@@ -160,6 +139,8 @@ const AreaSectionRow: React.FC<{
   onDragEnd,
   onDragOverRow,
   onDragLeaveRow,
+  onRemove,
+  onToggle,
 }) => (
   <div
     draggable
@@ -181,8 +162,23 @@ const AreaSectionRow: React.FC<{
         <span className="font-medium">{section.name}</span>
       </div>
       <div className="flex items-center gap-1">
+        <button
+          onClick={() => onToggle(section.id, !section.enabled)}
+          className={`p-1 rounded ${
+            section.enabled ? 'text-green-600 hover:bg-green-100' : 'text-gray-400 hover:bg-gray-100'
+          }`}
+          title={section.enabled ? "Ocultar" : "Mostrar"}
+        >
+          {section.enabled ? <Eye size={12} /> : <EyeOff size={12} />}
+        </button>
+        <button
+          onClick={() => onRemove(section.id)}
+          className="p-1 text-red-600 hover:bg-red-100 rounded"
+          title="Remover del layout"
+        >
+          <X size={12} />
+        </button>
         <span className="text-xs text-gray-500">#{section.order}</span>
-        {!section.enabled && <Icons.EyeOff size={12} className="text-gray-400" />}
       </div>
     </div>
   </div>
@@ -190,21 +186,21 @@ const AreaSectionRow: React.FC<{
 
 const DropArea: React.FC<{
   area: LayoutArea;
-  sections: Section[];
+  sections: SectionWithPlacement[];
   isActive: boolean;
   onDrop: (e: React.DragEvent, area: LayoutArea) => void;
   onDragOver: (e: React.DragEvent, area: LayoutArea) => void;
   onDragLeave: () => void;
-  onDragOverRow: (e: React.DragEvent, section: Section) => void;
+  onDragOverRow: (e: React.DragEvent, section: SectionWithPlacement) => void;
   onDragLeaveRow: () => void;
-  /** NUEVO: drag start/ end desde filas ya colocadas */
-  onRowDragStart: (e: React.DragEvent, section: Section) => void;
+  onRowDragStart: (e: React.DragEvent, section: SectionWithPlacement) => void;
   onRowDragEnd: () => void;
-
-  areaConfig: any;
+  areaConfig: AreaConfig;
   onAreaToggle: (area: LayoutArea, enabled: boolean) => void;
   dragOverIndex: number | null;
   draggedId: string | null;
+  onRemove: (id: string) => void;
+  onToggle: (id: string, enabled: boolean) => void;
 }> = ({
   area,
   sections,
@@ -220,6 +216,8 @@ const DropArea: React.FC<{
   onAreaToggle,
   dragOverIndex,
   draggedId,
+  onRemove,
+  onToggle,
 }) => {
   const areaNames: Record<LayoutArea, string> = {
     header: 'Header',
@@ -268,7 +266,7 @@ const DropArea: React.FC<{
             Activa
           </label>
           <button className="p-1 text-gray-400 hover:text-gray-600">
-            <Icons.Settings size={14} />
+            <Settings size={14} />
           </button>
         </div>
       </div>
@@ -276,7 +274,7 @@ const DropArea: React.FC<{
       <div className="space-y-2">
         {sections.length === 0 ? (
           <div className="text-center text-gray-400 py-4">
-            <Icons.Plus size={24} className="mx-auto mb-2 opacity-50" />
+            <Plus size={24} className="mx-auto mb-2 opacity-50" />
             <p className="text-sm">Arrastra secciones aquí</p>
           </div>
         ) : (
@@ -297,6 +295,8 @@ const DropArea: React.FC<{
                   onDragEnd={onRowDragEnd}
                   onDragOverRow={onDragOverRow}
                   onDragLeaveRow={onDragLeaveRow}
+                  onRemove={onRemove}
+                  onToggle={onToggle}
                 />
               );
             })
@@ -306,37 +306,71 @@ const DropArea: React.FC<{
   );
 };
 
-/* ================== main component ================== */
+interface AdvancedLayoutBuilderProps {
+  template: any;
+  sections: Section[];
+  onSectionsChange: (sections: Section[]) => void;
+  onLayoutChange: (structure: any) => void;
+  layoutStructure?: any;
+}
 
+// Helper para añadir placement a las secciones
+function addPlacement(sections: Section[]): SectionWithPlacement[] {
+  return sections.map(s => ({
+    ...s,
+    placement: (s.enabled ? 'placed' : 'unplaced') as SectionPlacement
+  }));
+}
+
+// Helper para remover placement de las secciones
+function removePlacement(sections: SectionWithPlacement[]): Section[] {
+  return sections.map(({ placement, ...rest }) => rest as Section);
+}
+
+// Main Component
 export const AdvancedLayoutBuilder: React.FC<AdvancedLayoutBuilderProps> = ({
   template,
-  sections,
+  sections: propSections,
   onSectionsChange,
   onLayoutChange,
   layoutStructure,
 }) => {
-  const structure: TemplateLayoutStructure = layoutStructure ?? template.layoutStructure;
+  const [areas, setAreas] = useState<Record<LayoutArea, AreaConfig>>(() => {
+    const structure = layoutStructure ?? template.layoutStructure;
+    return structure?.areas || DEFAULT_AREAS;
+  });
+  
+  const [sections, setSections] = useState<SectionWithPlacement[]>(() => 
+    addPlacement(propSections)
+  );
 
-  /** ← normalizamos las áreas para NO acceder nunca a undefined */
-  const safeAreas = useMemo(() => ensureAreas(structure.areas), [structure.areas]);
-
-  const [dragConfig, setDragConfig] = useState<DragDropConfig>({
+  const [dragConfig, setDragConfig] = useState<DragConfig>({
     draggedItem: null,
     dragOverArea: null,
     dragOverIndex: null,
   });
 
-  const [selectedSection, setSelectedSection] = useState<Section | null>(null);
-  const [layoutType, setLayoutType] = useState(structure.type);
+  const [selectedSection, setSelectedSection] = useState<SectionWithPlacement | null>(null);
 
-  const sectionsByArea = sections.reduce((acc, section) => {
-    if (!acc[section.area]) acc[section.area] = [];
-    acc[section.area].push(section);
-    return acc;
-  }, {} as Record<LayoutArea, Section[]>);
+  const unplacedSections = useMemo(
+    () => sections.filter(s => s.placement === 'unplaced'),
+    [sections]
+  );
 
-  /* ---------- Drag from anywhere ---------- */
-  const beginDrag = useCallback((e: React.DragEvent, section: Section) => {
+  const placedSections = useMemo(
+    () => sections.filter(s => s.placement === 'placed'),
+    [sections]
+  );
+
+  const sectionsByArea = useMemo(() => {
+    return placedSections.reduce((acc, section) => {
+      if (!acc[section.area]) acc[section.area] = [];
+      acc[section.area].push(section);
+      return acc;
+    }, {} as Record<LayoutArea, SectionWithPlacement[]>);
+  }, [placedSections]);
+
+  const beginDrag = useCallback((e: React.DragEvent, section: SectionWithPlacement) => {
     try {
       e.dataTransfer.setData('text/plain', section.id);
       e.dataTransfer.effectAllowed = 'move';
@@ -357,9 +391,9 @@ export const AdvancedLayoutBuilder: React.FC<AdvancedLayoutBuilderProps> = ({
   }, []);
 
   const handleDragOverRow = useCallback(
-    (e: React.DragEvent, rowSection: Section) => {
+    (e: React.DragEvent, rowSection: SectionWithPlacement) => {
       e.preventDefault();
-      const area = rowSection.area as LayoutArea;
+      const area = rowSection.area;
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
       const y = e.clientY - rect.top;
       const before = y < rect.height / 2;
@@ -397,200 +431,177 @@ export const AdvancedLayoutBuilder: React.FC<AdvancedLayoutBuilderProps> = ({
       if (!draggedId) return;
 
       const next = moveSection(sections, draggedId, targetArea, dragConfig.dragOverIndex);
+      setSections(next);
       onSectionsChange(next);
       setDragConfig({ draggedItem: null, dragOverArea: null, dragOverIndex: null });
     },
-    [dragConfig.draggedItem, dragConfig.dragOverIndex, sections, onSectionsChange]
+    [dragConfig, sections, onSectionsChange]
   );
 
-  const handleAreaToggle = useCallback(
-    (area: LayoutArea, enabled: boolean) => {
-      // usamos safeAreas para evitar leer de undefined
-      const newStructure = {
-        ...structure,
-        areas: {
-          ...safeAreas,
-          [area]: {
-            ...(safeAreas as any)[area],
-            enabled,
-          },
-        },
-      };
-      onLayoutChange(newStructure);
-    },
-    [structure, safeAreas, onLayoutChange]
-  );
+  const handleAreaToggle = useCallback((area: LayoutArea, enabled: boolean) => {
+    const newAreas = {
+      ...areas,
+      [area]: { ...areas[area], enabled }
+    };
+    setAreas(newAreas);
+    
+    const structure = layoutStructure ?? template.layoutStructure;
+    onLayoutChange({
+      ...structure,
+      areas: newAreas
+    });
+  }, [areas, layoutStructure, template.layoutStructure, onLayoutChange]);
 
-  const handleSectionToggle = useCallback(
-    (sectionId: string, enabled: boolean) => {
-      const updated = sections.map((s) => (s.id === sectionId ? { ...s, enabled } : s));
-      onSectionsChange(updated);
-    },
-    [sections, onSectionsChange]
-  );
+  const handleSectionToggle = useCallback((sectionId: string, enabled: boolean) => {
+    const updated = sections.map(s => s.id === sectionId ? { ...s, enabled } : s);
+    setSections(updated);
+    onSectionsChange(updated);
+  }, [sections, onSectionsChange]);
 
-  const renderLayoutPreview = () => {
-    const areas: LayoutArea[] = ['header', 'sidebar-left', 'main', 'sidebar-right', 'footer'];
-
-    return (
-      <div className="bg-white border rounded-xl p-4 overflow-x-auto">
-        <div
-          className="grid gap-2 min-w-[900px]"
-          style={{
-            gridTemplateAreas: `
-              "header header header"
-              "sidebar-left main sidebar-right"
-              "footer footer footer"
-            `,
-            gridTemplateColumns: '1fr 2fr 1fr',
-            gridTemplateRows: 'auto 1fr auto',
-          }}
-        >
-          {areas.map((area) => {
-            const areaSections = sectionsByArea[area] || [];
-            const areaConfig = safeAreas[area]; // ← SIEMPRE existe
-
-            return (
-              <div key={area} style={{ gridArea: area }}>
-                <DropArea
-                  area={area}
-                  sections={areaSections}
-                  isActive={dragConfig.dragOverArea === area}
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOverArea}
-                  onDragLeave={() => setDragConfig((p) => ({ ...p, dragOverIndex: null }))}
-                  onDragOverRow={handleDragOverRow}
-                  onDragLeaveRow={handleDragLeaveRow}
-                  onRowDragStart={beginDrag}
-                  onRowDragEnd={endDrag}
-                  areaConfig={areaConfig}
-                  onAreaToggle={handleAreaToggle}
-                  dragOverIndex={dragConfig.dragOverIndex}
-                  draggedId={dragConfig.draggedItem?.id ?? null}
-                />
-              </div>
-            );
-          })}
-        </div>
-      </div>
+  const handleRemoveSection = useCallback((sectionId: string) => {
+    const updated = sections.map(s => 
+      s.id === sectionId 
+        ? { ...s, placement: 'unplaced' as SectionPlacement, enabled: false, area: 'floating' as LayoutArea, order: 0 }
+        : s
     );
-  };
+    setSections(updated);
+    onSectionsChange(updated);
+  }, [sections, onSectionsChange]);
+
+  const layoutAreas: LayoutArea[] = ['header', 'sidebar-left', 'main', 'sidebar-right', 'footer'];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-800">Constructor de Layout</h2>
-          <p className="text-gray-600">Arrastra y suelta las secciones para personalizar tu diseño</p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <select
-            value={layoutType}
-            onChange={(e) => setLayoutType(e.target.value as any)}
-            className="border rounded-lg px-3 py-2 text-sm"
-          >
-            <option value="single-column">Una Columna</option>
-            <option value="two-column">Dos Columnas</option>
-            <option value="three-column">Tres Columnas</option>
-            <option value="sidebar-left">Sidebar Izquierda</option>
-            <option value="sidebar-right">Sidebar Derecha</option>
-            <option value="sidebar-both">Ambos Sidebars</option>
-          </select>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">Constructor de Layout</h2>
+            <p className="text-gray-600">Arrastra y suelta las secciones para personalizar tu diseño</p>
+          </div>
 
           <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
-            <Icons.Eye size={16} />
+            <Eye size={16} />
             Vista Previa
           </button>
         </div>
-      </div>
 
-      <div className="grid lg:grid-cols-4 gap-6">
-        <div className="space-y-4">
-          <h3 className="font-semibold text-gray-800">Secciones Disponibles</h3>
+        <div className="grid lg:grid-cols-4 gap-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-800">Secciones Disponibles</h3>
+              <span className="text-xs text-gray-500">({unplacedSections.length})</span>
+            </div>
 
-          <div className="space-y-2">
-            {sections
-              .filter((section) => section.area === 'floating' || !section.enabled)
-              .map((section) => (
+            <div className="space-y-2">
+              {unplacedSections.map((section) => (
                 <AvailableSectionCard
                   key={section.id}
                   section={section}
                   isDragging={dragConfig.draggedItem?.id === section.id}
                   onDragStart={beginDrag}
                   onDragEnd={endDrag}
-                  onToggle={handleSectionToggle}
                   onConfigure={setSelectedSection}
                 />
               ))}
-          </div>
+            </div>
 
-          <button className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors">
-            <Icons.Plus size={20} className="mx-auto mb-2 text-gray-400" />
-            <span className="text-sm text-gray-600">Crear Sección Custom</span>
-          </button>
-        </div>
-
-        <div className="lg:col-span-3">
-          <h3 className="font-semibold text-gray-800 mb-4">Diseño del Portfolio</h3>
-          {renderLayoutPreview()}
-        </div>
-      </div>
-
-      {selectedSection && (
-        <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-xl border-l z-50 p-6 overflow-y-auto">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold">Configurar {selectedSection.name}</h3>
-            <button onClick={() => setSelectedSection(null)} className="p-2 hover:bg-gray-100 rounded">
-              <Icons.X size={16} />
+            <button className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors">
+              <Plus size={20} className="mx-auto mb-2 text-gray-400" />
+              <span className="text-sm text-gray-600">Crear Sección Custom</span>
             </button>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Variante</label>
-              <select className="w-full border rounded-lg px-3 py-2">
-                <option value="default">Por Defecto</option>
-                <option value="compact">Compacta</option>
-                <option value="expanded">Expandida</option>
-                <option value="minimal">Mínimal</option>
-              </select>
-            </div>
+          <div className="lg:col-span-3">
+            <h3 className="font-semibold text-gray-800 mb-4">Diseño del Portfolio</h3>
+            
+            <div className="bg-white border rounded-xl p-4 overflow-x-auto">
+              <div
+                className="grid gap-2 min-w-[900px]"
+                style={{
+                  gridTemplateAreas: `
+                    "header header header"
+                    "sidebar-left main sidebar-right"
+                    "footer footer footer"
+                  `,
+                  gridTemplateColumns: '1fr 2fr 1fr',
+                  gridTemplateRows: 'auto 1fr auto',
+                }}
+              >
+                {layoutAreas.map((area) => {
+                  const areaSections = sectionsByArea[area] || [];
+                  const areaConfig = areas[area];
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Espaciado</label>
-              <select className="w-full border rounded-lg px-3 py-2">
-                <option value="tight">Apretado</option>
-                <option value="normal">Normal</option>
-                <option value="loose">Amplio</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Columnas</label>
-              <select className="w-full border rounded-lg px-3 py-2">
-                <option value="1">1 Columna</option>
-                <option value="2">2 Columnas</option>
-                <option value="3">3 Columnas</option>
-                <option value="4">4 Columnas</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" />
-                <span className="text-sm">Mostrar título</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" />
-                <span className="text-sm">Mostrar divisor</span>
-              </label>
+                  return (
+                    <div key={area} style={{ gridArea: area }}>
+                      <DropArea
+                        area={area}
+                        sections={areaSections}
+                        isActive={dragConfig.dragOverArea === area}
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOverArea}
+                        onDragLeave={() => setDragConfig((p) => ({ ...p, dragOverIndex: null }))}
+                        onDragOverRow={handleDragOverRow}
+                        onDragLeaveRow={handleDragLeaveRow}
+                        onRowDragStart={beginDrag}
+                        onRowDragEnd={endDrag}
+                        areaConfig={areaConfig}
+                        onAreaToggle={handleAreaToggle}
+                        dragOverIndex={dragConfig.dragOverIndex}
+                        draggedId={dragConfig.draggedItem?.id ?? null}
+                        onRemove={handleRemoveSection}
+                        onToggle={handleSectionToggle}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
-      )}
+
+        {selectedSection && (
+          <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-xl border-l z-50 p-6 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Configurar {selectedSection.name}</h3>
+              <button onClick={() => setSelectedSection(null)} className="p-2 hover:bg-gray-100 rounded">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Variante</label>
+                <select className="w-full border rounded-lg px-3 py-2">
+                  <option value="default">Por Defecto</option>
+                  <option value="compact">Compacta</option>
+                  <option value="expanded">Expandida</option>
+                  <option value="minimal">Mínimal</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Espaciado</label>
+                <select className="w-full border rounded-lg px-3 py-2">
+                  <option value="tight">Apretado</option>
+                  <option value="normal">Normal</option>
+                  <option value="normal">Amplio</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" className="rounded" />
+                  <span className="text-sm">Mostrar título</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" className="rounded" />
+                  <span className="text-sm">Mostrar divisor</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
-};
-
-export default AdvancedLayoutBuilder;
+}
