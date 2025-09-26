@@ -108,35 +108,67 @@ export const TemplateTheme: React.FC<Props> = ({
       className="template-scope"
     >
       <style>{`
-        .tpl-container { max-width: var(--max-w); margin: 0 auto; padding: var(--sp-md); }
-        .tpl-surface { background: var(--color-surface); border-radius: var(--br-md); box-shadow: var(--shadow-sm); }
-        .tpl-heading { font-family: var(--font-heading); color: var(--text-primary); }
-        .tpl-subtext { color: var(--text-secondary); }
-        .tpl-btn-primary { background: var(--color-primary); color: white; border-radius: var(--br-sm); padding: 0.5rem 0.75rem; }
-        .tpl-btn-outline { border: 1px solid rgba(0,0,0,.12); color: var(--text-primary); border-radius: var(--br-sm); padding: 0.5rem 0.75rem; background: transparent; }
+  .tpl-container { max-width: var(--max-w); margin: 0 auto; padding: var(--sp-md); }
+  .tpl-surface { background: var(--color-surface); border-radius: var(--br-md); box-shadow: var(--shadow-sm); }
+  .tpl-heading { font-family: var(--font-heading); color: var(--text-primary); }
+  .tpl-subtext { color: var(--text-secondary); }
+  .tpl-btn-primary { background: var(--color-primary); color: white; border-radius: var(--br-sm); padding: 0.5rem 0.75rem; }
+  .tpl-btn-outline { border: 1px solid rgba(0,0,0,.12); color: var(--text-primary); border-radius: var(--br-sm); padding: 0.5rem 0.75rem; background: transparent; }
 
-        .tpl-chip {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 6px 10px;
-          border-radius: 999px;
-          font-size: var(--fs-sm);
-          background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-          color: var(--color-accent);
-          border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent);
-        }
+  .tpl-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: var(--fs-sm);
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    color: var(--color-accent);
+    border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent);
+  }
 
-        /* Tarjetas respetan la superficie del tema */
-        .tpl-card { background: var(--color-surface); border-radius: var(--br-lg); box-shadow: var(--shadow-md); overflow: hidden; }
+  .tpl-card { background: var(--color-surface); border-radius: var(--br-lg); box-shadow: var(--shadow-md); overflow: hidden; }
 
-        /* APLICAR EL MISMO FONDO AL HEADER, USE LA CLASE QUE USE */
-        .tpl-header,
-        .tpl-header-bg {
-          background: ${headerBackground};
-          color: var(--text-on-primary, #fff);
-        }
-      `}</style>
+  .tpl-header,
+  .tpl-header-bg {
+    background: ${headerBackground};
+    color: var(--text-on-primary, #fff);
+  }
+
+  /* Variantes - con mayor especificidad */
+  .variant-compact * .tpl-surface,
+  .variant-compact .tpl-surface,
+  .variant-compact * .tpl-card,
+  .variant-compact .tpl-card {
+    padding: var(--sp-sm) !important;
+  }
+
+  .variant-expanded * .tpl-surface,
+  .variant-expanded .tpl-surface,
+  .variant-expanded * .tpl-card,
+  .variant-expanded .tpl-card {
+    padding: var(--sp-xl) !important;
+  }
+
+  .variant-minimal * .tpl-surface,
+  .variant-minimal .tpl-surface,
+  .variant-minimal * .tpl-card,
+  .variant-minimal .tpl-card {
+    padding: var(--sp-xs) !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .variant-card * .tpl-surface,
+  .variant-card .tpl-surface,
+  .variant-card * .tpl-card,
+  .variant-card .tpl-card {
+    padding: var(--sp-lg) !important;
+    border-radius: var(--br-xl) !important;
+    box-shadow: var(--shadow-lg) !important;
+  }
+`}</style>
 
       {children}
     </div>

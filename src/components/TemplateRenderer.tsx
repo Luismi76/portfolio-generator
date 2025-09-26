@@ -8,8 +8,6 @@ import { getDefaultTemplate } from "./built-in-templates";
 import { Icons } from "./portfolio-icons";
 import ProjectDetailsModal from "./portfolio/ProjectDetailsModal";
 
-// ⬇️ Sistema avanzado
-import { useAdvancedTemplates } from "../hooks/useAdvancedTemplates";
 import type {
   AdvancedTemplate,
   AdvancedTemplateConfig,
@@ -29,7 +27,13 @@ type Props = {
 const normalizeSectionId = (raw?: string): string => {
   const v = (raw || "").toLowerCase().trim();
   if (v === "footer") return "contact";
-  if (v === "sobre-mi" || v === "aboutme" || v === "about-me" || v === "profile") return "about";
+  if (
+    v === "sobre-mi" ||
+    v === "aboutme" ||
+    v === "about-me" ||
+    v === "profile"
+  )
+    return "about";
   if (v === "hero") return "header";
   return v;
 };
@@ -69,7 +73,9 @@ function groupSectionsByArea(sections: AdvSection[] | undefined) {
 }
 
 /** Convierte secciones a TemplateSection (legacy) para búsquedas simples (props, orden…) */
-function toTemplateSections(sections: AdvSection[] | undefined): TemplateSection[] {
+function toTemplateSections(
+  sections: AdvSection[] | undefined
+): TemplateSection[] {
   if (!sections) return [];
   return sections
     .filter((s) => isEnabled(s.enabled))
@@ -106,8 +112,8 @@ function buildAdvancedCSSVars(
     ["--color-primary" as any]: cols.primary,
     ["--color-secondary" as any]: cols.secondary,
     ["--color-accent" as any]: cols.accent,
-    ["--color-bg" as any]: cols.background,            // antes --background
-    ["--color-surface" as any]: cols.surface,          // antes --surface
+    ["--color-bg" as any]: cols.background, // antes --background
+    ["--color-surface" as any]: cols.surface, // antes --surface
     ["--surface-variant" as any]: cols.surfaceVariant,
     ["--text-primary" as any]: cols.text?.primary,
     ["--text-secondary" as any]: cols.text?.secondary,
@@ -117,9 +123,10 @@ function buildAdvancedCSSVars(
     ["--text-on-primary" as any]: "#ffffff",
 
     // Tipografías (alineadas)
-    ["--font-primary" as any]: ff.primary,             // antes --ff-primary
+    ["--font-primary" as any]: ff.primary, // antes --ff-primary
     ["--font-heading" as any]: ff.heading || ff.primary, // antes --ff-heading
-    ["--ff-mono" as any]: ff.monospace || "ui-monospace, SFMono-Regular, Menlo, monospace",
+    ["--ff-mono" as any]:
+      ff.monospace || "ui-monospace, SFMono-Regular, Menlo, monospace",
 
     ["--fs-xs" as any]: fs.xs,
     ["--fs-sm" as any]: fs.sm,
@@ -152,10 +159,10 @@ function buildAdvancedCSSVars(
     ["--sp-xl" as any]: sp.xl,
     ["--sp-2xl" as any]: sp["2xl"],
 
-    ["--br-sm" as any]: br.sm,                          // antes --radius-sm
-    ["--br-md" as any]: br.md,                          // antes --radius-md
-    ["--br-lg" as any]: br.lg,                          // antes --radius-lg
-    ["--br-xl" as any]: br.xl,                          // antes --radius-xl
+    ["--br-sm" as any]: br.sm, // antes --radius-sm
+    ["--br-md" as any]: br.md, // antes --radius-md
+    ["--br-lg" as any]: br.lg, // antes --radius-lg
+    ["--br-xl" as any]: br.xl, // antes --radius-xl
   };
 
   return style;
@@ -163,15 +170,12 @@ function buildAdvancedCSSVars(
 
 /* ---------------- component ---------------- */
 
-export const TemplateRenderer: React.FC<Props> = ({ data, onOpenProject, template: effectiveTemplate, config }) => {
-  // Avanzado
- type Props = {
-  data: PortfolioData;
-  onOpenProject?: (p: Project) => void;
-  template?: AdvancedTemplate;  // ✅ AÑADIR
-  config?: AdvancedTemplateConfig;  // ✅ AÑADIR
-};
-
+export const TemplateRenderer: React.FC<Props> = ({
+  data,
+  onOpenProject,
+  template: effectiveTemplate,
+  config,
+}) => {
   // Template base que copia los colores activos (para que TemplateTheme calcule el header)
   const themeTemplate: Template = useMemo(() => {
     const base = getDefaultTemplate();
@@ -180,15 +184,19 @@ export const TemplateRenderer: React.FC<Props> = ({ data, onOpenProject, templat
       ...base,
       colors: {
         ...base.colors,
-        primary:    effectiveTemplate.colors.primary    ?? base.colors.primary,
-        secondary:  effectiveTemplate.colors.secondary  ?? base.colors.secondary,
-        accent:     effectiveTemplate.colors.accent     ?? base.colors.accent,
-        background: effectiveTemplate.colors.background ?? base.colors.background,
-        surface:    effectiveTemplate.colors.surface    ?? base.colors.surface,
+        primary: effectiveTemplate.colors.primary ?? base.colors.primary,
+        secondary: effectiveTemplate.colors.secondary ?? base.colors.secondary,
+        accent: effectiveTemplate.colors.accent ?? base.colors.accent,
+        background:
+          effectiveTemplate.colors.background ?? base.colors.background,
+        surface: effectiveTemplate.colors.surface ?? base.colors.surface,
         text: {
           ...base.colors.text,
-          primary:   effectiveTemplate.colors.text?.primary   ?? base.colors.text.primary,
-          secondary: effectiveTemplate.colors.text?.secondary ?? base.colors.text.secondary,
+          primary:
+            effectiveTemplate.colors.text?.primary ?? base.colors.text.primary,
+          secondary:
+            effectiveTemplate.colors.text?.secondary ??
+            base.colors.text.secondary,
         },
         // si tu TemplateTheme usa gradiente, añádelo aquí cuando exista en el tipo
         // gradient/gradients no tipado en Template ⇒ omitir para no romper tipos
@@ -196,18 +204,23 @@ export const TemplateRenderer: React.FC<Props> = ({ data, onOpenProject, templat
     };
   }, [effectiveTemplate]);
 
-  
-
   const [selected, setSelected] = useState<Project | null>(null);
 
   // Secciones avanzadas (con área)
   const advancedSections = useMemo<AdvSection[] | undefined>(() => {
     const fromConfig = config?.customizations?.sections;
-    return (fromConfig && fromConfig.length ? fromConfig : effectiveTemplate?.sections) ?? [];
+    return (
+      (fromConfig && fromConfig.length
+        ? fromConfig
+        : effectiveTemplate?.sections) ?? []
+    );
   }, [config?.customizations?.sections, effectiveTemplate?.sections]);
 
   // Grupos por área para el layout
-  const byArea = useMemo(() => groupSectionsByArea(advancedSections), [advancedSections]);
+  const byArea = useMemo(
+    () => groupSectionsByArea(advancedSections),
+    [advancedSections]
+  );
 
   // Lista "plana" (legacy) para consultas/props simples
   const flatSections: TemplateSection[] = useMemo(
@@ -222,9 +235,14 @@ export const TemplateRenderer: React.FC<Props> = ({ data, onOpenProject, templat
   );
 
   // Estructura de layout (anchos de columnas)
-  const structure: TemplateLayoutStructure | undefined = effectiveTemplate?.layoutStructure;
-  const leftEnabled = structure?.areas?.["sidebar-left"]?.enabled !== false && byArea["sidebar-left"].length > 0;
-  const rightEnabled = structure?.areas?.["sidebar-right"]?.enabled !== false && byArea["sidebar-right"].length > 0;
+  const structure: TemplateLayoutStructure | undefined =
+    effectiveTemplate?.layoutStructure;
+  const leftEnabled =
+    structure?.areas?.["sidebar-left"]?.enabled !== false &&
+    byArea["sidebar-left"].length > 0;
+  const rightEnabled =
+    structure?.areas?.["sidebar-right"]?.enabled !== false &&
+    byArea["sidebar-right"].length > 0;
 
   const leftW = structure?.areas?.["sidebar-left"]?.width || "260px";
   const rightW = structure?.areas?.["sidebar-right"]?.width || "280px";
@@ -239,15 +257,17 @@ export const TemplateRenderer: React.FC<Props> = ({ data, onOpenProject, templat
       : `minmax(0,1fr)`;
 
   /* ===== Renderers de secciones ===== */
-console.log('🔍 advancedSections:', advancedSections);
-console.log('📦 byArea:', byArea);
-console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
+  console.log("🔍 advancedSections:", advancedSections);
+  console.log("📦 byArea:", byArea);
+  console.log("🎯 effectiveTemplate:", effectiveTemplate?.name);
 
   const renderHeader = () => {
     // Si no hay secciones en header, no pintamos cabecera
     if (byArea.header.length === 0) return null;
 
-    const handleProjectsClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
+    const handleProjectsClick: React.MouseEventHandler<HTMLAnchorElement> = (
+      e
+    ) => {
       const el = document.getElementById("projects");
       if (el) {
         e.preventDefault();
@@ -278,7 +298,6 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
     const name = data.personalInfo.fullName || "Tu Portfolio";
     const subtitle = data.personalInfo.title?.trim() || "";
 
-    
     return (
       <header
         className="tpl-header tpl-header-bg"
@@ -290,13 +309,18 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
           paddingTop: "var(--sp-md)",
           paddingBottom: "var(--sp-lg",
           marginBottom: "var(--sp-md)",
-          background: headerBg,                           // ← clave
-          color: "var(--text-on-primary, #fff)",          // para currentColor del SVG
+          background: headerBg, // ← clave
+          color: "var(--text-on-primary, #fff)", // para currentColor del SVG
         }}
       >
         <div
           className="tpl-container"
-          style={{ position: "relative", zIndex: 1, display: "grid", gap: "10px" }}
+          style={{
+            position: "relative",
+            zIndex: 1,
+            display: "grid",
+            gap: "10px",
+          }}
         >
           <div style={{ display: "grid", gap: "var(--sp-xs)" }}>
             <h1
@@ -329,10 +353,27 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
             )}
           </div>
 
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: "var(--sp-xs)" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              flexWrap: "wrap",
+              marginTop: "var(--sp-xs)",
+            }}
+          >
             {data.personalInfo.email && (
-              <a href={`mailto:${data.personalInfo.email}`} className="tpl-btn-primary" aria-label="Enviar email">
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <a
+                href={`mailto:${data.personalInfo.email}`}
+                className="tpl-btn-primary"
+                aria-label="Enviar email"
+              >
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
                   <Icons.Mail size={16} aria-hidden />
                   <span>Contactar</span>
                 </span>
@@ -346,14 +387,27 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
               aria-label="Ir a proyectos"
               style={{ borderColor: "var(--color-accent)" }}
             >
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--sp-xs)" }}>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "var(--sp-xs)",
+                }}
+              >
                 <Icons.Code size={16} aria-hidden />
                 <span>Ver proyectos</span>
               </span>
             </a>
           </div>
 
-          <div style={{ display: "flex", gap: "var(--sp-xs)", flexWrap: "wrap", marginTop: "var(--sp-xs)" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "var(--sp-xs)",
+              flexWrap: "wrap",
+              marginTop: "var(--sp-xs)",
+            }}
+          >
             {data.personalInfo.github && (
               <a
                 href={data.personalInfo.github}
@@ -363,7 +417,13 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
                 aria-label="GitHub"
                 title="GitHub"
               >
-                <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--sp-xs)" }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "var(--sp-xs)",
+                  }}
+                >
                   <Icons.Github size={14} aria-hidden />
                   <span>GitHub</span>
                 </span>
@@ -377,7 +437,13 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
                 className="tpl-chip"
                 aria-label="LinkedIn"
               >
-                <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--sp-xs)" }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "var(--sp-xs)",
+                  }}
+                >
                   <Icons.Linkedin size={14} aria-hidden />
                   <span>LinkedIn</span>
                 </span>
@@ -391,7 +457,13 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
                 className="tpl-chip"
                 aria-label="Sitio web"
               >
-                <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--sp-xs)" }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "var(--sp-xs)",
+                  }}
+                >
                   <Icons.Globe size={14} aria-hidden />
                   <span>Web</span>
                 </span>
@@ -441,13 +513,18 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
         }}
       >
         <div className="tpl-container">
-          <h2 className="tpl-heading" style={{ fontSize: "var(--fs-2xl)", marginBottom: "var(--sp-md)" }}>
+          <h2
+            className="tpl-heading"
+            style={{ fontSize: "var(--fs-2xl)" }}
+          >
             Sobre mí
           </h2>
         </div>
         <div className="tpl-container">
-          <div className="tpl-surface" style={{ padding: "var(--sp-md)" }}>
-            <p className="tpl-subtext" style={{ fontSize: "var(--fs-base)" }}>{summary}</p>
+          <div className="tpl-surface" style={{ padding: 0 }}>
+            <p className="tpl-subtext" style={{ fontSize: "var(--fs-base)" }}>
+              {summary}
+            </p>
           </div>
         </div>
       </section>
@@ -458,17 +535,30 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
     if (!data.projects.some((p) => p.title?.trim())) return null;
 
     // gridCols desde avanzado (columns) o props legacy
-    const advProj = advancedSections?.find((s) => normalizeSectionId(s.id) === "projects");
+    const advProj = advancedSections?.find(
+      (s) => normalizeSectionId(s.id) === "projects"
+    );
     const gridColsFromAdv = Number(advProj?.config?.columns ?? 0);
     const gridColsFromLegacy = Number(
       flatSections.find((s) => s.id === "projects")?.props?.gridCols ?? 0
     );
-    const gridCols = Math.max(2, Math.min(4, gridColsFromAdv || gridColsFromLegacy || 3));
+    const gridCols = Math.max(
+      2,
+      Math.min(4, gridColsFromAdv || gridColsFromLegacy || 3)
+    );
 
     return (
-      <section id="projects" style={{ paddingTop: "var(--sp-lg)", paddingBottom: "var(--sp-lg)" }} aria-labelledby="projects-title">
+      <section
+        id="projects"
+        style={{ paddingTop: "var(--sp-lg)", paddingBottom: "var(--sp-lg)" }}
+        aria-labelledby="projects-title"
+      >
         <div className="tpl-container">
-          <h2 id="projects-title" className="tpl-heading" style={{ fontSize: "var(--fs-2xl)", marginBottom: "var(--sp-md)" }}>
+          <h2
+            id="projects-title"
+            className="tpl-heading"
+            style={{ fontSize: "var(--fs-2xl)", marginBottom: "var(--sp-md)" }}
+          >
             Proyectos
           </h2>
 
@@ -508,7 +598,13 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
                         src={p.image}
                         alt={p.title}
                         loading="lazy"
-                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
                       />
                     ) : (
                       <div
@@ -537,28 +633,57 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
                       minHeight: 0,
                     }}
                   >
-                    <h3 className="tpl-heading" style={{ margin: 0, fontSize: "var(--fs-lg)" }}>
+                    <h3
+                      className="tpl-heading"
+                      style={{ margin: 0, fontSize: "var(--fs-lg)" }}
+                    >
                       {p.title}
                     </h3>
 
                     {p.description && (
-                      <p className="tpl-subtext" style={{ fontSize: "var(--fs-base)", margin: 0 }}>
+                      <p
+                        className="tpl-subtext"
+                        style={{ fontSize: "var(--fs-base)", margin: 0 }}
+                      >
                         {p.description}
                       </p>
                     )}
 
                     {p.technologies && (
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <TechList technologies={p.technologies.split(",").slice(0, 4).join(",")} variant="minimal" />
+                      <div
+                        style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
+                      >
+                        <TechList
+                          technologies={p.technologies
+                            .split(",")
+                            .slice(0, 4)
+                            .join(",")}
+                          variant="minimal"
+                        />
                       </div>
                     )}
 
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: "auto" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 8,
+                        flexWrap: "wrap",
+                        marginTop: "auto",
+                      }}
+                    >
                       {onOpenProject && (
                         <button
                           className="tpl-btn-primary"
                           onClick={() => setSelected(p)}
-                          style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, fontWeight: 600, lineHeight: 1.1 }}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            fontWeight: 600,
+                            lineHeight: 1.1,
+                          }}
                         >
                           <Icons.Code size={16} aria-hidden />
                           <span>Ver detalles</span>
@@ -571,7 +696,16 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
                           href={p.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, fontWeight: 600, lineHeight: 1.1, textDecoration: "none" }}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            fontWeight: 600,
+                            lineHeight: 1.1,
+                            textDecoration: "none",
+                          }}
                         >
                           <Icons.Globe size={16} aria-hidden />
                           <span>Live</span>
@@ -584,7 +718,16 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
                           href={p.github}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, fontWeight: 600, lineHeight: 1.1, textDecoration: "none" }}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            fontWeight: 600,
+                            lineHeight: 1.1,
+                            textDecoration: "none",
+                          }}
                         >
                           <Icons.Github size={16} aria-hidden />
                           <span>Código</span>
@@ -603,10 +746,28 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
   const renderSkills = () => {
     if (!data.skills.some((s) => s.category.trim())) return null;
 
+    // Obtener columnas configuradas (igual que en projects)
+    const advSkills = advancedSections?.find(
+      (s) => normalizeSectionId(s.id) === "skills"
+    );
+    const gridColsFromAdv = Number(advSkills?.config?.columns ?? 0);
+    const gridColsFromLegacy = Number(
+      flatSections.find((s) => s.id === "skills")?.props?.gridCols ?? 0
+    );
+    const gridCols = Math.max(
+      1,
+      Math.min(4, gridColsFromAdv || gridColsFromLegacy || 2)
+    );
+
     return (
-      <section style={{ paddingTop: "var(--sp-lg)", paddingBottom: "var(--sp-lg)" }}>
+      <section
+        style={{ paddingTop: "var(--sp-lg)", paddingBottom: "var(--sp-lg)" }}
+      >
         <div className="tpl-container">
-          <h2 className="tpl-heading" style={{ fontSize: "var(--fs-2xl)", marginBottom: "var(--sp-md)" }}>
+          <h2
+            className="tpl-heading"
+            style={{ fontSize: "var(--fs-2xl)", marginBottom: "var(--sp-md)" }}
+          >
             Habilidades
           </h2>
 
@@ -614,15 +775,27 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
             style={{
               display: "grid",
               gap: "var(--sp-md)",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
               alignItems: "start",
             }}
           >
             {data.skills
               .filter((s) => s.category.trim())
               .map((s, i) => (
-                <div key={i} className="tpl-surface" style={{ padding: "var(--sp-md)", display: "flex", flexDirection: "column", gap: "var(--sp-sm)" }}>
-                  <h3 className="tpl-heading" style={{ fontSize: "var(--fs-lg)", margin: 0 }}>
+                <div
+                  key={i}
+                  className="tpl-surface"
+                  style={{
+                    padding: "var(--sp-md)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "var(--sp-sm)",
+                  }}
+                >
+                  <h3
+                    className="tpl-heading"
+                    style={{ fontSize: "var(--fs-lg)", margin: 0 }}
+                  >
                     {s.category}
                   </h3>
                   <TechList technologies={s.items} variant="minimal" />
@@ -635,9 +808,14 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
   };
 
   const renderExperience = () => (
-    <section style={{ paddingTop: "var(--sp-lg)", paddingBottom: "var(--sp-lg)" }}>
+    <section
+      style={{ paddingTop: "var(--sp-lg)", paddingBottom: "var(--sp-lg)" }}
+    >
       <div className="tpl-container">
-        <h2 className="tpl-heading" style={{ fontSize: "var(--fs-2xl)", marginBottom: "var(--sp-md)" }}>
+        <h2
+          className="tpl-heading"
+          style={{ fontSize: "var(--fs-2xl)", marginBottom: "var(--sp-md)" }}
+        >
           Experiencia
         </h2>
         <div className="tpl-surface" style={{ padding: "var(--sp-md)" }}>
@@ -650,46 +828,88 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
   );
 
   const renderFooterLike = () => (
-    <footer style={{ paddingTop: "var(--sp-lg)", paddingBottom: "var(--sp-lg)", background: "var(--color-primary)", color: "white" }}>
+    <footer
+      style={{
+        paddingTop: "var(--sp-lg)",
+        paddingBottom: "var(--sp-lg)",
+        background: "var(--color-primary)",
+        color: "white",
+      }}
+    >
       <div className="tpl-container">
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
           {data.personalInfo.email && (
-            <a href={`mailto:${data.personalInfo.email}`} className="tpl-btn-outline" style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}>
+            <a
+              href={`mailto:${data.personalInfo.email}`}
+              className="tpl-btn-outline"
+              style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}
+            >
               Email
             </a>
           )}
           {data.personalInfo.github && (
-            <a href={data.personalInfo.github} target="_blank" rel="noopener noreferrer" className="tpl-btn-outline" style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}>
+            <a
+              href={data.personalInfo.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tpl-btn-outline"
+              style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}
+            >
               GitHub
             </a>
           )}
           {data.personalInfo.linkedin && (
-            <a href={data.personalInfo.linkedin} target="_blank" rel="noopener noreferrer" className="tpl-btn-outline" style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}>
+            <a
+              href={data.personalInfo.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tpl-btn-outline"
+              style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}
+            >
               LinkedIn
             </a>
           )}
           {data.personalInfo.website && (
-            <a href={data.personalInfo.website} target="_blank" rel="noopener noreferrer" className="tpl-btn-outline" style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}>
+            <a
+              href={data.personalInfo.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tpl-btn-outline"
+              style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}
+            >
               Web
             </a>
           )}
         </div>
-        <p style={{ marginTop: "var(--sp-sm)", opacity: 0.9, fontSize: "var(--fs-sm)" }}>
-          © {new Date().getFullYear()} {data.personalInfo.fullName || "Portfolio"}
+        <p
+          style={{
+            marginTop: "var(--sp-sm)",
+            opacity: 0.9,
+            fontSize: "var(--fs-sm)",
+          }}
+        >
+          © {new Date().getFullYear()}{" "}
+          {data.personalInfo.fullName || "Portfolio"}
         </p>
       </div>
     </footer>
   );
 
   const renderUnknown = (name: string) => (
-    <section style={{ paddingTop: "var(--sp-lg)", paddingBottom: "var(--sp-lg)" }}>
+    <section
+      style={{ paddingTop: "var(--sp-lg)", paddingBottom: "var(--sp-lg)" }}
+    >
       <div className="tpl-container">
-        <h2 className="tpl-heading" style={{ fontSize: "var(--fs-xl)", marginBottom: "var(--sp-sm)" }}>
+        <h2
+          className="tpl-heading"
+          style={{ fontSize: "var(--fs-xl)", marginBottom: "var(--sp-sm)" }}
+        >
           {name}
         </h2>
         <div className="tpl-surface" style={{ padding: "var(--sp-md)" }}>
           <p className="tpl-subtext" style={{ fontSize: "var(--fs-base)" }}>
-            Esta sección no tiene un renderer específico aún. Puedes añadirlo más tarde.
+            Esta sección no tiene un renderer específico aún. Puedes añadirlo
+            más tarde.
           </p>
         </div>
       </div>
@@ -715,13 +935,6 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
     }
   };
 
-  // Qué secciones pintamos en cada área (por ahora usamos el primero que encaje)
-  const firstOf = (id: string, list: AdvSection[]) =>
-    list.find((s) => normalizeSectionId(s.id ?? s.type) === id);
-
-  // Main: pintamos en este orden si están habilitadas
-  const mainOrder = ["about", "projects", "skills", "experience", "blog", "testimonials", "gallery", "custom"];
-
   return (
     <TemplateTheme template={themeTemplate}>
       {/* Variables avanzadas que sobre-escriben dentro del scope */}
@@ -742,42 +955,88 @@ console.log('🎯 effectiveTemplate:', effectiveTemplate?.name);
           {/* LEFT */}
           {leftEnabled && (
             <aside style={{ display: "grid", gap: "var(--sp-md)" }}>
-              {byArea["sidebar-left"].map((s) => (
-                <React.Fragment key={s.id}>
-                  {renderById(normalizeSectionId(s.id ?? s.type), s.name)}
-                </React.Fragment>
-              ))}
+              {byArea["sidebar-left"]
+                .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                .map((s) => {
+                  const variant = s.config?.variant || "default";
+                  const variantClass =
+                    variant !== "default" ? `variant-${variant}` : "";
+                  return (
+                    <div key={s.id} className={variantClass}>
+                      {renderById(normalizeSectionId(s.id ?? s.type), s.name)}
+                    </div>
+                  );
+                })}
             </aside>
           )}
 
           {/* MAIN */}
+          {/* MAIN */}
           <main style={{ display: "grid", gap: "var(--sp-lg)" }}>
-            {mainOrder.map((id) => {
-              const s = firstOf(id, byArea.main);
-              return s ? (
-                <React.Fragment key={id}>
-                  {renderById(id, s.name)}
-                </React.Fragment>
-              ) : null;
-            })}
+            {byArea.main
+              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+              .map((s) => {
+                const id = normalizeSectionId(s.id ?? s.type);
+                const variant = s.config?.variant || "default";
+                const variantClass =
+                  variant !== "default" ? `variant-${variant}` : "";
+
+                return (
+                  <div key={s.id} className={variantClass}>
+                    {renderById(id, s.name)}
+                  </div>
+                );
+              })}
           </main>
 
           {/* RIGHT */}
           {rightEnabled && (
             <aside style={{ display: "grid", gap: "var(--sp-md)" }}>
-              {byArea["sidebar-right"].map((s) => (
-                <React.Fragment key={s.id}>
-                  {renderById(normalizeSectionId(s.id ?? s.type), s.name)}
-                </React.Fragment>
-              ))}
+              {byArea["sidebar-right"]
+                .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                .map((s) => {
+                  const variant = s.config?.variant || "default";
+                  const variantClass =
+                    variant !== "default" ? `variant-${variant}` : "";
+                  return (
+                    <div key={s.id} className={variantClass}>
+                      {renderById(normalizeSectionId(s.id ?? s.type), s.name)}
+                    </div>
+                  );
+                })}
             </aside>
           )}
         </div>
 
         {/* FOOTER */}
-        {byArea.footer.length > 0 && renderFooterLike()}
+        {byArea.footer.length > 0 && (
+          <footer
+            style={{
+              paddingTop: "var(--sp-lg)",
+              paddingBottom: "var(--sp-lg)",
+              background: "var(--color-primary)",
+              color: "white",
+            }}
+          >
+            {byArea.footer
+              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+              .map((s) => {
+                const variant = s.config?.variant || "default";
+                const variantClass =
+                  variant !== "default" ? `variant-${variant}` : "";
+                return (
+                  <div key={s.id} className={variantClass}>
+                    {renderById(normalizeSectionId(s.id ?? s.type), s.name)}
+                  </div>
+                );
+              })}
+          </footer>
+        )}
 
-        <ProjectDetailsModal project={selected} onClose={() => setSelected(null)} />
+        <ProjectDetailsModal
+          project={selected}
+          onClose={() => setSelected(null)}
+        />
       </div>
     </TemplateTheme>
   );

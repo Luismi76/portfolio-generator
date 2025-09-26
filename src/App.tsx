@@ -1,5 +1,5 @@
 // src/App.tsx - Con sistema de plantillas avanzado integrado
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 // Componentes principales
 import ModernPortfolioEditor from './components/editor/ModernPortfolioEditor';
@@ -36,61 +36,105 @@ const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }
   );
 };
 
-// Componente de toggle de modo mejorado (siempre visible)
-const ModeToggle: React.FC<{
+// Componente de header con navegación integrada
+const AppHeader: React.FC<{
   currentMode: AppMode;
   onModeChange: (mode: AppMode) => void;
   hasUnsavedChanges?: boolean;
-}> = ({ currentMode, onModeChange, hasUnsavedChanges }) => (
-  <div className="fixed top-4 right-4 bg-white shadow-xl rounded-xl p-3 z-50 border border-gray-200">
-    <div className="flex gap-1">
-      <button
-        onClick={() => onModeChange('editor')}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-          currentMode === 'editor' 
-            ? 'bg-blue-600 text-white shadow-md' 
-            : 'text-gray-600 hover:bg-gray-100'
-        }`}
-      >
-        <span>📝</span>
-        Editor
-      </button>
-      
-      <button
-        onClick={() => onModeChange('templates')}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-          currentMode === 'templates' 
-            ? 'bg-purple-600 text-white shadow-md' 
-            : 'text-gray-600 hover:bg-gray-100'
-        }`}
-      >
-        <span>🎨</span>
-        Plantillas
-      </button>
-      
-      <button
-        onClick={() => onModeChange('portfolio')}
-        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-          currentMode === 'portfolio' 
-            ? 'bg-green-600 text-white shadow-md' 
-            : 'text-gray-600 hover:bg-gray-100'
-        }`}
-      >
-        <span>👁️</span>
-        Portfolio
-      </button>
-    </div>
-    
-    {/* Indicador de cambios sin guardar */}
-    {hasUnsavedChanges && (
-      <div className="mt-2 text-center">
-        <span className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
-          <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
-          Cambios sin guardar
-        </span>
+  customizeActions?: {
+    onSave?: () => void;
+    onPreview?: () => void;
+    onReset?: () => void;
+  };
+}> = ({ currentMode, onModeChange, hasUnsavedChanges, customizeActions }) => (
+  <header className="bg-white shadow-sm border-b sticky top-0 z-40">
+    <div className="max-w-7xl mx-auto px-4 py-3">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold text-gray-800">Portfolio Generator</h1>
+        
+        <div className="flex items-center gap-2">
+          {/* BOTONES PRINCIPALES - SIEMPRE VISIBLES */}
+          <button
+            onClick={() => onModeChange('editor')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+              currentMode === 'editor' 
+                ? 'bg-blue-600 text-white shadow-md' 
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <span>📝</span>
+            <span className="hidden sm:inline">Editor</span>
+          </button>
+          
+          <button
+            onClick={() => onModeChange('templates')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+              currentMode === 'templates' 
+                ? 'bg-purple-600 text-white shadow-md' 
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <span>🎨</span>
+            <span className="hidden sm:inline">Plantillas</span>
+          </button>
+          
+          <button
+            onClick={() => onModeChange('portfolio')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+              currentMode === 'portfolio' 
+                ? 'bg-green-600 text-white shadow-md' 
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <span>👁️</span>
+            <span className="hidden sm:inline">Portfolio</span>
+          </button>
+
+          {/* SEPARADOR cuando hay botones de customize */}
+          {currentMode === 'customize' && customizeActions && (
+            <div className="w-px h-8 bg-gray-300 mx-2"></div>
+          )}
+
+          {/* BOTONES DE CUSTOMIZE - SOLO CUANDO ESTÁS EN ESE MODO */}
+          {currentMode === 'customize' && customizeActions && (
+            <>
+              {customizeActions.onReset && (
+                <button
+                  onClick={customizeActions.onReset}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
+                >
+                  Resetear
+                </button>
+              )}
+              {customizeActions.onPreview && (
+                <button
+                  onClick={customizeActions.onPreview}
+                  className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-sm flex items-center gap-2"
+                >
+                  👁️ Vista Previa
+                </button>
+              )}
+              {customizeActions.onSave && (
+                <button
+                  onClick={customizeActions.onSave}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                >
+                  ✓ Guardar
+                </button>
+              )}
+            </>
+          )}
+          
+          {hasUnsavedChanges && (
+            <span className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full ml-2">
+              <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
+              <span className="hidden md:inline">Sin guardar</span>
+            </span>
+          )}
+        </div>
       </div>
-    )}
-  </div>
+    </div>
+  </header>
 );
 
 // Componente de vista previa rápida
@@ -181,9 +225,8 @@ const App: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
 
-  // Cambiar modo
-  const switchMode = (newMode: AppMode) => {
-    // Si hay cambios sin guardar, preguntar al usuario
+  // Cambiar modo - envuelto en useCallback
+  const switchMode = useCallback((newMode: AppMode) => {
     if (templates.hasUnsavedChanges && newMode !== appState.mode) {
       const confirmed = window.confirm(
         '¿Estás seguro de cambiar de modo? Los cambios no guardados se perderán.'
@@ -193,32 +236,41 @@ const App: React.FC = () => {
 
     setAppState((prev) => ({ ...prev, mode: newMode }));
 
-    // Guardar en localStorage
     try {
       localStorage.setItem('app-mode', newMode);
     } catch (error) {
       console.warn('Error saving mode to localStorage:', error);
     }
 
-    // Actualizar URL sin recargar página
     const url = new URL(window.location.href);
     url.searchParams.set('mode', newMode);
     window.history.replaceState({}, '', url.toString());
-  };
+  }, [templates.hasUnsavedChanges, appState.mode]);
 
-  // Handler para vista previa rápida
-  const handleQuickPreview = () => {
+  // Handler para vista previa rápida - envuelto en useCallback
+  const handleQuickPreview = useCallback(() => {
     const content = templates.previewTemplate();
     setPreviewContent(content);
     setShowPreview(true);
-  };
+  }, [templates]);
 
-  // Handler para guardar configuración
-  const handleSaveTemplate = () => {
-    // Aquí iría la lógica de guardado
+  // Handler para guardar configuración - envuelto en useCallback
+  const handleSaveTemplate = useCallback(() => {
     console.log('Guardando configuración de plantilla...');
-    switchMode('templates');
-  };
+    
+    try {
+      const configToSave = {
+        templateId: templates.selectedTemplate?.id,
+        config: templates.config,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('saved-portfolio-config', JSON.stringify(configToSave));
+      alert('✅ Configuración guardada correctamente');
+    } catch (error) {
+      console.error('Error guardando configuración:', error);
+      alert('❌ Error al guardar la configuración');
+    }
+  }, [templates.selectedTemplate?.id, templates.config]);
 
   // Shortcuts de teclado mejorados
   useEffect(() => {
@@ -227,7 +279,6 @@ const App: React.FC = () => {
         switch (event.key.toLowerCase()) {
           case 'm': {
             event.preventDefault();
-            // Ciclar entre modos: editor -> templates -> customize -> portfolio -> editor
             const modes: AppMode[] = ['editor', 'templates', 'customize', 'portfolio'];
             const currentIndex = modes.indexOf(appState.mode);
             const nextMode = modes[(currentIndex + 1) % modes.length];
@@ -262,15 +313,13 @@ const App: React.FC = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [appState.mode, templates.hasUnsavedChanges]);
+  }, [appState.mode, templates.hasUnsavedChanges, switchMode, handleQuickPreview, handleSaveTemplate]);
 
   // Efecto para manejar la carga inicial
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Simular carga de configuración
         await new Promise((resolve) => setTimeout(resolve, 500));
-
         setAppState((prev) => ({ ...prev, isLoading: false }));
       } catch (error) {
         setAppState((prev) => ({
@@ -353,34 +402,6 @@ const App: React.FC = () => {
       case 'templates':
         return (
           <div className="min-h-screen bg-gray-50">
-            <div className="bg-white shadow-sm border-b">
-              <div className="max-w-7xl mx-auto px-6 py-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-800">Gestión de Plantillas</h1>
-                    <p className="text-gray-600 mt-2">
-                      Selecciona y personaliza la plantilla perfecta para tu portfolio
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    {templates.selectedTemplate && (
-                      <button
-                        onClick={() => switchMode('customize')}
-                        className="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 flex items-center gap-2 font-semibold"
-                      >
-                        🎨 Personalizar
-                      </button>
-                    )}
-                    <button
-                      onClick={handleQuickPreview}
-                      className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 flex items-center gap-2 font-semibold"
-                    >
-                      👁️ Vista Previa
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
             <div className="max-w-7xl mx-auto px-6 py-8">
               <AdvancedTemplateSelector
                 templates={templates.templates}
@@ -458,11 +479,16 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Toggle de modo - Siempre visible */}
-      <ModeToggle 
+      {/* Header con navegación integrada */}
+      <AppHeader 
         currentMode={appState.mode} 
         onModeChange={switchMode}
         hasUnsavedChanges={templates.hasUnsavedChanges}
+        customizeActions={appState.mode === 'customize' ? {
+          onSave: handleSaveTemplate,
+          onPreview: handleQuickPreview,
+          onReset: templates.resetConfig
+        } : undefined}
       />
 
       {/* Contenido principal */}
@@ -476,34 +502,7 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Indicador de estado avanzado (solo en desarrollo) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 left-4 bg-gray-900 text-white px-4 py-3 rounded-xl text-sm z-40 shadow-xl">
-          <div className="font-semibold mb-2">Portfolio Generator v3.0</div>
-          <div className="space-y-1 text-xs">
-            <div className="flex items-center gap-2">
-              <span>Modo:</span>
-              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                appState.mode === 'editor' ? 'bg-green-600 text-white' :
-                appState.mode === 'templates' ? 'bg-purple-600 text-white' :
-                appState.mode === 'customize' ? 'bg-orange-600 text-white' :
-                appState.mode === 'preview' ? 'bg-pink-600 text-white' :
-                'bg-blue-600 text-white'
-              }`}>
-                {appState.mode}
-              </span>
-            </div>
-            <div className="text-gray-400">
-              Ctrl+M: Ciclar | Ctrl+R: Preview | Ctrl+S: Guardar
-            </div>
-            {templates.validationErrors.length > 0 && (
-              <div className="text-red-400 text-xs">
-                ⚠️ {templates.validationErrors.length} errores de validación
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 };

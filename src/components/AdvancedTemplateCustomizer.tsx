@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from "react";
 import {
   AdvancedTemplate,
   AdvancedTemplateConfig,
@@ -6,9 +6,9 @@ import {
   LayoutArea,
   TemplateLayoutStructure,
   TemplateLayoutStructurePatch,
-} from '../types/advanced-template-types';
-import { AdvancedLayoutBuilder } from './AdvancedLayoutBuilder';
-import { Icons } from './portfolio-icons';
+} from "../types/advanced-template-types";
+import { AdvancedLayoutBuilder } from "./AdvancedLayoutBuilder";
+import { Icons } from "./portfolio-icons";
 
 interface Props {
   template: AdvancedTemplate;
@@ -20,22 +20,36 @@ interface Props {
   onReset: () => void;
 }
 
-type CustomizerTab = 'layout' | 'colors' | 'typography' | 'sections' | 'advanced';
+type CustomizerTab =
+  | "layout"
+  | "colors"
+  | "typography"
+  | "sections"
+  | "advanced";
 
-const AREA_KEYS: LayoutArea[] = ['header', 'sidebar-left', 'sidebar-right', 'main', 'footer', 'floating'];
+const AREA_KEYS: LayoutArea[] = [
+  "header",
+  "sidebar-left",
+  "sidebar-right",
+  "main",
+  "footer",
+  "floating",
+];
 
 // ===== mergeLayoutStructure (seguro) =====
 function mergeLayoutStructure(
   base: TemplateLayoutStructure,
   custom?: TemplateLayoutStructurePatch
 ): TemplateLayoutStructure {
-  const baseAreas = (base?.areas ?? {}) as Required<TemplateLayoutStructure>['areas'];
+  const baseAreas = (base?.areas ??
+    {}) as Required<TemplateLayoutStructure>["areas"];
   const mergedAreas = AREA_KEYS.reduce((acc, key) => {
     acc[key] = { ...(baseAreas?.[key] ?? {}), ...(custom?.areas?.[key] ?? {}) };
     return acc;
-  }, {} as Required<TemplateLayoutStructure>['areas']);
+  }, {} as Required<TemplateLayoutStructure>["areas"]);
 
-  const baseResp = base?.responsive ?? ({ mobile: 'stack', tablet: 'full' } as const);
+  const baseResp =
+    base?.responsive ?? ({ mobile: "stack", tablet: "full" } as const);
   const responsive = custom?.responsive
     ? {
         mobile: custom.responsive.mobile ?? baseResp.mobile,
@@ -77,7 +91,10 @@ const ColorPicker: React.FC<{
           placeholder="#000000"
         />
         {presets && (
-          <button onClick={() => setShowPresets(!showPresets)} className="p-1 text-gray-400 hover:text-gray-600">
+          <button
+            onClick={() => setShowPresets(!showPresets)}
+            className="p-1 text-gray-400 hover:text-gray-600"
+          >
             <Icons.ChevronDown size={14} />
           </button>
         )}
@@ -105,22 +122,32 @@ const TypographyControls: React.FC<{
   onChange: (typography: any) => void;
 }> = ({ typography, onChange }) => {
   const fontFamilies = [
-    { name: 'Inter', value: "'Inter', sans-serif" },
-    { name: 'Roboto', value: "'Roboto', sans-serif" },
-    { name: 'Poppins', value: "'Poppins', sans-serif" },
-    { name: 'Playfair Display', value: "'Playfair Display', serif" },
-    { name: 'Merriweather', value: "'Merriweather', serif" },
-    { name: 'Source Code Pro', value: "'Source Code Pro', monospace" },
+    { name: "Inter", value: "'Inter', sans-serif" },
+    { name: "Roboto", value: "'Roboto', sans-serif" },
+    { name: "Poppins", value: "'Poppins', sans-serif" },
+    { name: "Playfair Display", value: "'Playfair Display', serif" },
+    { name: "Merriweather", value: "'Merriweather', serif" },
+    { name: "Source Code Pro", value: "'Source Code Pro', monospace" },
   ];
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Fuente Principal</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Fuente Principal
+          </label>
           <select
-            value={typography?.fontFamilies?.primary || ''}
-            onChange={(e) => onChange({ ...typography, fontFamilies: { ...(typography?.fontFamilies ?? {}), primary: e.target.value } })}
+            value={typography?.fontFamilies?.primary || ""}
+            onChange={(e) =>
+              onChange({
+                ...typography,
+                fontFamilies: {
+                  ...(typography?.fontFamilies ?? {}),
+                  primary: e.target.value,
+                },
+              })
+            }
             className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
           >
             {fontFamilies.map((font) => (
@@ -131,10 +158,20 @@ const TypographyControls: React.FC<{
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Fuente de Títulos</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Fuente de Títulos
+          </label>
           <select
-            value={typography?.fontFamilies?.heading || ''}
-            onChange={(e) => onChange({ ...typography, fontFamilies: { ...(typography?.fontFamilies ?? {}), heading: e.target.value } })}
+            value={typography?.fontFamilies?.heading || ""}
+            onChange={(e) =>
+              onChange({
+                ...typography,
+                fontFamilies: {
+                  ...(typography?.fontFamilies ?? {}),
+                  heading: e.target.value,
+                },
+              })
+            }
             className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
           >
             {fontFamilies.map((font) => (
@@ -149,13 +186,21 @@ const TypographyControls: React.FC<{
       <div className="space-y-3">
         <h4 className="text-sm font-medium text-gray-700">Tamaños de Fuente</h4>
         <div className="grid grid-cols-3 gap-3">
-          {['sm', 'base', 'lg', 'xl', '2xl', '3xl'].map((size) => (
+          {["sm", "base", "lg", "xl", "2xl", "3xl"].map((size) => (
             <div key={size}>
               <label className="block text-xs text-gray-600 mb-1">{size}</label>
               <input
                 type="text"
-                value={typography?.fontSizes?.[size] || ''}
-                onChange={(e) => onChange({ ...typography, fontSizes: { ...(typography?.fontSizes ?? {}), [size]: e.target.value } })}
+                value={typography?.fontSizes?.[size] || ""}
+                onChange={(e) =>
+                  onChange({
+                    ...typography,
+                    fontSizes: {
+                      ...(typography?.fontSizes ?? {}),
+                      [size]: e.target.value,
+                    },
+                  })
+                }
                 className="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-blue-500"
                 placeholder="1rem"
               />
@@ -172,68 +217,117 @@ const SpacingControls: React.FC<{
   spacing: any;
   onChange: (spacing: any) => void;
 }> = ({ spacing, onChange }) => {
-  const keys = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'] as const;
+  // Calcular el nivel de espaciado actual basado en 'md'
+  const getCurrentLevel = (): number => {
+    const mdValue = spacing?.md || "1.5rem";
+    const parsed = parseFloat(mdValue);
 
-  const parseLen = (v?: string): { num: number; unit: 'px' | 'rem' } => {
-    if (!v) return { num: 0, unit: 'px' };
-    const s = String(v).trim().toLowerCase();
-    if (s.endsWith('rem')) {
-      const n = parseFloat(s.slice(0, -3));
-      return { num: isNaN(n) ? 0 : n, unit: 'rem' };
+    if (mdValue.includes("rem")) {
+      return parsed;
+    } else if (mdValue.includes("px")) {
+      return parsed / 16;
     }
-    if (s.endsWith('px')) {
-      const n = parseFloat(s.slice(0, -2));
-      return { num: isNaN(n) ? 0 : n, unit: 'px' };
-    }
-    const n = parseFloat(s);
-    return { num: isNaN(n) ? 0 : n, unit: 'px' };
+    return 1.5;
   };
 
-  const formatLen = (num: number, unit: 'px' | 'rem') => (unit === 'rem' ? `${Number(num.toFixed(2))}rem` : `${Math.round(num)}px`);
+  const [spacingLevel, setSpacingLevel] = useState(getCurrentLevel());
+
+  // Ratios proporcionales
+  const spacingRatios = {
+    xs: 0.33,
+    sm: 0.67,
+    md: 1,
+    lg: 1.33,
+    xl: 2,
+    "2xl": 2.67,
+  };
+
+  const handleSpacingChange = (newLevel: number) => {
+    setSpacingLevel(newLevel);
+
+    const newSpacing = {
+      xs: `${(newLevel * spacingRatios.xs).toFixed(2)}rem`,
+      sm: `${(newLevel * spacingRatios.sm).toFixed(2)}rem`,
+      md: `${(newLevel * spacingRatios.md).toFixed(2)}rem`,
+      lg: `${(newLevel * spacingRatios.lg).toFixed(2)}rem`,
+      xl: `${(newLevel * spacingRatios.xl).toFixed(2)}rem`,
+      "2xl": `${(newLevel * spacingRatios["2xl"]).toFixed(2)}rem`,
+    };
+
+    onChange(newSpacing);
+  };
+
+  const presets = [
+    { label: "Muy Compacto", value: 0.5 },
+    { label: "Compacto", value: 1 },
+    { label: "Normal", value: 1.5 },
+    { label: "Espaciado", value: 2 },
+    { label: "Muy Espaciado", value: 3 },
+  ];
 
   return (
-    <div className="space-y-3">
-      <h4 className="text-sm font-medium text-gray-700">Espaciado</h4>
-
-      <div className="space-y-4">
-        {keys.map((k) => {
-          const raw = spacing?.[k];
-          const { num, unit } = parseLen(raw);
-
-          const min = unit === 'rem' ? 0.25 : 0;
-          const max = unit === 'rem' ? 6 : 64;
-          const step = unit === 'rem' ? 0.05 : 1;
-
-          return (
-            <div key={k} className="grid grid-cols-6 items-center gap-3">
-              <label className="col-span-1 block text-xs text-gray-600">{k}</label>
-
-              <input
-                type="range"
-                aria-label={`Espaciado ${k}`}
-                className="col-span-4 w-full"
-                min={min}
-                max={max}
-                step={step}
-                value={num}
-                onChange={(e) => {
-                  const nextNum = parseFloat(e.target.value);
-                  const next = {
-                    ...(spacing ?? {}),
-                    [k]: formatLen(nextNum, unit),
-                  };
-                  onChange(next);
-                }}
-              />
-
-              <div className="col-span-1 text-right text-xs text-gray-600 tabular-nums">{formatLen(num, unit)}</div>
-            </div>
-          );
-        })}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-medium text-gray-700">Espaciado General</h4>
+        <span className="text-xs text-gray-500">
+          {spacingLevel.toFixed(2)}rem
+        </span>
       </div>
 
-      <p className="text-[11px] text-gray-500 mt-1">
-        El control deslizante mantiene la <b>unidad actual</b> de cada tamaño (<code>px</code> o <code>rem</code>). Si no hay unidad, se asume <code>px</code>.
+      <div className="space-y-2">
+        <input
+          type="range"
+          aria-label="Nivel de espaciado general"
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+          min={0.25}
+          max={4}
+          step={0.25}
+          value={spacingLevel}
+          onChange={(e) => handleSpacingChange(parseFloat(e.target.value))}
+        />
+
+        <div className="flex justify-between text-xs text-gray-500">
+          <span>Compacto</span>
+          <span>Normal</span>
+          <span>Espaciado</span>
+        </div>
+      </div>
+
+      <div className="flex gap-2 flex-wrap">
+        {presets.map((preset) => (
+          <button
+            key={preset.label}
+            onClick={() => handleSpacingChange(preset.value)}
+            className={`px-3 py-1 rounded-lg text-xs transition-colors ${
+              Math.abs(spacingLevel - preset.value) < 0.1
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
+
+      <details className="mt-4">
+        <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
+          Ver valores específicos
+        </summary>
+        <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+          {Object.entries(spacingRatios).map(([key, ratio]) => (
+            <div key={key} className="bg-gray-50 rounded p-2">
+              <span className="text-gray-600">{key}:</span>
+              <span className="ml-1 font-mono text-gray-800">
+                {(spacingLevel * ratio).toFixed(2)}rem
+              </span>
+            </div>
+          ))}
+        </div>
+      </details>
+
+      <p className="text-[11px] text-gray-500 mt-2">
+        Ajusta el espaciado general de la plantilla. Todos los tamaños se
+        escalan proporcionalmente.
       </p>
     </div>
   );
@@ -249,7 +343,7 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
   onCancel,
   onReset,
 }) => {
-  const [activeTab, setActiveTab] = useState<CustomizerTab>('layout');
+  const [activeTab, setActiveTab] = useState<CustomizerTab>("layout");
   const [hasChanges, setHasChanges] = useState(false);
 
   const currentConfig = useMemo(
@@ -257,17 +351,29 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
       ...config,
       customizations: {
         ...config.customizations,
-        layout: { ...(template?.layout ?? {}), ...(config?.customizations?.layout ?? {}) },
-        colors: { ...(template?.colors ?? {}), ...(config?.customizations?.colors ?? {}) },
-        typography: { ...(template?.typography ?? {}), ...(config?.customizations?.typography ?? {}) },
-        sections: config?.customizations?.sections ?? (template?.sections ?? []),
+        layout: {
+          ...(template?.layout ?? {}),
+          ...(config?.customizations?.layout ?? {}),
+        },
+        colors: {
+          ...(template?.colors ?? {}),
+          ...(config?.customizations?.colors ?? {}),
+        },
+        typography: {
+          ...(template?.typography ?? {}),
+          ...(config?.customizations?.typography ?? {}),
+        },
+        sections:
+          config?.customizations?.sections && config.templateId === template.id
+            ? config.customizations.sections
+            : template?.sections ?? [],
       },
     }),
     [config, template]
   );
 
   const updateConfig = useCallback(
-    (updates: Partial<AdvancedTemplateConfig['customizations']>) => {
+    (updates: Partial<AdvancedTemplateConfig["customizations"]>) => {
       const newConfig: AdvancedTemplateConfig = {
         ...currentConfig,
         customizations: {
@@ -284,7 +390,12 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
 
   const updateColors = useCallback(
     (colorUpdates: any) => {
-      updateConfig({ colors: { ...(currentConfig.customizations.colors ?? {}), ...(colorUpdates ?? {}) } });
+      updateConfig({
+        colors: {
+          ...(currentConfig.customizations.colors ?? {}),
+          ...(colorUpdates ?? {}),
+        },
+      });
     },
     [currentConfig.customizations.colors, updateConfig]
   );
@@ -297,47 +408,66 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
   );
 
   // Estructura efectiva para el tab "layout"
-const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
-  const baseLS: TemplateLayoutStructure =
-    template?.layoutStructure ??
-    {
-      type: 'grid' as TemplateLayoutStructure['type'],
-      areas: {} as TemplateLayoutStructure['areas'],
+  const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
+    const baseLS: TemplateLayoutStructure = template?.layoutStructure ?? {
+      type: "grid" as TemplateLayoutStructure["type"],
+      areas: {} as TemplateLayoutStructure["areas"],
       responsive: {
-        mobile: 'stack',
-        tablet: 'full',
-      } as TemplateLayoutStructure['responsive'],
+        mobile: "stack",
+        tablet: "full",
+      } as TemplateLayoutStructure["responsive"],
     };
 
-  return mergeLayoutStructure(baseLS, currentConfig.customizations.layoutStructure);
-}, [template?.layoutStructure, currentConfig.customizations.layoutStructure]);
+    return mergeLayoutStructure(
+      baseLS,
+      currentConfig.customizations.layoutStructure
+    );
+  }, [template?.layoutStructure, currentConfig.customizations.layoutStructure]);
 
-
-  const colorPresets = ['#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#EF4444', '#F59E0B', '#10B981', '#06B6D4', '#84CC16', '#6B7280'];
-
-  const tabs: Array<{ id: CustomizerTab; label: string; icon: React.ComponentType<{ size?: number }> }> = [
-    { id: 'layout', label: 'Layout', icon: Icons.Code },
-    { id: 'colors', label: 'Colores', icon: Icons.Palette },
-    { id: 'typography', label: 'Tipografía', icon: Icons.Type },
-    { id: 'sections', label: 'Secciones', icon: Icons.Settings },
-    { id: 'advanced', label: 'Avanzado', icon: Icons.Settings }, // reemplazo de Advanced
+  const colorPresets = [
+    "#3B82F6",
+    "#6366F1",
+    "#8B5CF6",
+    "#EC4899",
+    "#EF4444",
+    "#F59E0B",
+    "#10B981",
+    "#06B6D4",
+    "#84CC16",
+    "#6B7280",
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'layout':
+      case "layout":
         return (
           <>
-            <AdvancedLayoutBuilder
-              template={{ ...template, layoutStructure: effectiveLayoutStructure }}
-              sections={currentConfig.customizations.sections || []}
-              onSectionsChange={updateSections}
-              onLayoutChange={(structure) => updateConfig({ layoutStructure: structure as TemplateLayoutStructurePatch })}
-            />
+<AdvancedLayoutBuilder
+  template={{
+    ...template,
+    layoutStructure: effectiveLayoutStructure,
+  }}
+  sections={currentConfig.customizations.sections || []}
+  onSectionsChange={updateSections}
+  onLayoutChange={(structure: TemplateLayoutStructurePatch) =>
+    updateConfig({
+      layoutStructure: structure,
+    })
+  }
+  layoutStructure={effectiveLayoutStructure}
+  config={currentConfig}
+  onConfigUpdate={(updates) => {
+    updateConfig(updates);
+  }}
+/>
 
             <div className="mt-6">
               <SpacingControls
-                spacing={currentConfig.customizations.layout?.spacing ?? template?.layout?.spacing ?? {}}
+                spacing={
+                  currentConfig.customizations.layout?.spacing ??
+                  template?.layout?.spacing ??
+                  {}
+                }
                 onChange={(spacing) =>
                   updateConfig({
                     layout: {
@@ -351,27 +481,41 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
           </>
         );
 
-      case 'colors':
+      case "colors":
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-3">
-                <h3 className="font-medium text-gray-800">Colores Principales</h3>
+                <h3 className="font-medium text-gray-800">
+                  Colores Principales
+                </h3>
                 <ColorPicker
                   label="Primario"
-                  value={currentConfig.customizations.colors?.primary || template?.colors?.primary || '#3B82F6'}
+                  value={
+                    currentConfig.customizations.colors?.primary ||
+                    template?.colors?.primary ||
+                    "#3B82F6"
+                  }
                   onChange={(c) => updateColors({ primary: c })}
                   presets={colorPresets}
                 />
                 <ColorPicker
                   label="Secundario"
-                  value={currentConfig.customizations.colors?.secondary || template?.colors?.secondary || '#6366F1'}
+                  value={
+                    currentConfig.customizations.colors?.secondary ||
+                    template?.colors?.secondary ||
+                    "#6366F1"
+                  }
                   onChange={(c) => updateColors({ secondary: c })}
                   presets={colorPresets}
                 />
                 <ColorPicker
                   label="Acento"
-                  value={currentConfig.customizations.colors?.accent || template?.colors?.accent || '#EF4444'}
+                  value={
+                    currentConfig.customizations.colors?.accent ||
+                    template?.colors?.accent ||
+                    "#EF4444"
+                  }
                   onChange={(c) => updateColors({ accent: c })}
                   presets={colorPresets}
                 />
@@ -381,17 +525,29 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
                 <h3 className="font-medium text-gray-800">Superficies</h3>
                 <ColorPicker
                   label="Fondo"
-                  value={currentConfig.customizations.colors?.background || template?.colors?.background || '#ffffff'}
+                  value={
+                    currentConfig.customizations.colors?.background ||
+                    template?.colors?.background ||
+                    "#ffffff"
+                  }
                   onChange={(c) => updateColors({ background: c })}
                 />
                 <ColorPicker
                   label="Superficie"
-                  value={currentConfig.customizations.colors?.surface || template?.colors?.surface || '#f7f7f9'}
+                  value={
+                    currentConfig.customizations.colors?.surface ||
+                    template?.colors?.surface ||
+                    "#f7f7f9"
+                  }
                   onChange={(c) => updateColors({ surface: c })}
                 />
                 <ColorPicker
                   label="Superficie Variante"
-                  value={currentConfig.customizations.colors?.surfaceVariant || template?.colors?.surfaceVariant || '#eeeeee'}
+                  value={
+                    currentConfig.customizations.colors?.surfaceVariant ||
+                    template?.colors?.surfaceVariant ||
+                    "#eeeeee"
+                  }
                   onChange={(c) => updateColors({ surfaceVariant: c })}
                 />
               </div>
@@ -400,18 +556,51 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
                 <h3 className="font-medium text-gray-800">Texto</h3>
                 <ColorPicker
                   label="Texto Principal"
-                  value={currentConfig.customizations.colors?.text?.primary || template?.colors?.text?.primary || '#0f172a'}
-                  onChange={(c) => updateColors({ text: { ...(currentConfig.customizations.colors?.text ?? {}), primary: c } })}
+                  value={
+                    currentConfig.customizations.colors?.text?.primary ||
+                    template?.colors?.text?.primary ||
+                    "#0f172a"
+                  }
+                  onChange={(c) =>
+                    updateColors({
+                      text: {
+                        ...(currentConfig.customizations.colors?.text ?? {}),
+                        primary: c,
+                      },
+                    })
+                  }
                 />
                 <ColorPicker
                   label="Texto Secundario"
-                  value={currentConfig.customizations.colors?.text?.secondary || template?.colors?.text?.secondary || '#64748b'}
-                  onChange={(c) => updateColors({ text: { ...(currentConfig.customizations.colors?.text ?? {}), secondary: c } })}
+                  value={
+                    currentConfig.customizations.colors?.text?.secondary ||
+                    template?.colors?.text?.secondary ||
+                    "#64748b"
+                  }
+                  onChange={(c) =>
+                    updateColors({
+                      text: {
+                        ...(currentConfig.customizations.colors?.text ?? {}),
+                        secondary: c,
+                      },
+                    })
+                  }
                 />
                 <ColorPicker
                   label="Texto de Acento"
-                  value={currentConfig.customizations.colors?.text?.accent || template?.colors?.text?.accent || '#ffffff'}
-                  onChange={(c) => updateColors({ text: { ...(currentConfig.customizations.colors?.text ?? {}), accent: c } })}
+                  value={
+                    currentConfig.customizations.colors?.text?.accent ||
+                    template?.colors?.text?.accent ||
+                    "#ffffff"
+                  }
+                  onChange={(c) =>
+                    updateColors({
+                      text: {
+                        ...(currentConfig.customizations.colors?.text ?? {}),
+                        accent: c,
+                      },
+                    })
+                  }
                 />
               </div>
             </div>
@@ -420,28 +609,46 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
               <h3 className="font-medium text-gray-800 mb-4">Gradientes</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-gray-700">Gradiente Primario</h4>
+                  <h4 className="text-sm font-medium text-gray-700">
+                    Gradiente Primario
+                  </h4>
                   <div className="grid grid-cols-2 gap-2">
                     <ColorPicker
                       label="Desde"
-                      value={currentConfig.customizations.colors?.gradients?.primary?.from || ''}
+                      value={
+                        currentConfig.customizations.colors?.gradients?.primary
+                          ?.from || ""
+                      }
                       onChange={(c) =>
                         updateColors({
                           gradients: {
-                            ...(currentConfig.customizations.colors?.gradients ?? {}),
-                            primary: { ...(currentConfig.customizations.colors?.gradients?.primary ?? {}), from: c },
+                            ...(currentConfig.customizations.colors
+                              ?.gradients ?? {}),
+                            primary: {
+                              ...(currentConfig.customizations.colors?.gradients
+                                ?.primary ?? {}),
+                              from: c,
+                            },
                           },
                         })
                       }
                     />
                     <ColorPicker
                       label="Hacia"
-                      value={currentConfig.customizations.colors?.gradients?.primary?.to || ''}
+                      value={
+                        currentConfig.customizations.colors?.gradients?.primary
+                          ?.to || ""
+                      }
                       onChange={(c) =>
                         updateColors({
                           gradients: {
-                            ...(currentConfig.customizations.colors?.gradients ?? {}),
-                            primary: { ...(currentConfig.customizations.colors?.gradients?.primary ?? {}), to: c },
+                            ...(currentConfig.customizations.colors
+                              ?.gradients ?? {}),
+                            primary: {
+                              ...(currentConfig.customizations.colors?.gradients
+                                ?.primary ?? {}),
+                              to: c,
+                            },
                           },
                         })
                       }
@@ -453,20 +660,30 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
           </div>
         );
 
-      case 'typography':
+      case "typography":
         return (
           <TypographyControls
-            typography={currentConfig.customizations.typography || template?.typography || {}}
+            typography={
+              currentConfig.customizations.typography ||
+              template?.typography ||
+              {}
+            }
             onChange={(typography) => updateConfig({ typography })}
           />
         );
 
-      case 'sections':
+      case "sections":
         return (
           <div className="space-y-4">
-            <h3 className="font-medium text-gray-800">Configuración de Secciones</h3>
+            <h3 className="font-medium text-gray-800">
+              Configuración de Secciones
+            </h3>
             <div className="space-y-3">
-              {(currentConfig.customizations.sections || template?.sections || []).map((section) => (
+              {(
+                currentConfig.customizations.sections ||
+                template?.sections ||
+                []
+              ).map((section) => (
                 <div key={section.id} className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -478,8 +695,14 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
                         type="checkbox"
                         checked={!!section.enabled}
                         onChange={(e) => {
-                          const updated = (currentConfig.customizations.sections || template?.sections || []).map((s) =>
-                            s.id === section.id ? { ...s, enabled: e.target.checked } : s
+                          const updated = (
+                            currentConfig.customizations.sections ||
+                            template?.sections ||
+                            []
+                          ).map((s) =>
+                            s.id === section.id
+                              ? { ...s, enabled: e.target.checked }
+                              : s
                           );
                           updateSections(updated);
                         }}
@@ -490,12 +713,26 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Variante</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Variante
+                      </label>
                       <select
-                        value={(section?.config?.variant as any) || 'default'}
+                        value={(section?.config?.variant as any) || "default"}
                         onChange={(e) => {
-                          const updated = (currentConfig.customizations.sections || template?.sections || []).map((s) =>
-                            s.id === section.id ? { ...s, config: { ...(s.config ?? {}), variant: e.target.value as any } } : s
+                          const updated = (
+                            currentConfig.customizations.sections ||
+                            template?.sections ||
+                            []
+                          ).map((s) =>
+                            s.id === section.id
+                              ? {
+                                  ...s,
+                                  config: {
+                                    ...(s.config ?? {}),
+                                    variant: e.target.value as any,
+                                  },
+                                }
+                              : s
                           );
                           updateSections(updated);
                         }}
@@ -509,12 +746,26 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Columnas</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Columnas
+                      </label>
                       <select
                         value={(section?.config?.columns as any) || 1}
                         onChange={(e) => {
-                          const updated = (currentConfig.customizations.sections || template?.sections || []).map((s) =>
-                            s.id === section.id ? { ...s, config: { ...(s.config ?? {}), columns: Number(e.target.value) as any } } : s
+                          const updated = (
+                            currentConfig.customizations.sections ||
+                            template?.sections ||
+                            []
+                          ).map((s) =>
+                            s.id === section.id
+                              ? {
+                                  ...s,
+                                  config: {
+                                    ...(s.config ?? {}),
+                                    columns: Number(e.target.value) as any,
+                                  },
+                                }
+                              : s
                           );
                           updateSections(updated);
                         }}
@@ -533,11 +784,13 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
           </div>
         );
 
-      case 'advanced':
+      case "advanced":
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              <h3 className="font-medium text-gray-800">Configuración Avanzada</h3>
+              <h3 className="font-medium text-gray-800">
+                Configuración Avanzada
+              </h3>
 
               <div className="border rounded-lg p-4">
                 <h4 className="font-medium mb-3">Animaciones</h4>
@@ -545,18 +798,42 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      checked={currentConfig.customizations.animations?.enabled || false}
-                      onChange={(e) => updateConfig({ animations: { ...(currentConfig.customizations.animations ?? {}), enabled: e.target.checked } })}
+                      checked={
+                        currentConfig.customizations.animations?.enabled ||
+                        false
+                      }
+                      onChange={(e) =>
+                        updateConfig({
+                          animations: {
+                            ...(currentConfig.customizations.animations ?? {}),
+                            enabled: e.target.checked,
+                          },
+                        })
+                      }
                     />
                     <span className="text-sm">Habilitar animaciones</span>
                   </label>
 
                   {currentConfig.customizations.animations?.enabled && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de animación</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de animación
+                      </label>
                       <select
-                        value={currentConfig.customizations.animations?.type || 'subtle'}
-                        onChange={(e) => updateConfig({ animations: { ...(currentConfig.customizations.animations ?? {}), enabled: true, type: e.target.value as any } })}
+                        value={
+                          currentConfig.customizations.animations?.type ||
+                          "subtle"
+                        }
+                        onChange={(e) =>
+                          updateConfig({
+                            animations: {
+                              ...(currentConfig.customizations.animations ??
+                                {}),
+                              enabled: true,
+                              type: e.target.value as any,
+                            },
+                          })
+                        }
                         className="w-full px-3 py-2 border rounded-lg"
                       >
                         <option value="none">Sin animaciones</option>
@@ -575,10 +852,18 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      checked={currentConfig.customizations.darkMode?.enabled || false}
+                      checked={
+                        currentConfig.customizations.darkMode?.enabled || false
+                      }
                       onChange={(e) =>
                         updateConfig({
-                          darkMode: { ...(currentConfig.customizations.darkMode ?? {}), enabled: e.target.checked, auto: currentConfig.customizations.darkMode?.auto || false },
+                          darkMode: {
+                            ...(currentConfig.customizations.darkMode ?? {}),
+                            enabled: e.target.checked,
+                            auto:
+                              currentConfig.customizations.darkMode?.auto ||
+                              false,
+                          },
                         })
                       }
                     />
@@ -589,8 +874,18 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
                     <label className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        checked={currentConfig.customizations.darkMode?.auto || false}
-                        onChange={(e) => updateConfig({ darkMode: { ...(currentConfig.customizations.darkMode ?? {}), enabled: true, auto: e.target.checked } })}
+                        checked={
+                          currentConfig.customizations.darkMode?.auto || false
+                        }
+                        onChange={(e) =>
+                          updateConfig({
+                            darkMode: {
+                              ...(currentConfig.customizations.darkMode ?? {}),
+                              enabled: true,
+                              auto: e.target.checked,
+                            },
+                          })
+                        }
                       />
                       <span className="text-sm">Detección automática</span>
                     </label>
@@ -601,7 +896,7 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
               <div className="border rounded-lg p-4">
                 <h4 className="font-medium mb-3">CSS Personalizado</h4>
                 <textarea
-                  value={currentConfig.customizations.customCSS || ''}
+                  value={currentConfig.customizations.customCSS || ""}
                   onChange={(e) => updateConfig({ customCSS: e.target.value })}
                   placeholder="/* Agrega tu CSS personalizado aquí */"
                   rows={8}
@@ -621,52 +916,11 @@ const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button onClick={onCancel} className="p-2 hover:bg-gray-100 rounded-lg">
-                <Icons.ArrowLeft size={20} />
-              </button>
-              <div>
-                <h1 className="text-xl font-bold text-gray-800">Personalizar {template?.name}</h1>
-                <p className="text-sm text-gray-600">{hasChanges ? '• Cambios sin guardar' : 'Configuración actual'}</p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-3">
-              <button onClick={onReset} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Resetear</button>
-              <button onClick={onPreview} className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2">
-                <Icons.Eye size={16} /> Vista Previa
-              </button>
-              <button onClick={onSave} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
-                <Icons.Check size={16} /> Guardar
-              </button>
-            </div>
+
+          <div className="flex-1">
+            {renderTabContent()}
           </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="flex gap-6">
-          <div className="w-64 flex-shrink-0">
-            <div className="bg-white rounded-lg border p-2 sticky top-24">
-              <nav className="space-y-1">
-                {tabs.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => setActiveTab(t.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                      activeTab === t.id ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    <t.icon size={18} />
-                    {t.label}
-                  </button>
-                ))}
-              </nav>
-            </div>
-          </div>
-
-          <div className="flex-1 bg-white rounded-lg border p-6">{renderTabContent()}</div>
         </div>
       </div>
     </div>
