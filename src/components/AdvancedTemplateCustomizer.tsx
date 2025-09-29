@@ -791,7 +791,68 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
               <h3 className="font-medium text-gray-800">
                 Configuración Avanzada
               </h3>
+<div className="border rounded-lg p-4">
+  <h4 className="font-medium mb-3">Configuración del Header</h4>
+  <div className="space-y-3">
+    <label className="flex items-center gap-2">
+      <input
+        type="checkbox"
+        checked={currentConfig.customizations.headerConfig?.showAvatar || false}
+        onChange={(e) => updateConfig({
+          headerConfig: {
+            ...(currentConfig.customizations.headerConfig ?? {}),
+            showAvatar: e.target.checked,
+          },
+        })}
+      />
+      <span className="text-sm">Mostrar avatar/foto</span>
+    </label>
 
+    {currentConfig.customizations.headerConfig?.showAvatar && (
+      <>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Posición del avatar
+          </label>
+          <select
+            value={currentConfig.customizations.headerConfig?.avatarPosition || 'center'}
+            onChange={(e) => updateConfig({
+              headerConfig: {
+                ...(currentConfig.customizations.headerConfig ?? {}),
+                avatarPosition: e.target.value as 'left' | 'center' | 'right',
+              },
+            })}
+            className="w-full px-3 py-2 border rounded-lg"
+          >
+            <option value="left">Izquierda</option>
+            <option value="center">Centro</option>
+            <option value="right">Derecha</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Tamaño del avatar
+          </label>
+          <select
+            value={currentConfig.customizations.headerConfig?.avatarSize || 'md'}
+            onChange={(e) => updateConfig({
+              headerConfig: {
+                ...(currentConfig.customizations.headerConfig ?? {}),
+                avatarSize: e.target.value as 'sm' | 'md' | 'lg',
+              },
+            })}
+            className="w-full px-3 py-2 border rounded-lg"
+          >
+            <option value="sm">Pequeño (80px)</option>
+            <option value="md">Mediano (120px)</option>
+            <option value="lg">Grande (160px)</option>
+          </select>
+        </div>
+      </>
+    )}
+  </div>
+</div>
               <div className="border rounded-lg p-4">
                 <h4 className="font-medium mb-3">Animaciones</h4>
                 <div className="space-y-3">

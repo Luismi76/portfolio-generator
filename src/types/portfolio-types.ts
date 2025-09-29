@@ -14,6 +14,7 @@ export interface PersonalInfo {
   github: string;
   linkedin: string;
   summary: string;
+  avatarUrl?: string;  // URL de la imagen del usuario
 }
 
 // ✅ CORREGIDO - Proyectos con todos los campos utilizados
@@ -237,6 +238,8 @@ export const DEFAULT_PORTFOLIO_DATA: PortfolioData = {
     github: "",
     linkedin: "",
     summary: "",
+    avatarUrl: "", 
+    
   },
   projects: [{
     title: "",

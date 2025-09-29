@@ -59,6 +59,7 @@ import {
   Palette,
   Type,
   Settings2,
+  Copy,
 } from "lucide-react";
 
 // Interfaz simple usada por tu UI
@@ -132,6 +133,7 @@ export const Icons: Record<string, ComponentType<SimpleIconProps>> = {
   Palette: adapt(Palette),
   Type: adapt(Type),
   Advanced: adapt(Settings2), // "Avanzado" mapeado a Settings2
+  Copy: adapt(Copy),
 };
 
 // Hook para obtener icono por nombre (clave segura)

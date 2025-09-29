@@ -22,6 +22,7 @@ type Props = {
   template?: AdvancedTemplate;
   config?: AdvancedTemplateConfig;
 };
+
 /* ---------------- helpers ---------------- */
 
 const normalizeSectionId = (raw?: string): string => {
@@ -112,8 +113,8 @@ function buildAdvancedCSSVars(
     ["--color-primary" as any]: cols.primary,
     ["--color-secondary" as any]: cols.secondary,
     ["--color-accent" as any]: cols.accent,
-    ["--color-bg" as any]: cols.background, // antes --background
-    ["--color-surface" as any]: cols.surface, // antes --surface
+    ["--color-bg" as any]: cols.background,
+    ["--color-surface" as any]: cols.surface,
     ["--surface-variant" as any]: cols.surfaceVariant,
     ["--text-primary" as any]: cols.text?.primary,
     ["--text-secondary" as any]: cols.text?.secondary,
@@ -123,8 +124,8 @@ function buildAdvancedCSSVars(
     ["--text-on-primary" as any]: "#ffffff",
 
     // Tipografías (alineadas)
-    ["--font-primary" as any]: ff.primary, // antes --ff-primary
-    ["--font-heading" as any]: ff.heading || ff.primary, // antes --ff-heading
+    ["--font-primary" as any]: ff.primary,
+    ["--font-heading" as any]: ff.heading || ff.primary,
     ["--ff-mono" as any]:
       ff.monospace || "ui-monospace, SFMono-Regular, Menlo, monospace",
 
@@ -159,10 +160,10 @@ function buildAdvancedCSSVars(
     ["--sp-xl" as any]: sp.xl,
     ["--sp-2xl" as any]: sp["2xl"],
 
-    ["--br-sm" as any]: br.sm, // antes --radius-sm
-    ["--br-md" as any]: br.md, // antes --radius-md
-    ["--br-lg" as any]: br.lg, // antes --radius-lg
-    ["--br-xl" as any]: br.xl, // antes --radius-xl
+    ["--br-sm" as any]: br.sm,
+    ["--br-md" as any]: br.md,
+    ["--br-lg" as any]: br.lg,
+    ["--br-xl" as any]: br.xl,
   };
 
   return style;
@@ -198,8 +199,6 @@ export const TemplateRenderer: React.FC<Props> = ({
             effectiveTemplate.colors.text?.secondary ??
             base.colors.text.secondary,
         },
-        // si tu TemplateTheme usa gradiente, añádelo aquí cuando exista en el tipo
-        // gradient/gradients no tipado en Template ⇒ omitir para no romper tipos
       },
     };
   }, [effectiveTemplate]);
@@ -257,13 +256,21 @@ export const TemplateRenderer: React.FC<Props> = ({
       : `minmax(0,1fr)`;
 
   /* ===== Renderers de secciones ===== */
-  console.log("🔍 advancedSections:", advancedSections);
-  console.log("📦 byArea:", byArea);
-  console.log("🎯 effectiveTemplate:", effectiveTemplate?.name);
 
   const renderHeader = () => {
     // Si no hay secciones en header, no pintamos cabecera
     if (byArea.header.length === 0) return null;
+
+    const headerConfig = config?.customizations.headerConfig;
+    const showAvatar = headerConfig?.showAvatar && data.personalInfo.avatarUrl;
+    const avatarPosition = headerConfig?.avatarPosition || 'center';
+    const avatarSize = (headerConfig?.avatarSize || 'md') as 'sm' | 'md' | 'lg';
+    
+    const avatarSizes: Record<'sm' | 'md' | 'lg', string> = { 
+      sm: '80px', 
+      md: '120px', 
+      lg: '160px' 
+    };
 
     const handleProjectsClick: React.MouseEventHandler<HTMLAnchorElement> = (
       e
@@ -307,10 +314,10 @@ export const TemplateRenderer: React.FC<Props> = ({
           isolation: "isolate",
           overflow: "hidden",
           paddingTop: "var(--sp-md)",
-          paddingBottom: "var(--sp-lg",
+          paddingBottom: "var(--sp-lg)",
           marginBottom: "var(--sp-md)",
-          background: headerBg, // ← clave
-          color: "var(--text-on-primary, #fff)", // para currentColor del SVG
+          background: headerBg,
+          color: "var(--text-on-primary, #fff)",
         }}
       >
         <div
@@ -318,11 +325,36 @@ export const TemplateRenderer: React.FC<Props> = ({
           style={{
             position: "relative",
             zIndex: 1,
-            display: "grid",
-            gap: "10px",
+            display: "flex",
+            flexDirection: avatarPosition === 'left' ? 'row' : 'column',
+            alignItems: avatarPosition === 'center' ? 'center' : 
+                       avatarPosition === 'left' ? 'flex-start' : 'flex-end',
+            gap: "var(--sp-md)",
           }}
         >
-          <div style={{ display: "grid", gap: "var(--sp-xs)" }}>
+          {/* Avatar */}
+          {showAvatar && (
+            <img 
+              src={data.personalInfo.avatarUrl}
+              alt={name}
+              style={{
+                width: avatarSizes[avatarSize],
+                height: avatarSizes[avatarSize],
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '4px solid rgba(255,255,255,0.3)',
+                flexShrink: 0
+              }}
+            />
+          )}
+          
+          {/* Contenido de texto */}
+          <div style={{ 
+            display: "grid", 
+            gap: "var(--sp-xs)",
+            textAlign: avatarPosition === 'center' ? 'center' : 'left',
+            flex: 1
+          }}>
             <h1
               className="tpl-heading"
               style={{
@@ -351,71 +383,41 @@ export const TemplateRenderer: React.FC<Props> = ({
                 {subtitle}
               </p>
             )}
-          </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: 10,
-              flexWrap: "wrap",
-              marginTop: "var(--sp-xs)",
-            }}
-          >
-            {data.personalInfo.email && (
-              <a
-                href={`mailto:${data.personalInfo.email}`}
-                className="tpl-btn-primary"
-                aria-label="Enviar email"
-              >
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  <Icons.Mail size={16} aria-hidden />
-                  <span>Contactar</span>
-                </span>
-              </a>
-            )}
-
-            <a
-              href="#projects"
-              onClick={handleProjectsClick}
-              className="tpl-btn-outline"
-              aria-label="Ir a proyectos"
-              style={{ borderColor: "var(--color-accent)" }}
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                flexWrap: "wrap",
+                marginTop: "var(--sp-xs)",
+                justifyContent: avatarPosition === 'center' ? 'center' : 'flex-start',
+              }}
             >
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "var(--sp-xs)",
-                }}
-              >
-                <Icons.Code size={16} aria-hidden />
-                <span>Ver proyectos</span>
-              </span>
-            </a>
-          </div>
+              {data.personalInfo.email && (
+                <a
+                  href={`mailto:${data.personalInfo.email}`}
+                  className="tpl-btn-primary"
+                  aria-label="Enviar email"
+                >
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <Icons.Mail size={16} aria-hidden />
+                    <span>Contactar</span>
+                  </span>
+                </a>
+              )}
 
-          <div
-            style={{
-              display: "flex",
-              gap: "var(--sp-xs)",
-              flexWrap: "wrap",
-              marginTop: "var(--sp-xs)",
-            }}
-          >
-            {data.personalInfo.github && (
               <a
-                href={data.personalInfo.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="tpl-chip"
-                aria-label="GitHub"
-                title="GitHub"
+                href="#projects"
+                onClick={handleProjectsClick}
+                className="tpl-btn-outline"
+                aria-label="Ir a proyectos"
+                style={{ borderColor: "var(--color-accent)" }}
               >
                 <span
                   style={{
@@ -424,56 +426,87 @@ export const TemplateRenderer: React.FC<Props> = ({
                     gap: "var(--sp-xs)",
                   }}
                 >
-                  <Icons.Github size={14} aria-hidden />
-                  <span>GitHub</span>
+                  <Icons.Code size={16} aria-hidden />
+                  <span>Ver proyectos</span>
                 </span>
               </a>
-            )}
-            {data.personalInfo.linkedin && (
-              <a
-                href={data.personalInfo.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="tpl-chip"
-                aria-label="LinkedIn"
-              >
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "var(--sp-xs)",
-                  }}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "var(--sp-xs)",
+                flexWrap: "wrap",
+                marginTop: "var(--sp-xs)",
+                justifyContent: avatarPosition === 'center' ? 'center' : 'flex-start',
+              }}
+            >
+              {data.personalInfo.github && (
+                <a
+                  href={data.personalInfo.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tpl-chip"
+                  aria-label="GitHub"
+                  title="GitHub"
                 >
-                  <Icons.Linkedin size={14} aria-hidden />
-                  <span>LinkedIn</span>
-                </span>
-              </a>
-            )}
-            {data.personalInfo.website && (
-              <a
-                href={data.personalInfo.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="tpl-chip"
-                aria-label="Sitio web"
-              >
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "var(--sp-xs)",
-                  }}
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "var(--sp-xs)",
+                    }}
+                  >
+                    <Icons.Github size={14} aria-hidden />
+                    <span>GitHub</span>
+                  </span>
+                </a>
+              )}
+              {data.personalInfo.linkedin && (
+                <a
+                  href={data.personalInfo.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tpl-chip"
+                  aria-label="LinkedIn"
                 >
-                  <Icons.Globe size={14} aria-hidden />
-                  <span>Web</span>
-                </span>
-              </a>
-            )}
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "var(--sp-xs)",
+                    }}
+                  >
+                    <Icons.Linkedin size={14} aria-hidden />
+                    <span>LinkedIn</span>
+                  </span>
+                </a>
+              )}
+              {data.personalInfo.website && (
+                <a
+                  href={data.personalInfo.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tpl-chip"
+                  aria-label="Sitio web"
+                >
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "var(--sp-xs)",
+                    }}
+                  >
+                    <Icons.Globe size={14} aria-hidden />
+                    <span>Web</span>
+                  </span>
+                </a>
+              )}
+            </div>
           </div>
         </div>
 
         <svg
-          role="presentation"
           aria-hidden="true"
           viewBox="0 0 1440 120"
           preserveAspectRatio="none"
@@ -507,16 +540,13 @@ export const TemplateRenderer: React.FC<Props> = ({
         style={{
           position: "relative",
           zIndex: 1,
-          background: "var(--color-surface, #fff)", // ← nombre alineado
+          background: "var(--color-surface, #fff)",
           paddingTop: "var(--sp-lg)",
           paddingBottom: "var(--sp-lg)",
         }}
       >
         <div className="tpl-container">
-          <h2
-            className="tpl-heading"
-            style={{ fontSize: "var(--fs-2xl)" }}
-          >
+          <h2 className="tpl-heading" style={{ fontSize: "var(--fs-2xl)" }}>
             Sobre mí
           </h2>
         </div>
@@ -952,7 +982,7 @@ export const TemplateRenderer: React.FC<Props> = ({
             alignItems: "start",
           }}
         >
-          {/* LEFT */}
+          {/* LEFT SIDEBAR */}
           {leftEnabled && (
             <aside style={{ display: "grid", gap: "var(--sp-md)" }}>
               {byArea["sidebar-left"]
@@ -971,7 +1001,6 @@ export const TemplateRenderer: React.FC<Props> = ({
           )}
 
           {/* MAIN */}
-          {/* MAIN */}
           <main style={{ display: "grid", gap: "var(--sp-lg)" }}>
             {byArea.main
               .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
@@ -989,7 +1018,7 @@ export const TemplateRenderer: React.FC<Props> = ({
               })}
           </main>
 
-          {/* RIGHT */}
+          {/* RIGHT SIDEBAR */}
           {rightEnabled && (
             <aside style={{ display: "grid", gap: "var(--sp-md)" }}>
               {byArea["sidebar-right"]
@@ -1033,6 +1062,7 @@ export const TemplateRenderer: React.FC<Props> = ({
           </footer>
         )}
 
+        {/* Modal de detalles del proyecto */}
         <ProjectDetailsModal
           project={selected}
           onClose={() => setSelected(null)}

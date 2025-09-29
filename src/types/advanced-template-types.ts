@@ -1,27 +1,27 @@
-import { PortfolioData } from './portfolio-types';
+import { PortfolioData } from "./portfolio-types";
 
 // Áreas disponibles
 export type LayoutArea =
-  | 'header'
-  | 'sidebar-left'
-  | 'sidebar-right'
-  | 'main'
-  | 'footer'
-  | 'floating';
+  | "header"
+  | "sidebar-left"
+  | "sidebar-right"
+  | "main"
+  | "footer"
+  | "floating";
 
 // Tipos de secciones
 export type SectionType =
-  | 'hero'
-  | 'about'
-  | 'projects'
-  | 'skills'
-  | 'experience'
-  | 'education'
-  | 'contact'
-  | 'testimonials'
-  | 'blog'
-  | 'gallery'
-  | 'custom';
+  | "hero"
+  | "about"
+  | "projects"
+  | "skills"
+  | "experience"
+  | "education"
+  | "contact"
+  | "testimonials"
+  | "blog"
+  | "gallery"
+  | "custom";
 
 // Config de una sección
 export interface Section {
@@ -33,12 +33,12 @@ export interface Section {
   area: LayoutArea;
   order: number;
   config: {
-    variant?: 'default' | 'compact' | 'expanded' | 'minimal';
+    variant?: "default" | "compact" | "expanded" | "minimal";
     showTitle?: boolean;
     showDivider?: boolean;
     backgroundColor?: string;
     textColor?: string;
-    spacing?: 'tight' | 'normal' | 'loose';
+    spacing?: "tight" | "normal" | "loose";
     columns?: 1 | 2 | 3 | 4;
     maxItems?: number;
   };
@@ -61,19 +61,25 @@ export type AreaConfigMap = Record<LayoutArea, AreaConfig>;
 
 // Estructura de layout de la plantilla (el modelo completo)
 export interface TemplateLayoutStructure {
-  type?: 'single-column' | 'two-column' | 'three-column' | 'sidebar-left' | 'sidebar-right' | 'sidebar-both';
+  type?:
+    | "single-column"
+    | "two-column"
+    | "three-column"
+    | "sidebar-left"
+    | "sidebar-right"
+    | "sidebar-both";
   areas?: AreaConfigMap;
   responsive?: {
-    mobile: 'stack' | 'collapse' | 'hidden';
-    tablet: 'partial' | 'full' | 'collapsed';
+    mobile: "stack" | "collapse" | "hidden";
+    tablet: "partial" | "full" | "collapsed";
   };
 }
 
 // Patch de layout (lo que guarda el usuario, puede tener partes)
 export type TemplateLayoutStructurePatch = {
-  type?: TemplateLayoutStructure['type'];
+  type?: TemplateLayoutStructure["type"];
   areas?: Partial<Record<LayoutArea, Partial<AreaConfig>>>;
-  responsive?: Partial<TemplateLayoutStructure['responsive']>;
+  responsive?: Partial<TemplateLayoutStructure["responsive"]>;
 };
 
 // Colores avanzados
@@ -121,18 +127,40 @@ export interface AdvancedTemplateTypography {
     display?: string;
   };
   fontSizes: {
-    xs: string; sm: string; base: string; lg: string; xl: string;
-    '2xl': string; '3xl': string; '4xl': string; '5xl': string; '6xl': string;
+    xs: string;
+    sm: string;
+    base: string;
+    lg: string;
+    xl: string;
+    "2xl": string;
+    "3xl": string;
+    "4xl": string;
+    "5xl": string;
+    "6xl": string;
   };
   fontWeights: {
-    thin: number; light: number; normal: number; medium: number;
-    semibold: number; bold: number; extrabold: number; black: number;
+    thin: number;
+    light: number;
+    normal: number;
+    medium: number;
+    semibold: number;
+    bold: number;
+    extrabold: number;
+    black: number;
   };
   lineHeights: {
-    tight: number; snug: number; normal: number; relaxed: number; loose: number;
+    tight: number;
+    snug: number;
+    normal: number;
+    relaxed: number;
+    loose: number;
   };
   letterSpacing: {
-    tighter: string; tight: string; normal: string; wide: string; wider: string;
+    tighter: string;
+    tight: string;
+    normal: string;
+    wide: string;
+    wider: string;
   };
 }
 
@@ -140,19 +168,40 @@ export interface AdvancedTemplateTypography {
 export interface AdvancedTemplateLayout {
   maxWidth: string;
   spacing: {
-    xs: string; sm: string; md: string; lg: string; xl: string; '2xl': string;
+    xs: string;
+    sm: string;
+    md: string;
+    lg: string;
+    xl: string;
+    "2xl": string;
   };
   borderRadius: {
-    none: string; sm: string; md: string; lg: string; xl: string; full: string;
+    none: string;
+    sm: string;
+    md: string;
+    lg: string;
+    xl: string;
+    full: string;
   };
   shadows: {
-    none: string; sm: string; md: string; lg: string; xl: string; '2xl': string;
+    none: string;
+    sm: string;
+    md: string;
+    lg: string;
+    xl: string;
+    "2xl": string;
   };
   borders: {
-    thin: string; normal: string; thick: string;
+    thin: string;
+    normal: string;
+    thick: string;
   };
   breakpoints: {
-    sm: string; md: string; lg: string; xl: string; '2xl': string;
+    sm: string;
+    md: string;
+    lg: string;
+    xl: string;
+    "2xl": string;
   };
 }
 
@@ -161,7 +210,14 @@ export interface AdvancedTemplate {
   id: string;
   name: string;
   description: string;
-  category: 'modern' | 'classic' | 'creative' | 'minimal' | 'tech' | 'portfolio' | 'business';
+  category:
+    | "modern"
+    | "classic"
+    | "creative"
+    | "minimal"
+    | "tech"
+    | "portfolio"
+    | "business";
   preview: string;
 
   colors: AdvancedTemplateColors;
@@ -182,7 +238,7 @@ export interface AdvancedTemplate {
 
   animations?: {
     enabled: boolean;
-    type?: 'none' | 'subtle' | 'smooth' | 'dynamic';
+    type?: "none" | "subtle" | "smooth" | "dynamic";
   };
   darkMode?: {
     enabled: boolean;
@@ -202,11 +258,16 @@ export interface AdvancedTemplateConfig {
     customCSS?: string;
     animations?: {
       enabled: boolean;
-      type?: 'none' | 'subtle' | 'smooth' | 'dynamic';
+      type?: "none" | "subtle" | "smooth" | "dynamic";
     };
     darkMode?: {
       enabled: boolean;
       auto?: boolean;
+    };
+    headerConfig?: {
+      showAvatar?: boolean;
+      avatarPosition?: "left" | "center" | "right";
+      avatarSize?: "sm" | "md" | "lg";
     };
   };
   lastModified: string;
@@ -219,7 +280,7 @@ export interface AdvancedTemplateSelectorProps {
   onTemplateSelect: (template: AdvancedTemplate) => void;
   onCustomize?: (template: AdvancedTemplate) => void;
   onPreview?: (template: AdvancedTemplate) => void;
-  viewMode?: 'grid' | 'list';
+  viewMode?: "grid" | "list";
   filterBy?: {
     category?: string;
     tags?: string[];
@@ -247,10 +308,23 @@ export interface DragDropConfig {
 
 // Utilidades
 export interface TemplateUtils {
-  generateCSS(template: AdvancedTemplate, config: AdvancedTemplateConfig): string;
-  generateHTML(template: AdvancedTemplate, config: AdvancedTemplateConfig, data: PortfolioData): string;
-  validateTemplate(template: AdvancedTemplate): { valid: boolean; errors: string[] };
-  validateConfig(config: AdvancedTemplateConfig): { valid: boolean; errors: string[] };
+  generateCSS(
+    template: AdvancedTemplate,
+    config: AdvancedTemplateConfig
+  ): string;
+  generateHTML(
+    template: AdvancedTemplate,
+    config: AdvancedTemplateConfig,
+    data: PortfolioData
+  ): string;
+  validateTemplate(template: AdvancedTemplate): {
+    valid: boolean;
+    errors: string[];
+  };
+  validateConfig(config: AdvancedTemplateConfig): {
+    valid: boolean;
+    errors: string[];
+  };
   migrateTemplate(oldTemplate: any): AdvancedTemplate;
   exportTemplate(template: AdvancedTemplate): string;
   importTemplate(data: string): AdvancedTemplate;
@@ -268,9 +342,16 @@ export interface UseAdvancedTemplatesReturn {
   resetConfig: () => void;
 
   updateSections: (sections: Section[]) => void;
-  moveSectionToArea: (sectionId: string, targetArea: LayoutArea, targetIndex?: number) => void;
+  moveSectionToArea: (
+    sectionId: string,
+    targetArea: LayoutArea,
+    targetIndex?: number
+  ) => void;
   toggleSection: (sectionId: string, enabled: boolean) => void;
-  updateSectionConfig: (sectionId: string, config: Partial<Section['config']>) => void;
+  updateSectionConfig: (
+    sectionId: string,
+    config: Partial<Section["config"]>
+  ) => void;
 
   updateLayoutStructure: (structure: TemplateLayoutStructurePatch) => void; // <- PATCH
   toggleLayoutArea: (area: LayoutArea, enabled: boolean) => void;

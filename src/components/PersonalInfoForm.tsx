@@ -1,16 +1,16 @@
 // PersonalInfoForm.tsx
-import React from 'react';
-import { PersonalInfo, PersonalInfoKey } from '../types/portfolio-types';
-import { Icons } from './portfolio-icons';
+import React from "react";
+import { PersonalInfo, PersonalInfoKey } from "../types/portfolio-types";
+import { Icons } from "./portfolio-icons";
 
 interface PersonalInfoFormProps {
   data: PersonalInfo;
   onUpdate: (field: PersonalInfoKey, value: string) => void;
 }
 
-export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ 
-  data, 
-  onUpdate 
+export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
+  data,
+  onUpdate,
 }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
@@ -21,7 +21,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
           Información Personal
         </h2>
       </div>
-      
+
       <p className="text-sm text-gray-600 mb-6">
         Completa tu información básica de contacto y presentación
       </p>
@@ -41,7 +41,19 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             required
           />
         </div>
-        
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Avatar/Foto (URL)
+          </label>
+          <input
+            type="text"
+            value={data.avatarUrl || ""}
+            onChange={(e) => onUpdate("avatarUrl", e.target.value)}
+            placeholder="https://ejemplo.com/foto.jpg"
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Título profesional *
@@ -55,7 +67,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             required
           />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Email
@@ -68,7 +80,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
           />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Teléfono
@@ -97,7 +109,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
           />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Sitio web
@@ -110,7 +122,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
           />
         </div>
-        
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             GitHub
@@ -160,10 +172,14 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
       {/* Ayuda contextual */}
       <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <div className="flex items-start gap-2">
-          <Icons.Info size={16} className="text-blue-600 mt-0.5 flex-shrink-0" />
+          <Icons.Info
+            size={16}
+            className="text-blue-600 mt-0.5 flex-shrink-0"
+          />
           <div className="text-sm text-blue-800">
-            <strong>Consejo:</strong> El nombre y título son obligatorios para generar tu portfolio. 
-            El resumen aparecerá en la página principal para presentarte a los visitantes.
+            <strong>Consejo:</strong> El nombre y título son obligatorios para
+            generar tu portfolio. El resumen aparecerá en la página principal
+            para presentarte a los visitantes.
           </div>
         </div>
       </div>
