@@ -1,8 +1,8 @@
 // SkillTableForm.tsx - CORREGIDO PARA USAR portfolio-types.ts
-import React, { useState } from 'react';
-import { Skill } from '../types/portfolio-types';
-import { Icons } from './portfolio-icons';
-import { Section } from './Section';
+import React, { useState, useEffect } from "react";
+import { Skill } from "../types/portfolio-types";
+import { Icons } from "./portfolio-icons";
+import { Section } from "./Section";
 
 interface SkillTableFormProps {
   skills: Skill[];
@@ -19,43 +19,59 @@ interface SkillModalProps {
   onSave: (index: number | undefined, skillData: Skill) => void;
 }
 
-// Modal para crear/editar habilidades  
+// Modal para crear/editar habilidades
 const SkillModal: React.FC<SkillModalProps> = ({
   skill,
   index,
   isOpen,
   onClose,
-  onSave
+  onSave,
 }) => {
-  // ✅ CORRECTO: Usar 'items' como está definido en portfolio-types.ts
-  const [formData, setFormData] = useState<Skill>(
-    skill || {
-      category: '',
-      items: '', // ✅ Campo correcto según portfolio-types.ts
-      level: ''
+  const [formData, setFormData] = useState<Skill>({
+    category: "",
+    items: "",
+    level: "",
+  });
+
+  // Sincronizar formData cuando cambia skill o isOpen
+  useEffect(() => {
+    if (isOpen && skill) {
+      setFormData({
+        category: skill.category || "",
+        items: skill.items || "",
+        level: skill.level || "",
+      });
+    } else if (isOpen && !skill) {
+      setFormData({
+        category: "",
+        items: "",
+        level: "",
+      });
     }
-  );
+  }, [skill, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.category.trim() || !formData.items.trim()) {
-      alert('La categoría y las habilidades son obligatorias');
+      alert("La categoría y las habilidades son obligatorias");
       return;
     }
-    
+
     onSave(index, formData);
     onClose();
   };
 
+  // ... resto del código sin cambios
+
   const updateField = (field: keyof Skill, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   // Obtener lista de habilidades para preview
   const skillsList = formData.items
-    .split(',')
-    .map(item => item.trim())
-    .filter(item => item.length > 0);
+    .split(",")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
 
   if (!isOpen) return null;
 
@@ -66,7 +82,7 @@ const SkillModal: React.FC<SkillModalProps> = ({
           {/* Header del modal */}
           <div className="flex items-center justify-between p-6 border-b">
             <h2 className="text-xl font-semibold">
-              {index !== undefined ? 'Editar Categoría' : 'Nueva Categoría'}
+              {index !== undefined ? "Editar Categoría" : "Nueva Categoría"}
             </h2>
             <button
               type="button"
@@ -86,7 +102,7 @@ const SkillModal: React.FC<SkillModalProps> = ({
               <input
                 type="text"
                 value={formData.category}
-                onChange={(e) => updateField('category', e.target.value)}
+                onChange={(e) => updateField("category", e.target.value)}
                 placeholder="Ej: Frontend, Backend, Herramientas, Soft Skills"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
@@ -100,14 +116,15 @@ const SkillModal: React.FC<SkillModalProps> = ({
               </label>
               <textarea
                 value={formData.items}
-                onChange={(e) => updateField('items', e.target.value)}
+                onChange={(e) => updateField("items", e.target.value)}
                 placeholder="React, JavaScript, TypeScript, Node.js, Express"
                 rows={4}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
               <div className="text-xs text-gray-500 mt-1">
-                Separa cada habilidad con una coma. Serán mostradas como etiquetas individuales.
+                Separa cada habilidad con una coma. Serán mostradas como
+                etiquetas individuales.
               </div>
             </div>
 
@@ -117,8 +134,8 @@ const SkillModal: React.FC<SkillModalProps> = ({
                 Nivel de experiencia
               </label>
               <select
-                value={formData.level || ''}
-                onChange={(e) => updateField('level', e.target.value)}
+                value={formData.level || ""}
+                onChange={(e) => updateField("level", e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Seleccionar nivel</option>
@@ -151,14 +168,22 @@ const SkillModal: React.FC<SkillModalProps> = ({
             {/* Consejos */}
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <div className="flex items-start gap-2">
-                <Icons.Info size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                <Icons.Info
+                  size={16}
+                  className="text-amber-600 mt-0.5 flex-shrink-0"
+                />
                 <div className="text-sm text-amber-800">
                   <strong>Consejos:</strong>
                   <ul className="mt-1 space-y-1 list-disc list-inside">
                     <li>Usa nombres reconocidos de tecnologías</li>
                     <li>Ordena por nivel de dominio (más fuerte primero)</li>
-                    <li>Incluye versiones específicas si es relevante (React 18, Node.js 20)</li>
-                    <li>Combina habilidades técnicas y blandas según la categoría</li>
+                    <li>
+                      Incluye versiones específicas si es relevante (React 18,
+                      Node.js 20)
+                    </li>
+                    <li>
+                      Combina habilidades técnicas y blandas según la categoría
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -178,7 +203,7 @@ const SkillModal: React.FC<SkillModalProps> = ({
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
-              {index !== undefined ? 'Actualizar' : 'Crear'} Categoría
+              {index !== undefined ? "Actualizar" : "Crear"} Categoría
             </button>
           </div>
         </form>
@@ -192,7 +217,7 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
   skills,
   onUpdate,
   onAdd,
-  onRemove
+  onRemove,
 }) => {
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
@@ -206,24 +231,25 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
     setModalState({
       isOpen: true,
       index: newIndex,
-      skill: skills[newIndex]
+      skill: skills[newIndex],
     });
   };
 
   const handleEdit = (index: number) => {
+    const skillToEdit = skills[index];
     setModalState({
       isOpen: true,
-      skill: skills[index],
-      index
+      skill: { ...skillToEdit }, // Clonar el objeto para evitar mutaciones
+      index,
     });
   };
 
   const handleSave = (index: number | undefined, skillData: Skill) => {
     if (index !== undefined) {
-      onUpdate(index, 'category', skillData.category);
-      onUpdate(index, 'items', skillData.items); // ✅ Usar 'items'
+      onUpdate(index, "category", skillData.category);
+      onUpdate(index, "items", skillData.items); // ✅ Usar 'items'
       if (skillData.level) {
-        onUpdate(index, 'level', skillData.level);
+        onUpdate(index, "level", skillData.level);
       }
     }
   };
@@ -235,12 +261,12 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
   // Función para obtener color de badge basado en índice
   const getBadgeColor = (index: number) => {
     const colors = [
-      'bg-blue-100 text-blue-800',
-      'bg-green-100 text-green-800', 
-      'bg-purple-100 text-purple-800',
-      'bg-yellow-100 text-yellow-800',
-      'bg-pink-100 text-pink-800',
-      'bg-indigo-100 text-indigo-800'
+      "bg-blue-100 text-blue-800",
+      "bg-green-100 text-green-800",
+      "bg-purple-100 text-purple-800",
+      "bg-yellow-100 text-yellow-800",
+      "bg-pink-100 text-pink-800",
+      "bg-indigo-100 text-indigo-800",
     ];
     return colors[index % colors.length];
   };
@@ -276,8 +302,14 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
             <tbody>
               {skills.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="border border-gray-200 p-8 text-center text-gray-500">
-                    <Icons.Award size={32} className="mx-auto mb-2 text-gray-300" />
+                  <td
+                    colSpan={4}
+                    className="border border-gray-200 p-8 text-center text-gray-500"
+                  >
+                    <Icons.Award
+                      size={32}
+                      className="mx-auto mb-2 text-gray-300"
+                    />
                     <p>No hay categorías de habilidades aún</p>
                     <button
                       onClick={handleCreateNew}
@@ -291,9 +323,12 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
                 skills.map((skill, index) => {
                   // ✅ CORRECTO: Usar 'items' en lugar de 'items'
                   const skillsList = skill.items
-                    ? skill.items.split(',').map(s => s.trim()).filter(s => s.length > 0)
+                    ? skill.items
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter((s) => s.length > 0)
                     : [];
-                  
+
                   const maxVisible = 4;
                   const visibleSkills = skillsList.slice(0, maxVisible);
                   const remainingCount = skillsList.length - maxVisible;
@@ -302,10 +337,13 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
                     <tr key={index} className="hover:bg-gray-50">
                       <td className="border border-gray-200 p-3">
                         <div className="flex items-center gap-2">
-                          <Icons.Award size={16} className="text-blue-600 flex-shrink-0" />
+                          <Icons.Award
+                            size={16}
+                            className="text-blue-600 flex-shrink-0"
+                          />
                           <div>
                             <span className="font-medium text-gray-900">
-                              {skill.category || 'Sin categoría'}
+                              {skill.category || "Sin categoría"}
                             </span>
                             {skill.level && (
                               <div className="text-xs text-gray-500 mt-1">
@@ -322,7 +360,9 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
                               {visibleSkills.map((skillItem, skillIndex) => (
                                 <span
                                   key={skillIndex}
-                                  className={`px-2 py-1 text-xs rounded font-medium ${getBadgeColor(skillIndex)}`}
+                                  className={`px-2 py-1 text-xs rounded font-medium ${getBadgeColor(
+                                    skillIndex
+                                  )}`}
                                 >
                                   {skillItem}
                                 </span>
@@ -334,7 +374,9 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
                               )}
                             </>
                           ) : (
-                            <span className="text-gray-400 text-sm">Sin habilidades</span>
+                            <span className="text-gray-400 text-sm">
+                              Sin habilidades
+                            </span>
                           )}
                         </div>
                       </td>
@@ -355,7 +397,11 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
                           {skills.length > 1 && (
                             <button
                               onClick={() => {
-                                if (window.confirm('¿Eliminar esta categoría de habilidades?')) {
+                                if (
+                                  window.confirm(
+                                    "¿Eliminar esta categoría de habilidades?"
+                                  )
+                                ) {
                                   onRemove(index);
                                 }
                               }}
@@ -379,12 +425,15 @@ export const SkillTableForm: React.FC<SkillTableFormProps> = ({
           <div className="mt-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
             <div className="flex items-center justify-between">
               <span>
-                Total: {skills.length} categorías, {' '}
+                Total: {skills.length} categorías,{" "}
                 {skills.reduce((total, skill) => {
                   // ✅ CORRECTO: Usar 'items' en lugar de 'items'
-                  const count = skill.items ? skill.items.split(',').filter(s => s.trim()).length : 0;
+                  const count = skill.items
+                    ? skill.items.split(",").filter((s) => s.trim()).length
+                    : 0;
                   return total + count;
-                }, 0)} habilidades
+                }, 0)}{" "}
+                habilidades
               </span>
               <div className="flex items-center gap-1 text-xs">
                 <Icons.Info size={12} />

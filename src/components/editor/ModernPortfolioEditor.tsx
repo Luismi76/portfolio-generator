@@ -6,8 +6,6 @@ import { PersonalInfoForm } from "../PersonalInfoForm";
 import ProjectTableForm from "../ProjectTableForm";
 import SkillTableForm from "../SkillTableForm";
 import { useTemplates } from "../use-templates";
-import { AdvancedTemplateSelector } from "../AdvancedTemplateSelector";
-import { AdvancedTemplate } from "../../types/advanced-template-types";
 import { ADVANCED_BUILT_IN_TEMPLATES } from "../advanced-built-in-templates";
 //import { Section } from '../../types/advanced-template-types';
 
@@ -28,7 +26,7 @@ const ModernPortfolioEditor: React.FC = () => {
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   // ✅ Obtener templates con mejor debugging
-  const { selectedTemplate, config, updateConfig } = useTemplates();
+  const { selectedTemplate, config } = useTemplates();
   const activeTemplate: any =
     selectedTemplate ?? ADVANCED_BUILT_IN_TEMPLATES[0];
   // Convertir Template simple a AdvancedTemplate
@@ -179,43 +177,7 @@ const ModernPortfolioEditor: React.FC = () => {
     }
   };
 
-  // Añade estas funciones DENTRO del componente, después de handleExportWebsite
 
-  const handleDuplicateTemplate = (template: AdvancedTemplate) => {
-    const newName = prompt(
-      `Duplicar "${template.name}" como:`,
-      `${template.name} (Copia)`
-    );
-    if (newName) {
-      alert(
-        `Plantilla "${newName}" duplicada (por implementar en useTemplates)`
-      );
-    }
-  };
-
-  const handleExportTemplate = (template: AdvancedTemplate) => {
-    const json = JSON.stringify(template, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `template-${template.name
-      .toLowerCase()
-      .replace(/\s+/g, "-")}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    alert(`✓ Plantilla "${template.name}" exportada`);
-  };
-
-  const handleDeleteTemplate = (template: AdvancedTemplate) => {
-    if (template.isBuiltIn) {
-      alert("No puedes eliminar plantillas predefinidas");
-      return;
-    }
-    if (window.confirm(`¿Eliminar plantilla "${template.name}"?`)) {
-      alert("Eliminar plantilla (por implementar en useTemplates)");
-    }
-  };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -286,11 +248,7 @@ const ModernPortfolioEditor: React.FC = () => {
           { id: "personal" as const, label: "Personal", icon: Icons.User },
           { id: "projects" as const, label: "Proyectos", icon: Icons.Code },
           { id: "skills" as const, label: "Habilidades", icon: Icons.Award },
-          {
-            id: "templates" as const,
-            label: "Plantillas",
-            icon: Icons.Settings,
-          },
+          
         ].map((section) => (
           <button
             key={section.id}
@@ -333,7 +291,7 @@ const ModernPortfolioEditor: React.FC = () => {
           />
         )}
 
-        {activeSection === "templates" && (
+{/*         {activeSection === "templates" && (
           <AdvancedTemplateSelector
             templates={ADVANCED_BUILT_IN_TEMPLATES} // <-- USA LAS PLANTILLAS REALES
             selectedTemplate={ADVANCED_BUILT_IN_TEMPLATES[0]}
@@ -358,7 +316,7 @@ const ModernPortfolioEditor: React.FC = () => {
             onExport={handleExportTemplate}
             onDelete={handleDeleteTemplate}
           />
-        )}
+        )} */}
       </div>
     </div>
   );

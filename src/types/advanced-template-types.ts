@@ -268,6 +268,7 @@ export interface AdvancedTemplateConfig {
       showAvatar?: boolean;
       avatarPosition?: "left" | "center" | "right";
       avatarSize?: "sm" | "md" | "lg";
+      avatarUrl?: string;
     };
   };
   lastModified: string;

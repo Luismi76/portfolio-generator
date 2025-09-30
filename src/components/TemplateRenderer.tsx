@@ -262,14 +262,14 @@ export const TemplateRenderer: React.FC<Props> = ({
     if (byArea.header.length === 0) return null;
 
     const headerConfig = config?.customizations.headerConfig;
-    const showAvatar = headerConfig?.showAvatar && data.personalInfo.avatarUrl;
-    const avatarPosition = headerConfig?.avatarPosition || 'center';
-    const avatarSize = (headerConfig?.avatarSize || 'md') as 'sm' | 'md' | 'lg';
-    
-    const avatarSizes: Record<'sm' | 'md' | 'lg', string> = { 
-      sm: '80px', 
-      md: '120px', 
-      lg: '160px' 
+    const showAvatar = headerConfig?.showAvatar && headerConfig?.avatarUrl;
+    const avatarPosition = headerConfig?.avatarPosition || "center";
+    const avatarSize = (headerConfig?.avatarSize || "md") as "sm" | "md" | "lg";
+
+    const avatarSizes: Record<"sm" | "md" | "lg", string> = {
+      sm: "80px",
+      md: "120px",
+      lg: "160px",
     };
 
     const handleProjectsClick: React.MouseEventHandler<HTMLAnchorElement> = (
@@ -326,35 +326,42 @@ export const TemplateRenderer: React.FC<Props> = ({
             position: "relative",
             zIndex: 1,
             display: "flex",
-            flexDirection: avatarPosition === 'left' ? 'row' : 'column',
-            alignItems: avatarPosition === 'center' ? 'center' : 
-                       avatarPosition === 'left' ? 'flex-start' : 'flex-end',
+            flexDirection: avatarPosition === "center" ? "column" : "row",
+            alignItems: avatarPosition === "center" ? "center" : "flex-start",
             gap: "var(--sp-md)",
+            ...(avatarPosition === "right" && { flexDirection: "row-reverse" }),
           }}
         >
           {/* Avatar */}
           {showAvatar && (
-            <img 
-              src={data.personalInfo.avatarUrl}
+            <img
+              src={headerConfig.avatarUrl}
               alt={name}
               style={{
                 width: avatarSizes[avatarSize],
                 height: avatarSizes[avatarSize],
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '4px solid rgba(255,255,255,0.3)',
-                flexShrink: 0
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "4px solid rgba(255,255,255,0.3)",
+                flexShrink: 0,
               }}
             />
           )}
-          
+
           {/* Contenido de texto */}
-          <div style={{ 
-            display: "grid", 
-            gap: "var(--sp-xs)",
-            textAlign: avatarPosition === 'center' ? 'center' : 'left',
-            flex: 1
-          }}>
+          <div
+            style={{
+              display: "grid",
+              gap: "var(--sp-xs)",
+              textAlign:
+                avatarPosition === "center"
+                  ? "center"
+                  : avatarPosition === "right"
+                  ? "right"
+                  : "left",
+              flex: 1,
+            }}
+          >
             <h1
               className="tpl-heading"
               style={{
@@ -390,7 +397,8 @@ export const TemplateRenderer: React.FC<Props> = ({
                 gap: 10,
                 flexWrap: "wrap",
                 marginTop: "var(--sp-xs)",
-                justifyContent: avatarPosition === 'center' ? 'center' : 'flex-start',
+                justifyContent:
+                  avatarPosition === "center" ? "center" : "flex-start",
               }}
             >
               {data.personalInfo.email && (
@@ -413,32 +421,41 @@ export const TemplateRenderer: React.FC<Props> = ({
               )}
 
               <a
-                href="#projects"
-                onClick={handleProjectsClick}
-                className="tpl-btn-outline"
-                aria-label="Ir a proyectos"
-                style={{ borderColor: "var(--color-accent)" }}
-              >
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "var(--sp-xs)",
-                  }}
-                >
-                  <Icons.Code size={16} aria-hidden />
-                  <span>Ver proyectos</span>
-                </span>
-              </a>
+               href="#projects"
+  onClick={handleProjectsClick}
+  className="tpl-btn-outline"
+  aria-label="Ir a proyectos"
+  style={{ 
+    borderColor: "rgba(255,255,255,0.4)",
+    color: "var(--text-on-primary, #fff)",
+    backgroundColor: "transparent"
+  }}
+>
+  <span
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "var(--sp-xs)",
+    }}
+  >
+    <Icons.Code size={16} aria-hidden />
+    <span>Ver proyectos</span>
+  </span>
+</a>
             </div>
 
             <div
               style={{
                 display: "flex",
-                gap: "var(--sp-xs)",
+                gap: 10,
                 flexWrap: "wrap",
                 marginTop: "var(--sp-xs)",
-                justifyContent: avatarPosition === 'center' ? 'center' : 'flex-start',
+                justifyContent:
+                  avatarPosition === "center"
+                    ? "center"
+                    : avatarPosition === "right"
+                    ? "flex-end"
+                    : "flex-start",
               }}
             >
               {data.personalInfo.github && (
