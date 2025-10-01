@@ -257,193 +257,230 @@ export const TemplateRenderer: React.FC<Props> = ({
 
   /* ===== Renderers de secciones ===== */
 
-  const renderHeader = () => {
-    // Si no hay secciones en header, no pintamos cabecera
-    if (byArea.header.length === 0) return null;
+const renderHeader = () => {
+  // Si no hay secciones en header, no pintamos cabecera
+  if (byArea.header.length === 0) return null;
 
-    const headerConfig = config?.customizations.headerConfig;
-    const showAvatar = headerConfig?.showAvatar && headerConfig?.avatarUrl;
-    const avatarPosition = headerConfig?.avatarPosition || "center";
-    const avatarSize = (headerConfig?.avatarSize || "md") as "sm" | "md" | "lg";
+  const headerConfig = config?.customizations.headerConfig;
+  const showAvatar = headerConfig?.showAvatar && headerConfig?.avatarUrl;
+  const avatarPosition = headerConfig?.avatarPosition || "center";
+  const avatarSize = (headerConfig?.avatarSize || "md") as "sm" | "md" | "lg";
 
-    const avatarSizes: Record<"sm" | "md" | "lg", string> = {
-      sm: "80px",
-      md: "120px",
-      lg: "160px",
-    };
+  const avatarSizes: Record<"sm" | "md" | "lg", string> = {
+    sm: "80px",
+    md: "120px",
+    lg: "160px",
+  };
 
-    const handleProjectsClick: React.MouseEventHandler<HTMLAnchorElement> = (
-      e
-    ) => {
-      const el = document.getElementById("projects");
-      if (el) {
-        e.preventDefault();
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    };
+  // Scroll suave a proyectos
+  const handleProjectsClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
+    const el = document.getElementById("projects");
+    if (el) {
+      e.preventDefault();
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
-    // FONDO DINÁMICO DEL HEADER (gradients.header → from/to/direction) o primary
-    const gAny =
-      (config?.customizations?.colors as any)?.gradients ??
-      (config?.customizations?.colors as any)?.gradient ??
-      (effectiveTemplate?.colors as any)?.gradients ??
-      (effectiveTemplate?.colors as any)?.gradient;
+  // SIMPLIFICADO: Obtener background del header
+  const getHeaderBackground = (): string => {
+    // Intentar obtener gradiente configurado
+    const gradients = 
+      config?.customizations?.colors?.gradients ?? 
+      effectiveTemplate?.colors?.gradients;
+    
+    // Usar gradiente primary como fallback (es el más común para headers)
+    const gradient = gradients?.primary;
+    
+    if (gradient?.from && gradient?.to) {
+      const direction = gradient.direction || "135deg";
+      return `linear-gradient(${direction}, ${gradient.from}, ${gradient.to})`;
+    }
+    
+    // Fallback a color primario
+    return config?.customizations?.colors?.primary ?? 
+           effectiveTemplate?.colors?.primary ?? 
+           "var(--color-primary)";
+  };
 
-    const gHeader = gAny?.header ?? gAny;
-    const gFrom: string | undefined = gHeader?.from;
-    const gTo: string | undefined = gHeader?.to;
-    const gDir: string = gHeader?.direction || "135deg";
+  const headerBg = getHeaderBackground();
+  const name = data.personalInfo.fullName || "Tu Portfolio";
+  const subtitle = data.personalInfo.title?.trim() || "";
 
-    const primary =
-      config?.customizations?.colors?.primary ??
-      effectiveTemplate?.colors?.primary ??
-      "var(--color-primary)";
+  // Helper para validar URLs
+  const isValidUrl = (url?: string): boolean => {
+    if (!url) return false;
+    try {
+      new URL(url.startsWith('http') ? url : `https://${url}`);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
-    const headerBg =
-      gFrom && gTo ? `linear-gradient(${gDir}, ${gFrom}, ${gTo})` : primary;
+  // Redes sociales con validación
+  const socialLinks = [
+    { 
+      url: data.personalInfo.github, 
+      Icon: Icons.Github, 
+      label: "GitHub",
+      isValid: isValidUrl(data.personalInfo.github)
+    },
+    { 
+      url: data.personalInfo.linkedin, 
+      Icon: Icons.Linkedin, 
+      label: "LinkedIn",
+      isValid: isValidUrl(data.personalInfo.linkedin)
+    },
+    { 
+      url: data.personalInfo.website, 
+      Icon: Icons.Globe, 
+      label: "Sitio web",
+      isValid: isValidUrl(data.personalInfo.website)
+    },
+  ].filter(link => link.isValid);
 
-    const name = data.personalInfo.fullName || "Tu Portfolio";
-    const subtitle = data.personalInfo.title?.trim() || "";
-
-    return (
-      <header
-        className="tpl-header tpl-header-bg"
-        aria-label="Encabezado del portafolio"
+  return (
+    <header
+      className="tpl-header tpl-header-bg"
+      aria-label="Encabezado del portafolio"
+      style={{
+        position: "relative",
+        isolation: "isolate",
+        overflow: "hidden",
+        paddingTop: "clamp(2rem, 5vw, var(--sp-lg))",
+        paddingBottom: "clamp(2rem, 5vw, var(--sp-lg))",
+        marginBottom: "var(--sp-md)",
+        background: headerBg,
+        color: "var(--text-on-primary, #fff)",
+      }}
+    >
+      <div
+        className="tpl-container"
         style={{
           position: "relative",
-          isolation: "isolate",
-          overflow: "hidden",
-          paddingTop: "var(--sp-md)",
-          paddingBottom: "var(--sp-lg)",
-          marginBottom: "var(--sp-md)",
-          background: headerBg,
-          color: "var(--text-on-primary, #fff)",
+          zIndex: 1,
+          display: "flex",
+          flexDirection: avatarPosition === "center" ? "column" : "row",
+          alignItems: avatarPosition === "center" ? "center" : "flex-start",
+          gap: "var(--sp-md)",
+          ...(avatarPosition === "right" && { flexDirection: "row-reverse" }),
         }}
       >
+        {/* Avatar */}
+        {showAvatar && (
+          <img
+            src={headerConfig.avatarUrl}
+            alt={`Foto de perfil de ${name}`}
+            style={{
+              width: avatarSizes[avatarSize],
+              height: avatarSizes[avatarSize],
+              borderRadius: "50%",
+              objectFit: "cover",
+              border: "4px solid rgba(255,255,255,0.3)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              flexShrink: 0,
+            }}
+          />
+        )}
+
+        {/* Contenido de texto */}
         <div
-          className="tpl-container"
           style={{
-            position: "relative",
-            zIndex: 1,
             display: "flex",
-            flexDirection: avatarPosition === "center" ? "column" : "row",
-            alignItems: avatarPosition === "center" ? "center" : "flex-start",
-            gap: "var(--sp-md)",
-            ...(avatarPosition === "right" && { flexDirection: "row-reverse" }),
+            flexDirection: "column",
+            gap: "var(--sp-sm)",
+            alignItems:
+              avatarPosition === "center"
+                ? "center"
+                : avatarPosition === "right"
+                ? "flex-end"
+                : "flex-start",
+            flex: 1,
           }}
         >
-          {/* Avatar */}
-          {showAvatar && (
-            <img
-              src={headerConfig.avatarUrl}
-              alt={name}
-              style={{
-                width: avatarSizes[avatarSize],
-                height: avatarSizes[avatarSize],
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "4px solid rgba(255,255,255,0.3)",
-                flexShrink: 0,
-              }}
-            />
-          )}
-
-          {/* Contenido de texto */}
-          <div
+          {/* Nombre */}
+          <h1
+            className="tpl-heading"
             style={{
-              display: "grid",
-              gap: "var(--sp-xs)",
-              textAlign:
-                avatarPosition === "center"
-                  ? "center"
-                  : avatarPosition === "right"
-                  ? "right"
-                  : "left",
-              flex: 1,
+              fontSize: "clamp(2rem, 5vw, var(--fs-3xl))",
+              fontWeight: 700,
+              lineHeight: 1.1,
+              letterSpacing: "var(--ls-tight, -0.02em)",
+              color: "var(--text-on-primary, #fff)",
+              textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+              margin: 0,
             }}
           >
-            <h1
-              className="tpl-heading"
+            {name}
+          </h1>
+
+          {/* Subtítulo */}
+          {subtitle && (
+            <p
+              className="tpl-subtext"
               style={{
-                fontSize: "var(--fs-3xl)",
-                fontWeight: "var(--fw-bold, 700)",
-                lineHeight: 1.1,
-                letterSpacing: "var(--ls-tight, -0.02em)",
+                fontSize: "clamp(1rem, 2.5vw, var(--fs-lg))",
+                opacity: 0.95,
                 color: "var(--text-on-primary, #fff)",
-                textShadow: "0 1px 1px rgb(0 0 0 / 0.15)",
                 margin: 0,
               }}
             >
-              {name}
-            </h1>
+              {subtitle}
+            </p>
+          )}
 
-            {subtitle && (
-              <p
-                className="tpl-subtext"
+          {/* Botones de acción */}
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+              marginTop: "var(--sp-sm)",
+              justifyContent:
+                avatarPosition === "center" 
+                  ? "center" 
+                  : avatarPosition === "right"
+                  ? "flex-end"
+                  : "flex-start",
+            }}
+          >
+            {data.personalInfo.email && (
+              <a
+                href={`mailto:${data.personalInfo.email}`}
+                className="tpl-btn-primary"
+                aria-label={`Enviar email a ${name}`}
                 style={{
-                  fontSize: "var(--fs-lg)",
-                  opacity: 0.95,
-                  color: "var(--text-on-primary, #fff)",
-                  margin: 0,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
                 }}
               >
-                {subtitle}
-              </p>
+                <Icons.Mail size={16} aria-hidden="true" />
+                <span>Contactar</span>
+              </a>
             )}
 
-            <div
+            <a
+              href="#projects"
+              onClick={handleProjectsClick}
+              className="tpl-btn-outline"
+              aria-label="Ver mis proyectos"
               style={{
-                display: "flex",
-                gap: 10,
-                flexWrap: "wrap",
-                marginTop: "var(--sp-xs)",
-                justifyContent:
-                  avatarPosition === "center" ? "center" : "flex-start",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                borderColor: "rgba(255,255,255,0.4)",
+                color: "var(--text-on-primary, #fff)",
+                backgroundColor: "transparent",
               }}
             >
-              {data.personalInfo.email && (
-                <a
-                  href={`mailto:${data.personalInfo.email}`}
-                  className="tpl-btn-primary"
-                  aria-label="Enviar email"
-                >
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <Icons.Mail size={16} aria-hidden />
-                    <span>Contactar</span>
-                  </span>
-                </a>
-              )}
+              <Icons.Code size={16} aria-hidden="true" />
+              <span>Ver proyectos</span>
+            </a>
+          </div>
 
-              <a
-               href="#projects"
-  onClick={handleProjectsClick}
-  className="tpl-btn-outline"
-  aria-label="Ir a proyectos"
-  style={{ 
-    borderColor: "rgba(255,255,255,0.4)",
-    color: "var(--text-on-primary, #fff)",
-    backgroundColor: "transparent"
-  }}
->
-  <span
-    style={{
-      display: "inline-flex",
-      alignItems: "center",
-      gap: "var(--sp-xs)",
-    }}
-  >
-    <Icons.Code size={16} aria-hidden />
-    <span>Ver proyectos</span>
-  </span>
-</a>
-            </div>
-
+          {/* Enlaces sociales */}
+          {socialLinks.length > 0 && (
             <div
               style={{
                 display: "flex",
@@ -457,95 +494,66 @@ export const TemplateRenderer: React.FC<Props> = ({
                     ? "flex-end"
                     : "flex-start",
               }}
+              role="list"
+              aria-label="Enlaces a redes sociales"
             >
-              {data.personalInfo.github && (
+              {socialLinks.map(({ url, Icon, label }) => (
                 <a
-                  href={data.personalInfo.github}
+                  key={label}
+                  href={url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="tpl-chip"
-                  aria-label="GitHub"
-                  title="GitHub"
+                  aria-label={`Visitar mi ${label}`}
+                  title={label}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    transition: "transform 0.2s, opacity 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.opacity = "0.9";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.opacity = "1";
+                  }}
                 >
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "var(--sp-xs)",
-                    }}
-                  >
-                    <Icons.Github size={14} aria-hidden />
-                    <span>GitHub</span>
-                  </span>
+                  <Icon size={14} aria-hidden="true" />
+                  <span>{label}</span>
                 </a>
-              )}
-              {data.personalInfo.linkedin && (
-                <a
-                  href={data.personalInfo.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="tpl-chip"
-                  aria-label="LinkedIn"
-                >
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "var(--sp-xs)",
-                    }}
-                  >
-                    <Icons.Linkedin size={14} aria-hidden />
-                    <span>LinkedIn</span>
-                  </span>
-                </a>
-              )}
-              {data.personalInfo.website && (
-                <a
-                  href={data.personalInfo.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="tpl-chip"
-                  aria-label="Sitio web"
-                >
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "var(--sp-xs)",
-                    }}
-                  >
-                    <Icons.Globe size={14} aria-hidden />
-                    <span>Web</span>
-                  </span>
-                </a>
-              )}
+              ))}
             </div>
-          </div>
+          )}
         </div>
+      </div>
 
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-          style={{
-            position: "absolute",
-            left: 0,
-            bottom: 0,
-            width: "100%",
-            height: 32,
-            opacity: 0.15,
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        >
-          <path
-            d="M0,64 C240,128 480,0 720,32 C960,64 1200,176 1440,96 L1440,160 L0,160 Z"
-            fill="currentColor"
-          />
-        </svg>
-      </header>
-    );
-  };
+      {/* SVG decorativo de onda */}
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 1440 120"
+        preserveAspectRatio="none"
+        style={{
+          position: "absolute",
+          left: 0,
+          bottom: 0,
+          width: "100%",
+          height: 32,
+          opacity: 0.15,
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      >
+        <path
+          d="M0,64 C240,128 480,0 720,32 C960,64 1200,176 1440,96 L1440,160 L0,160 Z"
+          fill="currentColor"
+        />
+      </svg>
+    </header>
+  );
+};
 
   const renderAbout = () => {
     const { summary } = data.personalInfo;
@@ -873,74 +881,188 @@ export const TemplateRenderer: React.FC<Props> = ({
       </div>
     </section>
   );
+  // REEMPLAZAR LA FUNCIÓN renderFooterLike() EN TemplateRenderer.tsx
+  // Busca la función renderFooterLike (línea ~770 aproximadamente) y reemplázala con esto:
 
-  const renderFooterLike = () => (
-    <footer
-      style={{
-        paddingTop: "var(--sp-lg)",
-        paddingBottom: "var(--sp-lg)",
-        background: "var(--color-primary)",
-        color: "white",
-      }}
-    >
-      <div className="tpl-container">
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-          {data.personalInfo.email && (
-            <a
-              href={`mailto:${data.personalInfo.email}`}
-              className="tpl-btn-outline"
-              style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}
+  const renderFooterLike = () => {
+    const { personalInfo } = data;
+
+    // Obtener colores de la plantilla actual
+    const primary =
+      config?.customizations?.colors?.primary ??
+      effectiveTemplate?.colors?.primary ??
+      "var(--color-primary)";
+
+    const secondary =
+      config?.customizations?.colors?.secondary ??
+      effectiveTemplate?.colors?.secondary ??
+      "var(--color-secondary)";
+
+    // Crear gradiente con los colores de la plantilla
+    const footerBackground = `linear-gradient(135deg, ${primary}, ${secondary})`;
+
+    return (
+      <footer
+        style={{
+          background: footerBackground,
+          color: "var(--text-on-primary, #fff)",
+        }}
+      >
+        <div className="tpl-container">
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "var(--sp-md)",
+            }}
+          >
+            {/* Redes sociales */}
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+              {personalInfo.github && (
+                <a
+                  href={personalInfo.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      "rgba(255, 255, 255, 0.2)";
+                    e.currentTarget.style.transform = "scale(1.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      "rgba(255, 255, 255, 0.1)";
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                  aria-label="GitHub"
+                >
+                  <Icons.Github size={20} />
+                </a>
+              )}
+              {personalInfo.linkedin && (
+                <a
+                  href={personalInfo.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      "rgba(255, 255, 255, 0.2)";
+                    e.currentTarget.style.transform = "scale(1.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      "rgba(255, 255, 255, 0.1)";
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                  aria-label="LinkedIn"
+                >
+                  <Icons.Linkedin size={20} />
+                </a>
+              )}
+              {personalInfo.email && (
+                <a
+                  href={`mailto:${personalInfo.email}`}
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      "rgba(255, 255, 255, 0.2)";
+                    e.currentTarget.style.transform = "scale(1.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      "rgba(255, 255, 255, 0.1)";
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                  aria-label="Email"
+                >
+                  <Icons.Mail size={20} />
+                </a>
+              )}
+            </div>
+
+            {/* Copyright */}
+            <div style={{ textAlign: "center" }}>
+              <p
+                style={{
+                  color: "rgba(255, 255, 255, 0.95)",
+                  fontWeight: 500,
+                  fontSize: "var(--fs-base)",
+                  margin: 0,
+                }}
+              >
+                {personalInfo.fullName || "Tu Nombre"}
+              </p>
+              <p
+                style={{
+                  color: "rgba(255, 255, 255, 0.7)",
+                  fontSize: "var(--fs-sm)",
+                  marginTop: 4,
+                  marginBottom: 0,
+                }}
+              >
+                © {new Date().getFullYear()} • Todos los derechos reservados
+              </p>
+            </div>
+
+            {/* Badge */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                color: "rgba(255, 255, 255, 0.6)",
+                fontSize: "var(--fs-xs)",
+              }}
             >
-              Email
-            </a>
-          )}
-          {data.personalInfo.github && (
-            <a
-              href={data.personalInfo.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tpl-btn-outline"
-              style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}
-            >
-              GitHub
-            </a>
-          )}
-          {data.personalInfo.linkedin && (
-            <a
-              href={data.personalInfo.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tpl-btn-outline"
-              style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}
-            >
-              LinkedIn
-            </a>
-          )}
-          {data.personalInfo.website && (
-            <a
-              href={data.personalInfo.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="tpl-btn-outline"
-              style={{ color: "white", borderColor: "rgba(255,255,255,.4)" }}
-            >
-              Web
-            </a>
-          )}
+              <span>Hecho con</span>
+              <span
+                style={{
+                  color: "#ef4444",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <Icons.Heart size={12} />
+              </span>
+              <span>usando React y TypeScript</span>
+            </div>
+          </div>
         </div>
-        <p
-          style={{
-            marginTop: "var(--sp-sm)",
-            opacity: 0.9,
-            fontSize: "var(--fs-sm)",
-          }}
-        >
-          © {new Date().getFullYear()}{" "}
-          {data.personalInfo.fullName || "Portfolio"}
-        </p>
-      </div>
-    </footer>
-  );
+      </footer>
+    );
+  };
 
   const renderUnknown = (name: string) => (
     <section
@@ -1058,8 +1180,6 @@ export const TemplateRenderer: React.FC<Props> = ({
         {byArea.footer.length > 0 && (
           <footer
             style={{
-              paddingTop: "var(--sp-lg)",
-              paddingBottom: "var(--sp-lg)",
               background: "var(--color-primary)",
               color: "white",
             }}

@@ -1,7 +1,7 @@
-// components/AdvancedTemplateSelector.tsx - VERSIÓN MEJORADA
+// AdvancedTemplateSelector.tsx - VERSIÓN CORREGIDA con botón personalizar en tarjetas
 import React, { useState, useMemo } from "react";
-import { AdvancedTemplate } from "../types/advanced-template-types";
-import { Icons } from "./portfolio-icons";
+import { Search, Settings, Grid, List, Check } from 'lucide-react';
+import { AdvancedTemplate } from '../types/advanced-template-types';
 
 interface AdvancedTemplateSelectorProps {
   templates: AdvancedTemplate[];
@@ -9,26 +9,230 @@ interface AdvancedTemplateSelectorProps {
   onTemplateSelect: (template: AdvancedTemplate) => void;
   onCustomize?: (template: AdvancedTemplate) => void;
   onPreview?: (template: AdvancedTemplate) => void;
-  onDuplicate?: (template: AdvancedTemplate) => void;
-  onExport?: (template: AdvancedTemplate) => void;
-  onDelete?: (template: AdvancedTemplate) => void;
 }
 
 type ViewMode = "grid" | "list";
 type SortBy = "name" | "category" | "recent";
 
-export const AdvancedTemplateSelector: React.FC<
-  AdvancedTemplateSelectorProps
-> = ({
+// Card de plantilla - VERSIÓN CORREGIDA
+const TemplateCard: React.FC<{
+  template: AdvancedTemplate;
+  isSelected: boolean;
+  onSelect: () => void;
+  onCustomize?: (template: AdvancedTemplate) => void;
+  onPreview?: () => void;
+  viewMode: ViewMode;
+}> = ({ template, isSelected, onSelect, onCustomize, onPreview, viewMode }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  if (viewMode === "list") {
+    return (
+      <div
+        className={`bg-white border rounded-lg p-4 transition-all ${
+          isSelected ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-200 hover:shadow-lg"
+        }`}
+      >
+        <div className="flex items-center gap-4">
+          <div
+            className="w-24 h-16 rounded-lg flex-shrink-0 cursor-pointer"
+            style={{
+              background: `linear-gradient(135deg, ${template.colors.background}, ${template.colors.surface})`,
+            }}
+            onClick={onSelect}
+          />
+          <div className="flex-1">
+            <h3 className="font-semibold text-gray-900">{template.name}</h3>
+            <p className="text-sm text-gray-600 mt-1">{template.description}</p>
+          </div>
+          
+          {/* BOTÓN PERSONALIZAR en vista lista */}
+          {isSelected && onCustomize && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onCustomize(template);
+              }}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Settings size={16} />
+              Personalizar
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Vista GRID
+  return (
+    <div
+      className={`bg-white border-2 rounded-xl overflow-hidden transition-all ${
+        isSelected 
+          ? "border-blue-500 ring-4 ring-blue-100 shadow-xl" 
+          : "border-gray-200 hover:shadow-lg"
+      }`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Preview - clickeable solo si NO está seleccionada */}
+      <div 
+        className={`relative aspect-video bg-gradient-to-br from-gray-50 to-gray-100 ${
+          !isSelected ? 'cursor-pointer' : ''
+        }`}
+        onClick={!isSelected ? onSelect : undefined}
+      >
+        <div
+          className="absolute inset-0 p-4"
+          style={{
+            background: `linear-gradient(135deg, ${template.colors.background}, ${template.colors.surface})`,
+          }}
+        >
+          <div className="relative h-full flex flex-col gap-0.5 bg-gray-100 p-1 rounded">
+            {template.layoutStructure?.areas?.header?.enabled !== false && (
+              <div 
+                className="h-6 rounded flex items-center justify-center text-[8px] text-white font-medium"
+                style={{ background: `linear-gradient(135deg, ${template.colors.primary}, ${template.colors.secondary})` }}
+              >
+                HEADER
+              </div>
+            )}
+
+            <div className="flex-1 flex gap-0.5">
+              {template.layoutStructure?.areas?.["sidebar-left"]?.enabled && (
+                <div 
+                  className="w-8 rounded flex items-center justify-center text-[7px] font-medium text-gray-600"
+                  style={{ backgroundColor: template.colors.surface }}
+                >
+                  <span className="transform -rotate-90 whitespace-nowrap">SIDE</span>
+                </div>
+              )}
+
+              <div className="flex-1 rounded p-1 space-y-0.5 bg-white">
+                <div className="h-1 rounded" style={{ backgroundColor: template.colors.primary, width: '70%' }} />
+                <div className="h-0.5 rounded" style={{ backgroundColor: template.colors.accent, width: '50%', opacity: 0.6 }} />
+                <div className="grid grid-cols-2 gap-0.5 mt-1">
+                  {[1,2].map(i => (
+                    <div key={i} className="h-4 rounded" style={{ backgroundColor: template.colors.surface }} />
+                  ))}
+                </div>
+                <div className="text-center text-[7px] text-gray-400 mt-1">MAIN</div>
+              </div>
+
+              {template.layoutStructure?.areas?.["sidebar-right"]?.enabled && (
+                <div 
+                  className="w-8 rounded flex items-center justify-center text-[7px] font-medium text-gray-600"
+                  style={{ backgroundColor: template.colors.surfaceVariant }}
+                >
+                  <span className="transform -rotate-90 whitespace-nowrap">SIDE</span>
+                </div>
+              )}
+            </div>
+
+            {template.layoutStructure?.areas?.footer?.enabled !== false && (
+              <div 
+                className="h-4 rounded flex items-center justify-center text-[8px] text-white font-medium"
+                style={{ backgroundColor: template.colors.primary }}
+              >
+                FOOTER
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Badge de seleccionada */}
+        {isSelected && (
+          <div className="absolute top-2 right-2 bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
+            <Check size={16} />
+          </div>
+        )}
+
+        {/* Badge Premium */}
+        {template.isPremium && (
+          <div className="absolute top-2 left-2 bg-yellow-500 text-white rounded-full px-3 py-1 text-xs font-bold shadow-md">
+            ⭐ PRO
+          </div>
+        )}
+
+        {/* Overlay al hover - SOLO si NO está seleccionada */}
+        {isHovered && !isSelected && onPreview && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onPreview();
+              }}
+              className="bg-white/95 hover:bg-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg"
+            >
+              👁️ Vista Previa
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect();
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg"
+            >
+              Seleccionar
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Información de la plantilla */}
+      <div className="p-4">
+        <h3 className="font-semibold text-gray-900 text-base">{template.name}</h3>
+        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+          {template.description}
+        </p>
+
+        {/* Tags */}
+        <div className="flex items-center justify-between mt-3 mb-3">
+          <div className="flex gap-2 flex-wrap">
+            <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium">
+              {template.category}
+            </span>
+            {template.tags?.slice(0, 2).map((tag) => (
+              <span key={tag} className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs">
+                {tag}
+              </span>
+            ))}
+          </div>
+          <span className="text-xs text-gray-500">v{template.version}</span>
+        </div>
+
+        {/* BOTÓN PERSONALIZAR - SOLO VISIBLE CUANDO ESTÁ SELECCIONADA */}
+        {isSelected && onCustomize && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onCustomize(template);
+            }}
+            className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm flex items-center justify-center gap-2 shadow-sm"
+          >
+            <Settings size={18} />
+            Personalizar esta plantilla
+          </button>
+        )}
+
+        {/* Mensaje si está seleccionada pero no hay handler */}
+        {isSelected && !onCustomize && (
+          <div className="w-full bg-gray-100 text-gray-500 px-4 py-3 rounded-lg text-sm text-center">
+            Personalización no disponible
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Componente principal
+export default function AdvancedTemplateSelector({
   templates,
   selectedTemplate,
   onTemplateSelect,
   onCustomize,
   onPreview,
-  onDuplicate,
-  onExport,
-  onDelete,
-}) => {
+}: AdvancedTemplateSelectorProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -37,14 +241,12 @@ export const AdvancedTemplateSelector: React.FC<
   const [showFilters, setShowFilters] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  // Obtener tags únicos
   const allTags = useMemo(() => {
     const tags = new Set<string>();
     templates.forEach((t) => t.tags?.forEach((tag) => tags.add(tag)));
     return Array.from(tags);
   }, [templates]);
 
-  // Filtrar y ordenar plantillas
   const filteredTemplates = useMemo(() => {
     let filtered = templates.filter((template) => {
       if (filterCategory !== "all" && template.category !== filterCategory)
@@ -67,7 +269,6 @@ export const AdvancedTemplateSelector: React.FC<
       return true;
     });
 
-    // Ordenar
     filtered.sort((a, b) => {
       if (sortBy === "name") return a.name.localeCompare(b.name);
       if (sortBy === "category") return a.category.localeCompare(b.category);
@@ -75,14 +276,7 @@ export const AdvancedTemplateSelector: React.FC<
     });
 
     return filtered;
-  }, [
-    templates,
-    filterCategory,
-    searchTerm,
-    showPremiumOnly,
-    sortBy,
-    selectedTags,
-  ]);
+  }, [templates, filterCategory, searchTerm, showPremiumOnly, sortBy, selectedTags]);
 
   const categories = [
     { value: "all", label: "Todas", icon: "🎯" },
@@ -99,40 +293,30 @@ export const AdvancedTemplateSelector: React.FC<
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
-  console.log(
-    "📥 Templates recibidos:",
-    templates.length,
-    templates.map((t) => t.id)
-  );
-  console.log(
-    "🔍 Filtrados:",
-    filteredTemplates.length,
-    filteredTemplates.map((t) => t.id)
-  );
-  console.log("🏷️ Categoría actual:", filterCategory);
+
+  const handlePreview = (template: AdvancedTemplate) => {
+    if (onPreview) onPreview(template);
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Header con controles */}
+    <div className="space-y-6 p-6">
+      {/* Header */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">
-            Plantillas de Portfolio
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-800">Plantillas de Portfolio</h1>
           <p className="text-gray-600 mt-1">
-            {filteredTemplates.length} plantilla
-            {filteredTemplates.length !== 1 ? "s" : ""} disponible
-            {filteredTemplates.length !== 1 ? "s" : ""}
+            {filteredTemplates.length} plantilla{filteredTemplates.length !== 1 ? "s" : ""} disponible{filteredTemplates.length !== 1 ? "s" : ""}
+            {selectedTemplate && (
+              <span className="text-blue-600 font-medium ml-2">
+                · {selectedTemplate.name} seleccionada
+              </span>
+            )}
           </p>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Buscador */}
           <div className="relative">
-            <Icons.Search
-              size={16}
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            />
+            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Buscar plantillas..."
@@ -142,7 +326,6 @@ export const AdvancedTemplateSelector: React.FC<
             />
           </div>
 
-          {/* Ordenar */}
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortBy)}
@@ -153,7 +336,6 @@ export const AdvancedTemplateSelector: React.FC<
             <option value="recent">Recientes</option>
           </select>
 
-          {/* Filtro premium */}
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -164,20 +346,16 @@ export const AdvancedTemplateSelector: React.FC<
             Solo Premium
           </label>
 
-          {/* Botón filtros avanzados */}
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`px-3 py-2 rounded-lg border text-sm flex items-center gap-2 ${
-              showFilters
-                ? "bg-blue-50 border-blue-300 text-blue-700"
-                : "hover:bg-gray-50"
+              showFilters ? "bg-blue-50 border-blue-300 text-blue-700" : "hover:bg-gray-50"
             }`}
           >
-            <Icons.Settings size={16} />
+            <Settings size={16} />
             Filtros
           </button>
 
-          {/* Modo de vista */}
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setViewMode("grid")}
@@ -185,7 +363,7 @@ export const AdvancedTemplateSelector: React.FC<
                 viewMode === "grid" ? "bg-white shadow-sm" : "hover:bg-gray-200"
               }`}
             >
-              <Icons.Grid size={16} />
+              <Grid size={16} />
             </button>
             <button
               onClick={() => setViewMode("list")}
@@ -193,13 +371,13 @@ export const AdvancedTemplateSelector: React.FC<
                 viewMode === "list" ? "bg-white shadow-sm" : "hover:bg-gray-200"
               }`}
             >
-              <Icons.List size={16} />
+              <List size={16} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Panel de filtros avanzados */}
+      {/* Filtros de tags */}
       {showFilters && allTags.length > 0 && (
         <div className="bg-gray-50 rounded-lg p-4 border">
           <h3 className="text-sm font-medium mb-3">Filtrar por tags:</h3>
@@ -221,7 +399,7 @@ export const AdvancedTemplateSelector: React.FC<
         </div>
       )}
 
-      {/* Filtros de categoría */}
+      {/* Categorías */}
       <div className="flex flex-wrap gap-2">
         {categories.map((category) => (
           <button
@@ -244,7 +422,7 @@ export const AdvancedTemplateSelector: React.FC<
         ))}
       </div>
 
-      {/* Grid/List de plantillas */}
+      {/* Grid o lista de plantillas */}
       {filteredTemplates.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🔍</div>
@@ -281,342 +459,12 @@ export const AdvancedTemplateSelector: React.FC<
               isSelected={selectedTemplate?.id === template.id}
               onSelect={() => onTemplateSelect(template)}
               onCustomize={onCustomize}
-              onPreview={onPreview}
-              onDuplicate={onDuplicate}
-              onExport={onExport}
-              onDelete={onDelete}
+              onPreview={() => handlePreview(template)}
               viewMode={viewMode}
             />
           ))}
         </div>
       )}
-
-      {/* Panel de plantilla seleccionada */}
-      {selectedTemplate && (
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex-1">
-              <h3 className="text-xl font-bold text-blue-900 mb-2">
-                {selectedTemplate.name}
-              </h3>
-              <p className="text-blue-700 mb-3">
-                {selectedTemplate.description}
-              </p>
-
-              <div className="flex flex-wrap gap-2 mb-3">
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-medium">
-                  {selectedTemplate.category}
-                </span>
-                {selectedTemplate.isPremium && (
-                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-md text-xs font-medium">
-                    ⭐ Premium
-                  </span>
-                )}
-                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs">
-                  v{selectedTemplate.version}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {selectedTemplate.tags?.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-1 bg-white text-blue-600 rounded-md text-xs"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => onTemplateSelect(selectedTemplate)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                <Icons.Check size={16} />
-                Usar
-              </button>
-              {onCustomize && (
-                <button
-                  onClick={() => onCustomize(selectedTemplate)}
-                  className="flex items-center gap-2 px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-100"
-                >
-                  <Icons.Settings size={16} />
-                  Personalizar
-                </button>
-              )}
-              {onPreview && (
-                <button
-                  onClick={() => onPreview(selectedTemplate)}
-                  className="flex items-center gap-2 px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-100"
-                >
-                  <Icons.Eye size={16} />
-                  Vista Previa
-                </button>
-              )}
-              <div className="flex gap-2">
-                {onDuplicate && (
-                  <button
-                    onClick={() => onDuplicate(selectedTemplate)}
-                    className="flex-1 p-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100"
-                    title="Duplicar"
-                  >
-                    <Icons.Copy size={16} />
-                  </button>
-                )}
-                {onExport && (
-                  <button
-                    onClick={() => onExport(selectedTemplate)}
-                    className="flex-1 p-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100"
-                    title="Exportar"
-                  >
-                    <Icons.Download size={16} />
-                  </button>
-                )}
-                {!selectedTemplate.isBuiltIn && onDelete && (
-                  <button
-                    onClick={() => onDelete(selectedTemplate)}
-                    className="flex-1 p-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50"
-                    title="Eliminar"
-                  >
-                    <Icons.Trash2 size={16} />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Estadísticas */}
-      {filteredTemplates.length > 0 && (
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-blue-600">
-                {templates.filter((t) => t.category === "modern").length}
-              </div>
-              <div className="text-sm text-gray-600">Modernas</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-purple-600">
-                {templates.filter((t) => t.category === "creative").length}
-              </div>
-              <div className="text-sm text-gray-600">Creativas</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-green-600">
-                {templates.filter((t) => t.isPremium).length}
-              </div>
-              <div className="text-sm text-gray-600">Premium</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-600">
-                {templates.filter((t) => t.animations?.enabled).length}
-              </div>
-              <div className="text-sm text-gray-600">Con Animaciones</div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
-};
-
-// Card de plantilla
-const TemplateCard: React.FC<{
-  template: AdvancedTemplate;
-  isSelected: boolean;
-  onSelect: () => void;
-  onCustomize?: (t: AdvancedTemplate) => void;
-  onPreview?: (t: AdvancedTemplate) => void;
-  onDuplicate?: (t: AdvancedTemplate) => void;
-  onExport?: (t: AdvancedTemplate) => void;
-  onDelete?: (t: AdvancedTemplate) => void;
-  viewMode: ViewMode;
-}> = ({
-  template,
-  isSelected,
-  onSelect,
-  onCustomize,
-  onPreview,
-  onDuplicate,
-  onExport,
-  onDelete,
-  viewMode,
-}) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  if (viewMode === "list") {
-    return (
-      <div
-        className={`bg-white border rounded-lg p-4 cursor-pointer transition-all hover:shadow-lg ${
-          isSelected
-            ? "border-blue-500 ring-2 ring-blue-100"
-            : "border-gray-200"
-        }`}
-        onClick={onSelect}
-      >
-        <div className="flex items-center gap-4">
-          <div
-            className="w-24 h-16 rounded-lg flex-shrink-0"
-            style={{
-              background: `linear-gradient(135deg, ${template.colors.background}, ${template.colors.surface})`,
-            }}
-          />
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900">{template.name}</h3>
-            <p className="text-sm text-gray-600 mt-1">{template.description}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={`bg-white border-2 rounded-xl overflow-hidden cursor-pointer transition-all group ${
-        isSelected
-          ? "border-blue-500 ring-4 ring-blue-100 shadow-xl"
-          : "border-gray-200 hover:shadow-lg"
-      }`}
-      onClick={onSelect}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Preview visual */}
-      <div className="relative aspect-video bg-gradient-to-br from-gray-50 to-gray-100">
-        <div
-          className="absolute inset-0 p-4"
-          style={{
-            background: `linear-gradient(135deg, ${template.colors.background}, ${template.colors.surface})`,
-          }}
-        >
-{/* Mockup que refleja la estructura real */}
-<div className="relative h-full flex flex-col gap-0.5 bg-gray-100 p-1 rounded">
-  
-  {/* Header si está habilitado */}
-  {template.layoutStructure?.areas?.header?.enabled && (
-    <div 
-      className="h-6 rounded flex items-center justify-center text-[8px] text-white font-medium"
-      style={{ background: `linear-gradient(135deg, ${template.colors.primary}, ${template.colors.secondary})` }}
-    >
-      HEADER
-    </div>
-  )}
-
-  {/* Layout principal */}
-  <div className="flex-1 flex gap-0.5">
-    {/* Sidebar izquierda */}
-    {template.layoutStructure?.areas?.['sidebar-left']?.enabled && (
-      <div 
-        className="w-8 rounded flex items-center justify-center text-[7px] font-medium text-gray-600"
-        style={{ backgroundColor: template.colors.surface }}
-      >
-        <span className="transform -rotate-90 whitespace-nowrap">SIDE</span>
-      </div>
-    )}
-
-    {/* Main content */}
-    <div 
-      className="flex-1 rounded p-1 space-y-0.5 bg-white"
-    >
-      <div className="h-1 rounded" style={{ backgroundColor: template.colors.primary, width: '70%' }} />
-      <div className="h-0.5 rounded" style={{ backgroundColor: template.colors.accent, width: '50%', opacity: 0.6 }} />
-      <div className="grid grid-cols-2 gap-0.5 mt-1">
-        {[1,2].map(i => (
-          <div key={i} className="h-4 rounded" style={{ backgroundColor: template.colors.surface }} />
-        ))}
-      </div>
-      <div className="text-center text-[7px] text-gray-400 mt-1">MAIN</div>
-    </div>
-
-    {/* Sidebar derecha */}
-    {template.layoutStructure?.areas?.['sidebar-right']?.enabled && (
-      <div 
-        className="w-8 rounded flex items-center justify-center text-[7px] font-medium text-gray-600"
-        style={{ backgroundColor: template.colors.surfaceVariant }}
-      >
-        <span className="transform -rotate-90 whitespace-nowrap">SIDE</span>
-      </div>
-    )}
-  </div>
-
-  {/* Footer si está habilitado */}
-  {template.layoutStructure?.areas?.footer?.enabled && (
-    <div 
-      className="h-4 rounded flex items-center justify-center text-[8px] text-white font-medium"
-      style={{ backgroundColor: template.colors.primary }}
-    >
-      FOOTER
-    </div>
-  )}
-</div>
-        </div>
-
-        {isSelected && (
-          <div className="absolute top-2 right-2 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center">
-            <Icons.Check size={14} />
-          </div>
-        )}
-
-        {template.isPremium && (
-          <div className="absolute top-2 left-2 bg-yellow-500 text-white rounded-full px-2 py-1 text-xs font-bold">
-            PRO
-          </div>
-        )}
-
-        {isHovered && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2">
-            {onPreview && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPreview(template);
-                }}
-                className="bg-white/90 hover:bg-white px-3 py-1.5 rounded-lg text-sm font-medium"
-              >
-                👁️ Ver
-              </button>
-            )}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect();
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium"
-            >
-              Seleccionar
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900">{template.name}</h3>
-        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-          {template.description}
-        </p>
-
-        <div className="flex items-center justify-between mt-3">
-          <div className="flex gap-2">
-            <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-              {template.category}
-            </span>
-            {template.tags?.slice(0, 2).map((tag) => (
-              <span
-                key={tag}
-                className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-          <span className="text-xs text-gray-500">v{template.version}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
+}

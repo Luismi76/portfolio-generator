@@ -1,15 +1,17 @@
 // src/App.tsx - Con sistema de plantillas avanzado integrado
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 
 // Componentes principales
-import ModernPortfolioEditor from './components/editor/ModernPortfolioEditor';
-import PortfolioViewer from './components/PortfolioViewer';
-import { AdvancedTemplateSelector } from './components/AdvancedTemplateSelector';
-import { AdvancedTemplateCustomizer } from './components/AdvancedTemplateCustomizer';
-import { useAdvancedTemplates } from './hooks/useAdvancedTemplates';
+import ModernPortfolioEditor from "./components/editor/ModernPortfolioEditor";
+import PortfolioViewer from "./components/PortfolioViewer";
+import AdvancedTemplateSelector from "./components/AdvancedTemplateSelector";
+import { AdvancedTemplateCustomizer } from "./components/AdvancedTemplateCustomizer";
+import { useAdvancedTemplates } from "./hooks/useAdvancedTemplates";
+import TemplatePreviewModal from "./components/preview";
+import { AdvancedTemplate } from '../src/types/advanced-template-types';
 
 // Tipos para el modo de la aplicación
-type AppMode = 'editor' | 'portfolio' | 'templates' | 'customize' | 'preview';
+type AppMode = "editor" | "portfolio" | "templates" | "customize" | "preview";
 
 interface AppState {
   mode: AppMode;
@@ -18,16 +20,20 @@ interface AppState {
 }
 
 // Componente de loading spinner mejorado
-const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
+const LoadingSpinner: React.FC<{ size?: "sm" | "md" | "lg" }> = ({
+  size = "md",
+}) => {
   const sizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-8 h-8',
-    lg: 'w-12 h-12',
+    sm: "w-4 h-4",
+    md: "w-8 h-8",
+    lg: "w-12 h-12",
   };
 
   return (
     <div className="flex flex-col items-center justify-center">
-      <div className={`${sizeClasses[size]} animate-spin rounded-full border-2 border-gray-300 border-t-blue-600`} />
+      <div
+        className={`${sizeClasses[size]} animate-spin rounded-full border-2 border-gray-300 border-t-blue-600`}
+      />
       <div className="mt-4 space-y-2">
         <div className="h-2 w-32 bg-gray-200 rounded animate-pulse"></div>
         <div className="h-2 w-24 bg-gray-200 rounded animate-pulse"></div>
@@ -51,39 +57,39 @@ const AppHeader: React.FC<{
     <div className="max-w-7xl mx-auto px-4 py-3">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-800">Portfolio Generator</h1>
-        
+
         <div className="flex items-center gap-2">
           {/* BOTONES PRINCIPALES - SIEMPRE VISIBLES */}
           <button
-            onClick={() => onModeChange('editor')}
+            onClick={() => onModeChange("editor")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-              currentMode === 'editor' 
-                ? 'bg-blue-600 text-white shadow-md' 
-                : 'text-gray-600 hover:bg-gray-100'
+              currentMode === "editor"
+                ? "bg-blue-600 text-white shadow-md"
+                : "text-gray-600 hover:bg-gray-100"
             }`}
           >
             <span>📝</span>
             <span className="hidden sm:inline">Editor</span>
           </button>
-          
+
           <button
-            onClick={() => onModeChange('templates')}
+            onClick={() => onModeChange("templates")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-              currentMode === 'templates' 
-                ? 'bg-purple-600 text-white shadow-md' 
-                : 'text-gray-600 hover:bg-gray-100'
+              currentMode === "templates"
+                ? "bg-purple-600 text-white shadow-md"
+                : "text-gray-600 hover:bg-gray-100"
             }`}
           >
             <span>🎨</span>
             <span className="hidden sm:inline">Plantillas</span>
           </button>
-          
+
           <button
-            onClick={() => onModeChange('portfolio')}
+            onClick={() => onModeChange("portfolio")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-              currentMode === 'portfolio' 
-                ? 'bg-green-600 text-white shadow-md' 
-                : 'text-gray-600 hover:bg-gray-100'
+              currentMode === "portfolio"
+                ? "bg-green-600 text-white shadow-md"
+                : "text-gray-600 hover:bg-gray-100"
             }`}
           >
             <span>👁️</span>
@@ -91,12 +97,12 @@ const AppHeader: React.FC<{
           </button>
 
           {/* SEPARADOR cuando hay botones de customize */}
-          {currentMode === 'customize' && customizeActions && (
+          {currentMode === "customize" && customizeActions && (
             <div className="w-px h-8 bg-gray-300 mx-2"></div>
           )}
 
           {/* BOTONES DE CUSTOMIZE - SOLO CUANDO ESTÁS EN ESE MODO */}
-          {currentMode === 'customize' && customizeActions && (
+          {currentMode === "customize" && customizeActions && (
             <>
               {customizeActions.onReset && (
                 <button
@@ -124,7 +130,7 @@ const AppHeader: React.FC<{
               )}
             </>
           )}
-          
+
           {hasUnsavedChanges && (
             <span className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full ml-2">
               <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
@@ -137,50 +143,6 @@ const AppHeader: React.FC<{
   </header>
 );
 
-// Componente de vista previa rápida
-const QuickPreview: React.FC<{
-  onClose: () => void;
-  previewContent: string;
-}> = ({ onClose, previewContent }) => (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="text-lg font-semibold text-gray-800">Vista Previa</h3>
-        <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-      
-      {/* Contenido */}
-      <div className="h-[70vh] overflow-auto">
-        <iframe
-          srcDoc={previewContent}
-          className="w-full h-full border-none"
-          title="Vista Previa del Portfolio"
-        />
-      </div>
-      
-      {/* Footer */}
-      <div className="p-4 border-t bg-gray-50 flex justify-between items-center">
-        <span className="text-sm text-gray-600">
-          Vista previa generada automáticamente
-        </span>
-        <button
-          onClick={onClose}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-        >
-          Cerrar
-        </button>
-      </div>
-    </div>
-  </div>
-);
 
 const App: React.FC = () => {
   // Hook avanzado de plantillas
@@ -189,29 +151,37 @@ const App: React.FC = () => {
   // Función para determinar el modo inicial
   function getInitialMode(): AppMode {
     // 1. Variable de entorno (para builds de producción)
-    if (process.env.REACT_APP_MODE === 'portfolio') return 'portfolio';
-    if (process.env.REACT_APP_MODE === 'editor') return 'editor';
-    if (process.env.REACT_APP_MODE === 'templates') return 'templates';
+    if (process.env.REACT_APP_MODE === "portfolio") return "portfolio";
+    if (process.env.REACT_APP_MODE === "editor") return "editor";
+    if (process.env.REACT_APP_MODE === "templates") return "templates";
 
     // 2. Parámetro URL (?mode=editor|portfolio|templates|customize|preview)
     const urlParams = new URLSearchParams(window.location.search);
-    const urlMode = urlParams.get('mode') as AppMode;
-    if (['editor', 'portfolio', 'templates', 'customize', 'preview'].includes(urlMode)) {
+    const urlMode = urlParams.get("mode") as AppMode;
+    if (
+      ["editor", "portfolio", "templates", "customize", "preview"].includes(
+        urlMode
+      )
+    ) {
       return urlMode;
     }
 
     // 3. LocalStorage
     try {
-      const savedMode = localStorage.getItem('app-mode') as AppMode;
-      if (['editor', 'portfolio', 'templates', 'customize', 'preview'].includes(savedMode)) {
+      const savedMode = localStorage.getItem("app-mode") as AppMode;
+      if (
+        ["editor", "portfolio", "templates", "customize", "preview"].includes(
+          savedMode
+        )
+      ) {
         return savedMode;
       }
     } catch (error) {
-      console.warn('Error reading mode from localStorage:', error);
+      console.warn("Error reading mode from localStorage:", error);
     }
 
     // 4. Default basado en environment
-    return process.env.NODE_ENV === 'development' ? 'editor' : 'portfolio';
+    return process.env.NODE_ENV === "development" ? "editor" : "portfolio";
   }
 
   // Estado de la aplicación
@@ -223,52 +193,65 @@ const App: React.FC = () => {
 
   // Estado para vista previa rápida
   const [showPreview, setShowPreview] = useState(false);
-  const [previewContent, setPreviewContent] = useState('');
+  // const [previewContent, setPreviewContent] = useState("");
+  const [previewTemplate, setPreviewTemplate] =
+    useState<AdvancedTemplate | null>(null);
 
   // Cambiar modo - envuelto en useCallback
-  const switchMode = useCallback((newMode: AppMode) => {
-    if (templates.hasUnsavedChanges && newMode !== appState.mode) {
-      const confirmed = window.confirm(
-        '¿Estás seguro de cambiar de modo? Los cambios no guardados se perderán.'
-      );
-      if (!confirmed) return;
-    }
+  const switchMode = useCallback(
+    (newMode: AppMode) => {
+      if (templates.hasUnsavedChanges && newMode !== appState.mode) {
+        const confirmed = window.confirm(
+          "¿Estás seguro de cambiar de modo? Los cambios no guardados se perderán."
+        );
+        if (!confirmed) return;
+      }
 
-    setAppState((prev) => ({ ...prev, mode: newMode }));
+      setAppState((prev) => ({ ...prev, mode: newMode }));
 
-    try {
-      localStorage.setItem('app-mode', newMode);
-    } catch (error) {
-      console.warn('Error saving mode to localStorage:', error);
-    }
+      try {
+        localStorage.setItem("app-mode", newMode);
+      } catch (error) {
+        console.warn("Error saving mode to localStorage:", error);
+      }
 
-    const url = new URL(window.location.href);
-    url.searchParams.set('mode', newMode);
-    window.history.replaceState({}, '', url.toString());
-  }, [templates.hasUnsavedChanges, appState.mode]);
+      const url = new URL(window.location.href);
+      url.searchParams.set("mode", newMode);
+      window.history.replaceState({}, "", url.toString());
+    },
+    [templates.hasUnsavedChanges, appState.mode]
+  );
 
   // Handler para vista previa rápida - envuelto en useCallback
-  const handleQuickPreview = useCallback(() => {
-    const content = templates.previewTemplate();
-    setPreviewContent(content);
-    setShowPreview(true);
-  }, [templates]);
+  const handleQuickPreview = useCallback(
+    (template?: AdvancedTemplate) => {
+      const templateToPreview = template || templates.selectedTemplate;
+      if (templateToPreview) {
+        setPreviewTemplate(templateToPreview);
+        setShowPreview(true);
+      }
+    },
+    [templates.selectedTemplate]
+  );
 
   // Handler para guardar configuración - envuelto en useCallback
   const handleSaveTemplate = useCallback(() => {
-    console.log('Guardando configuración de plantilla...');
-    
+    console.log("Guardando configuración de plantilla...");
+
     try {
       const configToSave = {
         templateId: templates.selectedTemplate?.id,
         config: templates.config,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
-      localStorage.setItem('saved-portfolio-config', JSON.stringify(configToSave));
-      alert('✅ Configuración guardada correctamente');
+      localStorage.setItem(
+        "saved-portfolio-config",
+        JSON.stringify(configToSave)
+      );
+      alert("✅ Configuración guardada correctamente");
     } catch (error) {
-      console.error('Error guardando configuración:', error);
-      alert('❌ Error al guardar la configuración');
+      console.error("Error guardando configuración:", error);
+      alert("❌ Error al guardar la configuración");
     }
   }, [templates.selectedTemplate?.id, templates.config]);
 
@@ -277,33 +260,38 @@ const App: React.FC = () => {
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey) {
         switch (event.key.toLowerCase()) {
-          case 'm': {
+          case "m": {
             event.preventDefault();
-            const modes: AppMode[] = ['editor', 'templates', 'customize', 'portfolio'];
+            const modes: AppMode[] = [
+              "editor",
+              "templates",
+              "customize",
+              "portfolio",
+            ];
             const currentIndex = modes.indexOf(appState.mode);
             const nextMode = modes[(currentIndex + 1) % modes.length];
             switchMode(nextMode);
             break;
           }
-          case 'e':
+          case "e":
             event.preventDefault();
-            switchMode('editor');
+            switchMode("editor");
             break;
-          case 't':
+          case "t":
             event.preventDefault();
-            switchMode('templates');
+            switchMode("templates");
             break;
-          case 'p':
+          case "p":
             event.preventDefault();
-            switchMode('portfolio');
+            switchMode("portfolio");
             break;
-          case 'r':
+          case "r":
             event.preventDefault();
             handleQuickPreview();
             break;
-          case 's':
+          case "s":
             event.preventDefault();
-            if (appState.mode === 'customize' && templates.hasUnsavedChanges) {
+            if (appState.mode === "customize" && templates.hasUnsavedChanges) {
               handleSaveTemplate();
             }
             break;
@@ -311,9 +299,15 @@ const App: React.FC = () => {
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [appState.mode, templates.hasUnsavedChanges, switchMode, handleQuickPreview, handleSaveTemplate]);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [
+    appState.mode,
+    templates.hasUnsavedChanges,
+    switchMode,
+    handleQuickPreview,
+    handleSaveTemplate,
+  ]);
 
   // Efecto para manejar la carga inicial
   useEffect(() => {
@@ -325,7 +319,7 @@ const App: React.FC = () => {
         setAppState((prev) => ({
           ...prev,
           isLoading: false,
-          error: error instanceof Error ? error.message : 'Error desconocido',
+          error: error instanceof Error ? error.message : "Error desconocido",
         }));
       }
     };
@@ -348,14 +342,18 @@ const App: React.FC = () => {
               🚀
             </div>
           </div>
-          
+
           <LoadingSpinner size="lg" />
-          
+
           <div className="mt-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">Portfolio Generator</h2>
-            <p className="text-gray-600 text-lg">Cargando tu editor de portfolios profesionales...</p>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">
+              Portfolio Generator
+            </h2>
+            <p className="text-gray-600 text-lg">
+              Cargando tu editor de portfolios profesionales...
+            </p>
           </div>
-          
+
           <div className="mt-8 text-sm text-gray-500">
             <p>✨ Sistema de plantillas avanzado</p>
             <p>🎨 Editor drag & drop</p>
@@ -372,7 +370,9 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-lg w-full bg-white rounded-2xl shadow-2xl p-8 text-center border border-red-200">
           <div className="text-red-500 text-7xl mb-6">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-3">¡Oops! Algo salió mal</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-3">
+            ¡Oops! Algo salió mal
+          </h2>
           <p className="text-gray-600 mb-8 leading-relaxed">{appState.error}</p>
           <div className="space-y-4">
             <button
@@ -396,10 +396,10 @@ const App: React.FC = () => {
   // Función para renderizar el contenido según el modo
   const renderContent = () => {
     switch (appState.mode) {
-      case 'editor':
+      case "editor":
         return <ModernPortfolioEditor />;
 
-      case 'templates':
+      case "templates":
         return (
           <div className="min-h-screen bg-gray-50">
             <div className="max-w-7xl mx-auto px-6 py-8">
@@ -407,14 +407,14 @@ const App: React.FC = () => {
                 templates={templates.templates}
                 selectedTemplate={templates.selectedTemplate}
                 onTemplateSelect={templates.selectTemplate}
-                onCustomize={() => switchMode('customize')}
+                onCustomize={() => switchMode("customize")}
                 onPreview={handleQuickPreview}
               />
             </div>
           </div>
         );
 
-      case 'customize':
+      case "customize":
         return templates.selectedTemplate && templates.config ? (
           <AdvancedTemplateCustomizer
             template={templates.selectedTemplate}
@@ -422,17 +422,21 @@ const App: React.FC = () => {
             onConfigChange={templates.updateConfig}
             onPreview={handleQuickPreview}
             onSave={handleSaveTemplate}
-            onCancel={() => switchMode('templates')}
+            onCancel={() => switchMode("templates")}
             onReset={templates.resetConfig}
           />
         ) : (
           <div className="min-h-screen bg-gray-50 flex items-center justify-center">
             <div className="text-center bg-white rounded-2xl p-12 shadow-lg max-w-md">
               <div className="text-6xl mb-4">🎨</div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-3">No hay plantilla seleccionada</h2>
-              <p className="text-gray-600 mb-8">Selecciona una plantilla para personalizar</p>
+              <h2 className="text-2xl font-bold text-gray-800 mb-3">
+                No hay plantilla seleccionada
+              </h2>
+              <p className="text-gray-600 mb-8">
+                Selecciona una plantilla para personalizar
+              </p>
               <button
-                onClick={() => switchMode('templates')}
+                onClick={() => switchMode("templates")}
                 className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-semibold"
               >
                 Seleccionar Plantilla
@@ -441,15 +445,17 @@ const App: React.FC = () => {
           </div>
         );
 
-      case 'preview':
+      case "preview":
         return (
           <div className="min-h-screen bg-gray-100">
             <div className="bg-white shadow-sm border-b">
               <div className="max-w-7xl mx-auto px-6 py-4">
                 <div className="flex items-center justify-between">
-                  <h1 className="text-xl font-semibold text-gray-800">Vista Previa</h1>
+                  <h1 className="text-xl font-semibold text-gray-800">
+                    Vista Previa
+                  </h1>
                   <button
-                    onClick={() => switchMode('editor')}
+                    onClick={() => switchMode("editor")}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                   >
                     Volver al Editor
@@ -469,7 +475,7 @@ const App: React.FC = () => {
           </div>
         );
 
-      case 'portfolio':
+      case "portfolio":
         return <PortfolioViewer />;
 
       default:
@@ -480,29 +486,35 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header con navegación integrada */}
-      <AppHeader 
-        currentMode={appState.mode} 
+      <AppHeader
+        currentMode={appState.mode}
         onModeChange={switchMode}
         hasUnsavedChanges={templates.hasUnsavedChanges}
-        customizeActions={appState.mode === 'customize' ? {
-          onSave: handleSaveTemplate,
-          onPreview: handleQuickPreview,
-          onReset: templates.resetConfig
-        } : undefined}
+        customizeActions={
+          appState.mode === "customize"
+            ? {
+                onSave: handleSaveTemplate,
+                onPreview: handleQuickPreview,
+                onReset: templates.resetConfig,
+              }
+            : undefined
+        }
       />
 
       {/* Contenido principal */}
       {renderContent()}
 
       {/* Vista previa modal */}
-      {showPreview && (
-        <QuickPreview
-          onClose={() => setShowPreview(false)}
-          previewContent={previewContent}
+      {showPreview && previewTemplate && (
+        <TemplatePreviewModal
+          isOpen={showPreview}
+          onClose={() => {
+            setShowPreview(false);
+            setPreviewTemplate(null);
+          }}
+          template={previewTemplate}
         />
       )}
-
-      
     </div>
   );
 };

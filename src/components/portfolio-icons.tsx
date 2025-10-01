@@ -8,6 +8,7 @@ import {
   Trash2,
   Download,
   Upload,
+  Heart,
 
   // Vista / navegación
   Eye,
@@ -81,6 +82,7 @@ export const Icons: Record<string, ComponentType<SimpleIconProps>> = {
   Trash2: adapt(Trash2),
   Download: adapt(Download),
   Upload: adapt(Upload),
+  Heart: adapt(Heart),
 
   // Vista / navegación
   Eye: adapt(Eye),

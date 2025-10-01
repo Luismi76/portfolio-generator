@@ -9,6 +9,8 @@ import {
 } from "../types/advanced-template-types";
 import { AdvancedLayoutBuilder } from "./AdvancedLayoutBuilder";
 import { Icons } from "./portfolio-icons";
+import { TabNavigation, TabId } from "./TabNavigation";
+import TypographyControls from './TypographyControls';
 
 interface Props {
   template: AdvancedTemplate;
@@ -20,13 +22,7 @@ interface Props {
   onReset: () => void;
 }
 
-type CustomizerTab =
-  | "avatar"
-  | "layout"
-  | "colors"
-  | "typography"
-  | "sections"
-  | "advanced";
+type CustomizerTab = TabId;
 
 const AREA_KEYS: LayoutArea[] = [
   "header",
@@ -117,108 +113,12 @@ const ColorPicker: React.FC<{
   );
 };
 
-// ===== TypographyControls =====
-const TypographyControls: React.FC<{
-  typography: any;
-  onChange: (typography: any) => void;
-}> = ({ typography, onChange }) => {
-  const fontFamilies = [
-    { name: "Inter", value: "'Inter', sans-serif" },
-    { name: "Roboto", value: "'Roboto', sans-serif" },
-    { name: "Poppins", value: "'Poppins', sans-serif" },
-    { name: "Playfair Display", value: "'Playfair Display', serif" },
-    { name: "Merriweather", value: "'Merriweather', serif" },
-    { name: "Source Code Pro", value: "'Source Code Pro', monospace" },
-  ];
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Fuente Principal
-          </label>
-          <select
-            value={typography?.fontFamilies?.primary || ""}
-            onChange={(e) =>
-              onChange({
-                ...typography,
-                fontFamilies: {
-                  ...(typography?.fontFamilies ?? {}),
-                  primary: e.target.value,
-                },
-              })
-            }
-            className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-          >
-            {fontFamilies.map((font) => (
-              <option key={font.value} value={font.value}>
-                {font.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Fuente de Títulos
-          </label>
-          <select
-            value={typography?.fontFamilies?.heading || ""}
-            onChange={(e) =>
-              onChange({
-                ...typography,
-                fontFamilies: {
-                  ...(typography?.fontFamilies ?? {}),
-                  heading: e.target.value,
-                },
-              })
-            }
-            className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-          >
-            {fontFamilies.map((font) => (
-              <option key={font.value} value={font.value}>
-                {font.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <h4 className="text-sm font-medium text-gray-700">Tamaños de Fuente</h4>
-        <div className="grid grid-cols-3 gap-3">
-          {["sm", "base", "lg", "xl", "2xl", "3xl"].map((size) => (
-            <div key={size}>
-              <label className="block text-xs text-gray-600 mb-1">{size}</label>
-              <input
-                type="text"
-                value={typography?.fontSizes?.[size] || ""}
-                onChange={(e) =>
-                  onChange({
-                    ...typography,
-                    fontSizes: {
-                      ...(typography?.fontSizes ?? {}),
-                      [size]: e.target.value,
-                    },
-                  })
-                }
-                className="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-blue-500"
-                placeholder="1rem"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // ===== SpacingControls =====
 const SpacingControls: React.FC<{
   spacing: any;
   onChange: (spacing: any) => void;
 }> = ({ spacing, onChange }) => {
-  // Calcular el nivel inicial solo una vez
   const getInitialLevel = () => {
     const mdValue = spacing?.md || "1.5rem";
     const parsed = parseFloat(mdValue);
@@ -232,7 +132,6 @@ const SpacingControls: React.FC<{
 
   const [spacingLevel, setSpacingLevel] = useState(getInitialLevel);
 
-  // Ratios proporcionales
   const spacingRatios = {
     xs: 0.33,
     sm: 0.67,
@@ -332,6 +231,7 @@ const SpacingControls: React.FC<{
     </div>
   );
 };
+
 // ===== Componente principal =====
 export const AdvancedTemplateCustomizer: React.FC<Props> = ({
   template,
@@ -343,7 +243,7 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
   onReset,
 }) => {
   const [activeTab, setActiveTab] = useState<CustomizerTab>("avatar");
-  const [hasChanges, setHasChanges] = useState(false);
+  
   const currentConfig = useMemo(
     () => ({
       ...config,
@@ -381,7 +281,6 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
         lastModified: new Date().toISOString(),
       };
       onConfigChange(newConfig);
-      setHasChanges(true);
     },
     [currentConfig, onConfigChange]
   );
@@ -405,15 +304,14 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
     [updateConfig]
   );
 
-  // Estructura efectiva para el tab "layout"
   const effectiveLayoutStructure: TemplateLayoutStructure = useMemo(() => {
     const baseLS: TemplateLayoutStructure = template?.layoutStructure ?? {
-      type: "grid" as TemplateLayoutStructure["type"],
+      type: "single-column",
       areas: {} as TemplateLayoutStructure["areas"],
       responsive: {
         mobile: "stack",
         tablet: "full",
-      } as TemplateLayoutStructure["responsive"],
+      },
     };
 
     return mergeLayoutStructure(
@@ -437,160 +335,175 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
 
   const renderTabContent = () => {
     switch (activeTab) {
-     case "avatar":
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Configuración del Avatar
-        </h3>
-        <p className="text-sm text-gray-600 mb-4">
-          Personaliza tu foto de perfil
-        </p>
-      </div>
+      case "avatar":
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Configuración del Avatar
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Personaliza tu foto de perfil
+              </p>
+            </div>
 
-      <div className="border rounded-lg p-4">
-        <h4 className="font-medium mb-3">Avatar/Foto de Perfil</h4>
-        <div className="space-y-3">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={
-                currentConfig.customizations.headerConfig?.showAvatar ||
-                false
-              }
-              onChange={(e) =>
+            <div className="border rounded-lg p-4">
+              <h4 className="font-medium mb-3">Avatar/Foto de Perfil</h4>
+              <div className="space-y-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={
+                      currentConfig.customizations.headerConfig?.showAvatar ||
+                      false
+                    }
+                    onChange={(e) =>
+                      updateConfig({
+                        headerConfig: {
+                          ...(currentConfig.customizations.headerConfig ?? {}),
+                          showAvatar: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                  <span className="text-sm">Mostrar avatar/foto</span>
+                </label>
+
+                {currentConfig.customizations.headerConfig?.showAvatar && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        URL de la imagen
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://ejemplo.com/mi-foto.jpg"
+                        value={
+                          currentConfig.customizations.headerConfig
+                            ?.avatarUrl || ""
+                        }
+                        onChange={(e) =>
+                          updateConfig({
+                            headerConfig: {
+                              ...(currentConfig.customizations.headerConfig ??
+                                {}),
+                              avatarUrl: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Sube tu imagen a Imgur o ImgBB y pega la URL aquí
+                      </p>
+                    </div>
+
+                    {currentConfig.customizations.headerConfig?.avatarUrl && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Vista previa
+                        </label>
+                        <div className="flex justify-center">
+                          <img
+                            src={
+                              currentConfig.customizations.headerConfig
+                                .avatarUrl
+                            }
+                            alt="Avatar preview"
+                            className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = "none";
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Posición del avatar
+                      </label>
+                      <select
+                        value={
+                          currentConfig.customizations.headerConfig
+                            ?.avatarPosition || "center"
+                        }
+                        onChange={(e) =>
+                          updateConfig({
+                            headerConfig: {
+                              ...(currentConfig.customizations.headerConfig ??
+                                {}),
+                              avatarPosition: e.target.value as
+                                | "left"
+                                | "center"
+                                | "right",
+                            },
+                          })
+                        }
+                        className="w-full px-3 py-2 border rounded-lg"
+                      >
+                        <option value="left">Izquierda</option>
+                        <option value="center">Centro</option>
+                        <option value="right">Derecha</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Tamaño del avatar
+                      </label>
+                      <select
+                        value={
+                          currentConfig.customizations.headerConfig
+                            ?.avatarSize || "md"
+                        }
+                        onChange={(e) =>
+                          updateConfig({
+                            headerConfig: {
+                              ...(currentConfig.customizations.headerConfig ??
+                                {}),
+                              avatarSize: e.target.value as "sm" | "md" | "lg",
+                            },
+                          })
+                        }
+                        className="w-full px-3 py-2 border rounded-lg"
+                      >
+                        <option value="sm">Pequeño (80px)</option>
+                        <option value="md">Mediano (120px)</option>
+                        <option value="lg">Grande (160px)</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+      case "layout":
+        return (
+          <>
+            <AdvancedLayoutBuilder
+              template={{
+                ...template,
+                layoutStructure: effectiveLayoutStructure,
+              }}
+              sections={currentConfig.customizations.sections || []}
+              onSectionsChange={updateSections}
+              onLayoutChange={(structure: TemplateLayoutStructurePatch) =>
                 updateConfig({
-                  headerConfig: {
-                    ...(currentConfig.customizations.headerConfig ?? {}),
-                    showAvatar: e.target.checked,
-                  },
+                  layoutStructure: structure,
                 })
               }
+              layoutStructure={effectiveLayoutStructure}
+              config={currentConfig}
+              onConfigUpdate={(updates) => {
+                updateConfig(updates);
+              }}
             />
-            <span className="text-sm">Mostrar avatar/foto</span>
-          </label>
-
-          {currentConfig.customizations.headerConfig?.showAvatar && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  URL de la imagen
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://ejemplo.com/mi-foto.jpg"
-                  value={currentConfig.customizations.headerConfig?.avatarUrl || ""}
-                  onChange={(e) =>
-                    updateConfig({
-                      headerConfig: {
-                        ...(currentConfig.customizations.headerConfig ?? {}),
-                        avatarUrl: e.target.value,
-                      },
-                    })
-                  }
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Sube tu imagen a Imgur o ImgBB y pega la URL aquí
-                </p>
-              </div>
-
-              {currentConfig.customizations.headerConfig?.avatarUrl && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Vista previa
-                  </label>
-                  <div className="flex justify-center">
-                    <img
-                      src={currentConfig.customizations.headerConfig.avatarUrl}
-                      alt="Avatar preview"
-                      className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Posición del avatar
-                </label>
-                <select
-                  value={
-                    currentConfig.customizations.headerConfig?.avatarPosition || "center"
-                  }
-                  onChange={(e) =>
-                    updateConfig({
-                      headerConfig: {
-                        ...(currentConfig.customizations.headerConfig ?? {}),
-                        avatarPosition: e.target.value as "left" | "center" | "right",
-                      },
-                    })
-                  }
-                  className="w-full px-3 py-2 border rounded-lg"
-                >
-                  <option value="left">Izquierda</option>
-                  <option value="center">Centro</option>
-                  <option value="right">Derecha</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tamaño del avatar
-                </label>
-                <select
-                  value={
-                    currentConfig.customizations.headerConfig?.avatarSize || "md"
-                  }
-                  onChange={(e) =>
-                    updateConfig({
-                      headerConfig: {
-                        ...(currentConfig.customizations.headerConfig ?? {}),
-                        avatarSize: e.target.value as "sm" | "md" | "lg",
-                      },
-                    })
-                  }
-                  className="w-full px-3 py-2 border rounded-lg"
-                >
-                  <option value="sm">Pequeño (80px)</option>
-                  <option value="md">Mediano (120px)</option>
-                  <option value="lg">Grande (160px)</option>
-                </select>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-case "layout":
-  return (
-    <>
-      <AdvancedLayoutBuilder
-        template={{
-          ...template,
-          layoutStructure: effectiveLayoutStructure,
-        }}
-        sections={currentConfig.customizations.sections || []}
-        onSectionsChange={updateSections}
-        onLayoutChange={(structure: TemplateLayoutStructurePatch) =>
-          updateConfig({
-            layoutStructure: structure,
-          })
-        }
-        layoutStructure={effectiveLayoutStructure}
-        config={currentConfig}
-        onConfigUpdate={(updates) => {
-          updateConfig(updates);
-        }}
-      />
-    </>
-  );
+          </>
+        );
 
       case "colors":
         return (
@@ -828,7 +741,7 @@ case "layout":
                         Variante
                       </label>
                       <select
-                        value={(section?.config?.variant as any) || "default"}
+                        value={section?.config?.variant || "default"}
                         onChange={(e) => {
                           const updated = (
                             currentConfig.customizations.sections ||
@@ -840,7 +753,11 @@ case "layout":
                                   ...s,
                                   config: {
                                     ...(s.config ?? {}),
-                                    variant: e.target.value as any,
+                                    variant: e.target.value as
+                                      | "default"
+                                      | "compact"
+                                      | "expanded"
+                                      | "minimal",
                                   },
                                 }
                               : s
@@ -861,7 +778,7 @@ case "layout":
                         Columnas
                       </label>
                       <select
-                        value={(section?.config?.columns as any) || 1}
+                        value={section?.config?.columns || 1}
                         onChange={(e) => {
                           const updated = (
                             currentConfig.customizations.sections ||
@@ -873,7 +790,11 @@ case "layout":
                                   ...s,
                                   config: {
                                     ...(s.config ?? {}),
-                                    columns: Number(e.target.value) as any,
+                                    columns: Number(e.target.value) as
+                                      | 1
+                                      | 2
+                                      | 3
+                                      | 4,
                                   },
                                 }
                               : s
@@ -895,152 +816,155 @@ case "layout":
           </div>
         );
 
-     case "advanced":
-  return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <h3 className="font-medium text-gray-800">
-          Configuración Avanzada
-        </h3>
-        
-        {/* Animaciones */}
-        <div className="border rounded-lg p-4">
-          <h4 className="font-medium mb-3">Animaciones</h4>
-          <div className="space-y-3">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={
-                  currentConfig.customizations.animations?.enabled ||
-                  false
-                }
-                onChange={(e) =>
-                  updateConfig({
-                    animations: {
-                      ...(currentConfig.customizations.animations ?? {}),
-                      enabled: e.target.checked,
-                    },
-                  })
-                }
-              />
-              <span className="text-sm">Habilitar animaciones</span>
-            </label>
+      case "advanced":
+        return (
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="font-medium text-gray-800">
+                Configuración Avanzada
+              </h3>
 
-            {currentConfig.customizations.animations?.enabled && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de animación
-                </label>
-                <select
-                  value={
-                    currentConfig.customizations.animations?.type ||
-                    "subtle"
-                  }
-                  onChange={(e) =>
-                    updateConfig({
-                      animations: {
-                        ...(currentConfig.customizations.animations ??
-                          {}),
-                        enabled: true,
-                        type: e.target.value as any,
-                      },
-                    })
-                  }
-                  className="w-full px-3 py-2 border rounded-lg"
-                >
-                  <option value="none">Sin animaciones</option>
-                  <option value="subtle">Sutiles</option>
-                  <option value="smooth">Suaves</option>
-                  <option value="dynamic">Dinámicas</option>
-                </select>
+              {/* Animaciones */}
+              <div className="border rounded-lg p-4">
+                <h4 className="font-medium mb-3">Animaciones</h4>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={
+                        currentConfig.customizations.animations?.enabled ||
+                        false
+                      }
+                      onChange={(e) =>
+                        updateConfig({
+                          animations: {
+                            ...(currentConfig.customizations.animations ?? {}),
+                            enabled: e.target.checked,
+                          },
+                        })
+                      }
+                    />
+                    <span className="text-sm">Habilitar animaciones</span>
+                  </label>
+
+                  {currentConfig.customizations.animations?.enabled && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de animación
+                      </label>
+                      <select
+                        value={
+                          currentConfig.customizations.animations?.type ||
+                          "subtle"
+                        }
+                        onChange={(e) =>
+                          updateConfig({
+                            animations: {
+                              ...(currentConfig.customizations.animations ??
+                                {}),
+                              enabled: true,
+                              type: e.target.value as
+                                | "none"
+                                | "subtle"
+                                | "smooth"
+                                | "dynamic",
+                            },
+                          })
+                        }
+                        className="w-full px-3 py-2 border rounded-lg"
+                      >
+                        <option value="none">Sin animaciones</option>
+                        <option value="subtle">Sutiles</option>
+                        <option value="smooth">Suaves</option>
+                        <option value="dynamic">Dinámicas</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </div>
 
-        {/* Modo Oscuro */}
-        <div className="border rounded-lg p-4">
-          <h4 className="font-medium mb-3">Modo Oscuro</h4>
-          <div className="space-y-3">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={
-                  currentConfig.customizations.darkMode?.enabled || false
-                }
-                onChange={(e) =>
-                  updateConfig({
-                    darkMode: {
-                      ...(currentConfig.customizations.darkMode ?? {}),
-                      enabled: e.target.checked,
-                      auto:
-                        currentConfig.customizations.darkMode?.auto ||
-                        false,
-                    },
-                  })
-                }
-              />
-              <span className="text-sm">Soportar modo oscuro</span>
-            </label>
+              {/* Modo Oscuro */}
+              <div className="border rounded-lg p-4">
+                <h4 className="font-medium mb-3">Modo Oscuro</h4>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={
+                        currentConfig.customizations.darkMode?.enabled || false
+                      }
+                      onChange={(e) =>
+                        updateConfig({
+                          darkMode: {
+                            ...(currentConfig.customizations.darkMode ?? {}),
+                            enabled: e.target.checked,
+                            auto:
+                              currentConfig.customizations.darkMode?.auto ||
+                              false,
+                          },
+                        })
+                      }
+                    />
+                    <span className="text-sm">Soportar modo oscuro</span>
+                  </label>
 
-            {currentConfig.customizations.darkMode?.enabled && (
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={
-                    currentConfig.customizations.darkMode?.auto || false
+                  {currentConfig.customizations.darkMode?.enabled && (
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={
+                          currentConfig.customizations.darkMode?.auto || false
+                        }
+                        onChange={(e) =>
+                          updateConfig({
+                            darkMode: {
+                              ...(currentConfig.customizations.darkMode ?? {}),
+                              enabled: true,
+                              auto: e.target.checked,
+                            },
+                          })
+                        }
+                      />
+                      <span className="text-sm">Detección automática</span>
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* CSS Personalizado */}
+              <div className="border rounded-lg p-4">
+                <h4 className="font-medium mb-3">CSS Personalizado</h4>
+                <textarea
+                  value={currentConfig.customizations.customCSS || ""}
+                  onChange={(e) => updateConfig({ customCSS: e.target.value })}
+                  placeholder="/* Agrega tu CSS personalizado aquí */"
+                  rows={8}
+                  className="w-full px-3 py-2 border rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Espaciado */}
+              <div className="border rounded-lg p-4">
+                <h4 className="font-medium mb-3">Espaciado</h4>
+                <SpacingControls
+                  spacing={
+                    currentConfig.customizations.layout?.spacing ??
+                    template?.layout?.spacing ??
+                    {}
                   }
-                  onChange={(e) =>
+                  onChange={(spacing) =>
                     updateConfig({
-                      darkMode: {
-                        ...(currentConfig.customizations.darkMode ?? {}),
-                        enabled: true,
-                        auto: e.target.checked,
+                      layout: {
+                        ...(currentConfig.customizations.layout ?? {}),
+                        spacing,
                       },
                     })
                   }
                 />
-                <span className="text-sm">Detección automática</span>
-              </label>
-            )}
+              </div>
+            </div>
           </div>
-        </div>
-
-        {/* CSS Personalizado */}
-        <div className="border rounded-lg p-4">
-          <h4 className="font-medium mb-3">CSS Personalizado</h4>
-          <textarea
-            value={currentConfig.customizations.customCSS || ""}
-            onChange={(e) => updateConfig({ customCSS: e.target.value })}
-            placeholder="/* Agrega tu CSS personalizado aquí */"
-            rows={8}
-            className="w-full px-3 py-2 border rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        {/* Espaciado */}
-        <div className="border rounded-lg p-4">
-          <h4 className="font-medium mb-3">Espaciado</h4>
-          <SpacingControls
-            spacing={
-              currentConfig.customizations.layout?.spacing ??
-              template?.layout?.spacing ??
-              {}
-            }
-            onChange={(spacing) =>
-              updateConfig({
-                layout: {
-                  ...(currentConfig.customizations.layout ?? {}),
-                  spacing,
-                },
-              })
-            }
-          />
-        </div>
-
-      </div>
-    </div>
-  );
+        );
 
       default:
         return null;
@@ -1048,77 +972,19 @@ case "layout":
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          {/* Tabs de navegación */}
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setActiveTab("avatar")}
-              className={`px-4 py-2 rounded-lg ${
-                activeTab === "avatar"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Avatar
-            </button>
-            <button
-              onClick={() => setActiveTab("layout")}
-              className={`px-4 py-2 rounded-lg ${
-                activeTab === "layout"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Layout
-            </button>
-            <button
-              onClick={() => setActiveTab("colors")}
-              className={`px-4 py-2 rounded-lg ${
-                activeTab === "colors"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Colores
-            </button>
-            <button
-              onClick={() => setActiveTab("typography")}
-              className={`px-4 py-2 rounded-lg ${
-                activeTab === "typography"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Tipografía
-            </button>
-            <button
-              onClick={() => setActiveTab("sections")}
-              className={`px-4 py-2 rounded-lg ${
-                activeTab === "sections"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Secciones
-            </button>
-            <button
-              onClick={() => setActiveTab("advanced")}
-              className={`px-4 py-2 rounded-lg ${
-                activeTab === "advanced"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Avanzado
-            </button>
-          </div>
 
-          <div className="flex-1">{renderTabContent()}</div>
-        </div>
-      </div>
+
+      <div className="min-h-screen bg-gray-50">
+    <TabNavigation 
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    />
+    
+    <div className="max-w-7xl mx-auto px-4 py-4">
+      {renderTabContent()}
     </div>
+  </div>
+
   );
 };
 
