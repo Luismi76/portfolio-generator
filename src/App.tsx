@@ -54,93 +54,103 @@ const AppHeader: React.FC<{
   };
 }> = ({ currentMode, onModeChange, hasUnsavedChanges, customizeActions }) => (
   <header className="bg-white shadow-sm border-b sticky top-0 z-40">
-    <div className="max-w-7xl mx-auto px-4 py-3">
-      <div className="flex items-center justify-between">
+  <div className="max-w-7xl mx-auto px-4 py-3">
+    <div className="flex items-center justify-between">
+
+      {/* LOGO + TÍTULO */}
+      <div className="flex items-center gap-2">
+        <img
+          src="/logo.png"
+          alt="Logo"
+          className="w-10 h-10 object-contain"
+        />
         <h1 className="text-xl font-bold text-gray-800">Portfolio Generator</h1>
+      </div>
 
-        <div className="flex items-center gap-2">
-          {/* BOTONES PRINCIPALES - SIEMPRE VISIBLES */}
-          <button
-            onClick={() => onModeChange("editor")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-              currentMode === "editor"
-                ? "bg-blue-600 text-white shadow-md"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            <span>📝</span>
-            <span className="hidden sm:inline">Editor</span>
-          </button>
+      <div className="flex items-center gap-2">
+        {/* BOTONES PRINCIPALES - SIEMPRE VISIBLES */}
+        <button
+          onClick={() => onModeChange("editor")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+            currentMode === "editor"
+              ? "bg-blue-600 text-white shadow-md"
+              : "text-gray-600 hover:bg-gray-100"
+          }`}
+        >
+          <span>📝</span>
+          <span className="hidden sm:inline">Editor</span>
+        </button>
 
-          <button
-            onClick={() => onModeChange("templates")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-              currentMode === "templates"
-                ? "bg-purple-600 text-white shadow-md"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            <span>🎨</span>
-            <span className="hidden sm:inline">Plantillas</span>
-          </button>
+        <button
+          onClick={() => onModeChange("templates")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+            currentMode === "templates"
+              ? "bg-purple-600 text-white shadow-md"
+              : "text-gray-600 hover:bg-gray-100"
+          }`}
+        >
+          <span>🎨</span>
+          <span className="hidden sm:inline">Plantillas</span>
+        </button>
 
-          <button
-            onClick={() => onModeChange("portfolio")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-              currentMode === "portfolio"
-                ? "bg-green-600 text-white shadow-md"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            <span>👁️</span>
-            <span className="hidden sm:inline">Portfolio</span>
-          </button>
+        <button
+          onClick={() => onModeChange("portfolio")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+            currentMode === "portfolio"
+              ? "bg-green-600 text-white shadow-md"
+              : "text-gray-600 hover:bg-gray-100"
+          }`}
+        >
+          <span>👁️</span>
+          <span className="hidden sm:inline">Portfolio</span>
+        </button>
 
-          {/* SEPARADOR cuando hay botones de customize */}
-          {currentMode === "customize" && customizeActions && (
-            <div className="w-px h-8 bg-gray-300 mx-2"></div>
-          )}
+        {/* SEPARADOR cuando hay botones de customize */}
+        {currentMode === "customize" && customizeActions && (
+          <div className="w-px h-8 bg-gray-300 mx-2"></div>
+        )}
 
-          {/* BOTONES DE CUSTOMIZE - SOLO CUANDO ESTÁS EN ESE MODO */}
-          {currentMode === "customize" && customizeActions && (
-            <>
-              {customizeActions.onReset && (
-                <button
-                  onClick={customizeActions.onReset}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
-                >
-                  Resetear
-                </button>
-              )}
-              {customizeActions.onPreview && (
-                <button
-                  onClick={customizeActions.onPreview}
-                  className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-sm flex items-center gap-2"
-                >
-                  👁️ Vista Previa
-                </button>
-              )}
-              {customizeActions.onSave && (
-                <button
-                  onClick={customizeActions.onSave}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-                >
-                  ✓ Guardar
-                </button>
-              )}
-            </>
-          )}
+        {/* BOTONES DE CUSTOMIZE - SOLO CUANDO ESTÁS EN ESE MODO */}
+        {currentMode === "customize" && customizeActions && (
+          <>
+            {customizeActions.onReset && (
+              <button
+                onClick={customizeActions.onReset}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
+              >
+                Resetear
+              </button>
+            )}
+            {customizeActions.onPreview && (
+              <button
+                onClick={customizeActions.onPreview}
+                className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-sm flex items-center gap-2"
+              >
+                👁️ Vista Previa
+              </button>
+            )}
+            {customizeActions.onSave && (
+              <button
+                onClick={customizeActions.onSave}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+              >
+                ✓ Guardar
+              </button>
+            )}
+          </>
+        )}
 
-          {hasUnsavedChanges && (
-            <span className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full ml-2">
-              <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
-              <span className="hidden md:inline">Sin guardar</span>
-            </span>
-          )}
-        </div>
+        {hasUnsavedChanges && (
+          <span className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full ml-2">
+            <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
+            <span className="hidden md:inline">Sin guardar</span>
+          </span>
+        )}
       </div>
     </div>
-  </header>
+  </div>
+</header>
+
 );
 
 

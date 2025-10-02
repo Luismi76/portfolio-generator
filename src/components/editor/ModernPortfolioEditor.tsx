@@ -290,33 +290,6 @@ const ModernPortfolioEditor: React.FC = () => {
             onRemove={(index) => removeItem("skills", index)}
           />
         )}
-
-{/*         {activeSection === "templates" && (
-          <AdvancedTemplateSelector
-            templates={ADVANCED_BUILT_IN_TEMPLATES} // <-- USA LAS PLANTILLAS REALES
-            selectedTemplate={ADVANCED_BUILT_IN_TEMPLATES[0]}
-            onTemplateSelect={(advTemplate) => {
-              // Simplemente actualizar con el ID de la plantilla avanzada
-              if (updateConfig) {
-                updateConfig({ templateId: advTemplate.id });
-              }
-              console.log("Plantilla seleccionada:", advTemplate.name);
-            }}
-            onCustomize={(template) => {
-              window.alert(
-                `Personalizar "${template.name}" - Editor visual por implementar`
-              );
-            }}
-            onPreview={(template) => {
-              window.alert(
-                `Vista previa de "${template.name}" - Por implementar`
-              );
-            }}
-            onDuplicate={handleDuplicateTemplate}
-            onExport={handleExportTemplate}
-            onDelete={handleDeleteTemplate}
-          />
-        )} */}
       </div>
     </div>
   );
