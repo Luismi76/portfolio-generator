@@ -4,13 +4,8 @@ import { Project } from "../types/portfolio-types";
 import { Icons } from "./portfolio-icons";
 import { Section } from "./Section";
 import { generateSlug } from "./portfolio-export";
+import { ProjectTableFormProps } from "../types/portfolio-types";
 
-interface ProjectTableFormProps {
-  projects: Project[];
-  onUpdate: (index: number, field: keyof Project, value: string) => void;
-  onAdd: () => void;
-  onRemove: (index: number) => void;
-}
 
 interface ProjectModalProps {
   project?: Project;

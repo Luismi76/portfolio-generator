@@ -3,9 +3,9 @@ import {
   AdvancedTemplate,
   AdvancedTemplateConfig,
   Section,
-  LayoutArea,
   TemplateLayoutStructure,
   TemplateLayoutStructurePatch,
+  AREA_KEYS
 } from "../types/advanced-template-types";
 import { AdvancedLayoutBuilder } from "./AdvancedLayoutBuilder";
 import { Icons } from "./portfolio-icons";
@@ -24,14 +24,7 @@ interface Props {
 
 type CustomizerTab = TabId;
 
-const AREA_KEYS: LayoutArea[] = [
-  "header",
-  "sidebar-left",
-  "sidebar-right",
-  "main",
-  "footer",
-  "floating",
-];
+
 
 // ===== mergeLayoutStructure (seguro) =====
 function mergeLayoutStructure(

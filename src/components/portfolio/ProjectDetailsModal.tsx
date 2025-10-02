@@ -15,7 +15,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 
-type Props = {
+type ProjectDetailsModalProps = {
   project: Project | null;
   onClose: () => void;
   asPage?: boolean; // si quieres renderizar como página en vez de modal
@@ -38,7 +38,7 @@ export default function ProjectDetailsModal({
   project,
   onClose,
   asPage = false,
-}: Props) {
+}: ProjectDetailsModalProps) {
   // ✅ Memoiza 'p' para que NO cambie en cada render (arregla el warning del linter)
   const p = React.useMemo<Project>(() => project ?? ({} as Project), [project]);
   const open = !!project;

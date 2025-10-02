@@ -1,8 +1,16 @@
-// portfolio-export.ts - EXPORTADORES CON SOPORTE COMPLETO DE PERSONALIZACIÓN
+// src/portfolio-export.ts - EXPORTADORES CON SOPORTE COMPLETO DE PERSONALIZACIÓN
 import { PortfolioData, Project } from '../types/portfolio-types';
-import { Template, TemplateConfig, TemplateSection } from '../types/template-types';
+import { Template, TemplateConfig } from '../types/template-types';
+import type {
+  AdvancedTemplate,
+  AdvancedTemplateConfig,
+} from '../types/advanced-template-types';
 
-// ✅ EXPORTAR función helper para descargar archivos
+// =========================
+// Helpers públicos sencillos
+// =========================
+
+// ✅ EXPORTAR helper para descargar archivos
 export const downloadFile = (filename: string, content: string) => {
   const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -15,7 +23,7 @@ export const downloadFile = (filename: string, content: string) => {
   URL.revokeObjectURL(url);
 };
 
-// ✅ EXPORTAR la función para generar slug desde título
+// ✅ Slug desde título
 export const generateSlug = (title: string): string => {
   return title
     .toLowerCase()
@@ -24,7 +32,7 @@ export const generateSlug = (title: string): string => {
     .trim();
 };
 
-// ✅ EXPORTAR la función para obtener icono de tecnología
+// ✅ Icono de tecnología
 export const getTechIcon = (tech: string): string => {
   const techLower = tech.toLowerCase();
   if (techLower.includes('react')) return '⚛️';
@@ -41,87 +49,240 @@ export const getTechIcon = (tech: string): string => {
   return '⚡';
 };
 
-// ✅ FUNCIÓN HELPER PARA MERGE PROFUNDO
+// =========================
+// Utilidades internas
+// =========================
+
+// Deep merge sencillo (objetos planos / anidados)
 const deepMerge = (target: any, source: any): any => {
-  if (!source) return target;
-  
-  const result = { ...target };
-  
-  for (const key in source) {
-    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-      result[key] = deepMerge(target[key] || {}, source[key]);
+  const t = (target && typeof target === 'object') ? target : {};
+  const s = (source && typeof source === 'object') ? source : {};
+  const result: any = { ...t };
+  for (const key in s) {
+    const sv = s[key];
+    if (sv && typeof sv === 'object' && !Array.isArray(sv)) {
+      result[key] = deepMerge(t[key], sv);
     } else {
-      result[key] = source[key];
+      result[key] = sv;
     }
   }
-  
   return result;
 };
 
-// ✅ FUNCIÓN AVANZADA: Generar CSS con personalización completa
-const generateAdvancedTemplateCSS = (template: Template, config?: TemplateConfig): string => {
-  // Combinar configuración base con personalizaciones usando deep merge
-  const customizations = config?.customizations || {};
-  
-  const colors = deepMerge(template.colors, customizations.colors);
-  const typography = deepMerge(template.typography, customizations.typography);
-  const layout = deepMerge(template.layout, customizations.layout);
-  
+// Type guard para distinguir plantilla avanzada
+function isAdvancedTemplate(t: Template | AdvancedTemplate): t is AdvancedTemplate {
+  return (t as AdvancedTemplate)?.layout !== undefined;
+}
+
+// Tipo mínimo de sección que usamos en este archivo
+type SectionLike = { id: string; enabled: boolean; order: number };
+
+// =========================
+// Defaults seguros
+// =========================
+const DEFAULT_COLORS = {
+  primary: '#2563eb',
+  secondary: '#7c3aed',
+  accent: '#10b981',
+  background: '#ffffff',
+  surface: '#ffffff',
+  text: {
+    primary: '#111827',
+    secondary: '#374151',
+    accent: '#2563eb',
+  },
+  // gradient es opcional; cuando no haya, no se imprime la var
+  // gradient: { direction: '135deg', from: '#2563eb', to: '#7c3aed' }
+} as const;
+
+const DEFAULT_TYPOGRAPHY = {
+  fontFamily: {
+    primary: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
+    heading: 'Poppins, Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
+    code: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+  },
+  fontSize: {
+    xs: '0.75rem',
+    sm: '0.875rem',
+    base: '1rem',
+    lg: '1.125rem',
+    xl: '1.25rem',
+    '2xl': '1.5rem',
+    '3xl': '1.875rem',
+    '4xl': '2.25rem',
+  },
+  fontWeight: {
+    normal: 400,
+    medium: 500,
+    semibold: 600,
+    bold: 700,
+  },
+} as const;
+
+const DEFAULT_LAYOUT = {
+  maxWidth: '1100px',
+  spacing: { xs: '4px', sm: '8px', md: '16px', lg: '24px', xl: '40px' },
+  borderRadius: { sm: '6px', md: '10px', lg: '14px', xl: '24px' },
+  shadows: {
+    sm: '0 1px 2px rgba(0,0,0,0.06)',
+    md: '0 4px 8px rgba(0,0,0,0.08)',
+    lg: '0 10px 20px rgba(0,0,0,0.12)',
+    xl: '0 20px 40px rgba(0,0,0,0.14)',
+  },
+} as const;
+
+// =========================
+// Generadores de CSS/HTML
+// =========================
+
+/**
+ * Genera el CSS a partir de la plantilla + config. Acepta tanto Template simple como AdvancedTemplate,
+ * siempre que expongan las mismas claves usadas (colors, typography, layout, customCSS).
+ */
+const generateAdvancedTemplateCSS = (
+  template: Template | AdvancedTemplate,
+  config?: TemplateConfig | AdvancedTemplateConfig
+): string => {
+  const customizations = (config as any)?.customizations ?? {};
+
+  // Merge con defaults → plantilla → custom
+  const colors = deepMerge(
+    deepMerge(DEFAULT_COLORS, (template as any)?.colors ?? {}),
+    customizations.colors ?? {}
+  );
+  const typography = deepMerge(
+    deepMerge(DEFAULT_TYPOGRAPHY, (template as any)?.typography ?? {}),
+    customizations.typography ?? {}
+  );
+  const layout = deepMerge(
+    deepMerge(DEFAULT_LAYOUT, (template as any)?.layout ?? {}),
+    customizations.layout ?? {}
+  );
+
+  // ✅ VALIDACIÓN: Asegurar que colors tiene las propiedades mínimas necesarias
+  const safeColors = {
+    primary: colors?.primary ?? DEFAULT_COLORS.primary,
+    secondary: colors?.secondary ?? DEFAULT_COLORS.secondary,
+    accent: colors?.accent ?? DEFAULT_COLORS.accent,
+    background: colors?.background ?? DEFAULT_COLORS.background,
+    surface: colors?.surface ?? DEFAULT_COLORS.surface,
+    text: {
+      primary: colors?.text?.primary ?? DEFAULT_COLORS.text.primary,
+      secondary: colors?.text?.secondary ?? DEFAULT_COLORS.text.secondary,
+      accent: colors?.text?.accent ?? DEFAULT_COLORS.text.accent,
+    },
+    gradient: colors?.gradient,
+  };
+
+  // ✅ VALIDACIÓN: Asegurar que typography tiene las propiedades necesarias
+  const safeTypography = {
+    fontFamily: {
+      primary: typography?.fontFamily?.primary ?? DEFAULT_TYPOGRAPHY.fontFamily.primary,
+      heading: typography?.fontFamily?.heading ?? DEFAULT_TYPOGRAPHY.fontFamily.heading,
+      code: typography?.fontFamily?.code ?? DEFAULT_TYPOGRAPHY.fontFamily.code,
+    },
+    fontSize: {
+      xs: typography?.fontSize?.xs ?? DEFAULT_TYPOGRAPHY.fontSize.xs,
+      sm: typography?.fontSize?.sm ?? DEFAULT_TYPOGRAPHY.fontSize.sm,
+      base: typography?.fontSize?.base ?? DEFAULT_TYPOGRAPHY.fontSize.base,
+      lg: typography?.fontSize?.lg ?? DEFAULT_TYPOGRAPHY.fontSize.lg,
+      xl: typography?.fontSize?.xl ?? DEFAULT_TYPOGRAPHY.fontSize.xl,
+      '2xl': typography?.fontSize?.['2xl'] ?? DEFAULT_TYPOGRAPHY.fontSize['2xl'],
+      '3xl': typography?.fontSize?.['3xl'] ?? DEFAULT_TYPOGRAPHY.fontSize['3xl'],
+      '4xl': typography?.fontSize?.['4xl'] ?? DEFAULT_TYPOGRAPHY.fontSize['4xl'],
+    },
+    fontWeight: {
+      normal: typography?.fontWeight?.normal ?? DEFAULT_TYPOGRAPHY.fontWeight.normal,
+      medium: typography?.fontWeight?.medium ?? DEFAULT_TYPOGRAPHY.fontWeight.medium,
+      semibold: typography?.fontWeight?.semibold ?? DEFAULT_TYPOGRAPHY.fontWeight.semibold,
+      bold: typography?.fontWeight?.bold ?? DEFAULT_TYPOGRAPHY.fontWeight.bold,
+    },
+  };
+
+  // ✅ VALIDACIÓN: Asegurar que layout tiene las propiedades necesarias
+  const safeLayout = {
+    maxWidth: layout?.maxWidth ?? DEFAULT_LAYOUT.maxWidth,
+    spacing: {
+      xs: layout?.spacing?.xs ?? DEFAULT_LAYOUT.spacing.xs,
+      sm: layout?.spacing?.sm ?? DEFAULT_LAYOUT.spacing.sm,
+      md: layout?.spacing?.md ?? DEFAULT_LAYOUT.spacing.md,
+      lg: layout?.spacing?.lg ?? DEFAULT_LAYOUT.spacing.lg,
+      xl: layout?.spacing?.xl ?? DEFAULT_LAYOUT.spacing.xl,
+    },
+    borderRadius: {
+      sm: layout?.borderRadius?.sm ?? DEFAULT_LAYOUT.borderRadius.sm,
+      md: layout?.borderRadius?.md ?? DEFAULT_LAYOUT.borderRadius.md,
+      lg: layout?.borderRadius?.lg ?? DEFAULT_LAYOUT.borderRadius.lg,
+      xl: layout?.borderRadius?.xl ?? DEFAULT_LAYOUT.borderRadius.xl,
+    },
+    shadows: {
+      sm: layout?.shadows?.sm ?? DEFAULT_LAYOUT.shadows.sm,
+      md: layout?.shadows?.md ?? DEFAULT_LAYOUT.shadows.md,
+      lg: layout?.shadows?.lg ?? DEFAULT_LAYOUT.shadows.lg,
+      xl: layout?.shadows?.xl ?? DEFAULT_LAYOUT.shadows.xl,
+    },
+  };
+
+  const gradient = safeColors.gradient;
+  const gradientCss = (gradient?.from && gradient?.to)
+    ? `--gradient-primary: linear-gradient(${gradient?.direction ?? '135deg'}, ${gradient.from}, ${gradient.to});`
+    : '';
+
+  // LOGS ÚTILES
+  console.log('[EXPORT/CSS] colors.in:', (template as any)?.colors);
+  console.log('[EXPORT/CSS] colors.safe.text.primary:', safeColors.text.primary);
+
   return `
-    /* Variables CSS personalizadas - Plantilla: ${template.name} */
+    /* Variables CSS personalizadas - Plantilla: ${(template as any)?.name ?? 'Advanced Template'} */
     :root {
-      --color-primary: ${colors.primary};
-      --color-secondary: ${colors.secondary};
-      --color-accent: ${colors.accent};
-      --color-background: ${colors.background};
-      --color-surface: ${colors.surface};
-      --color-text-primary: ${colors.text.primary};
-      --color-text-secondary: ${colors.text.secondary};
-      --color-text-accent: ${colors.text.accent};
-      ${colors.gradient ? `--gradient-primary: linear-gradient(${colors.gradient.direction || '135deg'}, ${colors.gradient.from}, ${colors.gradient.to});` : ''}
-      
-      --font-primary: ${typography.fontFamily.primary};
-      --font-heading: ${typography.fontFamily.heading};
-      ${typography.fontFamily.code ? `--font-code: ${typography.fontFamily.code};` : ''}
-      
-      --text-xs: ${typography.fontSize.xs};
-      --text-sm: ${typography.fontSize.sm};
-      --text-base: ${typography.fontSize.base};
-      --text-lg: ${typography.fontSize.lg};
-      --text-xl: ${typography.fontSize.xl};
-      --text-2xl: ${typography.fontSize['2xl']};
-      --text-3xl: ${typography.fontSize['3xl']};
-      --text-4xl: ${typography.fontSize['4xl']};
-      
-      --weight-normal: ${typography.fontWeight.normal};
-      --weight-medium: ${typography.fontWeight.medium};
-      --weight-semibold: ${typography.fontWeight.semibold};
-      --weight-bold: ${typography.fontWeight.bold};
-      
-      --max-width: ${layout.maxWidth};
-      --spacing-xs: ${layout.spacing.xs};
-      --spacing-sm: ${layout.spacing.sm};
-      --spacing-md: ${layout.spacing.md};
-      --spacing-lg: ${layout.spacing.lg};
-      --spacing-xl: ${layout.spacing.xl};
-      
-      --radius-sm: ${layout.borderRadius.sm};
-      --radius-md: ${layout.borderRadius.md};
-      --radius-lg: ${layout.borderRadius.lg};
-      --radius-xl: ${layout.borderRadius.xl};
-      
-      --shadow-sm: ${layout.shadows.sm};
-      --shadow-md: ${layout.shadows.md};
-      --shadow-lg: ${layout.shadows.lg};
-      --shadow-xl: ${layout.shadows.xl};
+      --color-primary: ${safeColors.primary};
+      --color-secondary: ${safeColors.secondary};
+      --color-accent: ${safeColors.accent};
+      --color-background: ${safeColors.background};
+      --color-surface: ${safeColors.surface};
+      --color-text-primary: ${safeColors.text.primary};
+      --color-text-secondary: ${safeColors.text.secondary};
+      --color-text-accent: ${safeColors.text.accent};
+      ${gradientCss}
+
+      --font-primary: ${safeTypography.fontFamily.primary};
+      --font-heading: ${safeTypography.fontFamily.heading};
+      --font-code: ${safeTypography.fontFamily.code};
+
+      --text-xs: ${safeTypography.fontSize.xs};
+      --text-sm: ${safeTypography.fontSize.sm};
+      --text-base: ${safeTypography.fontSize.base};
+      --text-lg: ${safeTypography.fontSize.lg};
+      --text-xl: ${safeTypography.fontSize.xl};
+      --text-2xl: ${safeTypography.fontSize['2xl']};
+      --text-3xl: ${safeTypography.fontSize['3xl']};
+      --text-4xl: ${safeTypography.fontSize['4xl']};
+
+      --weight-normal: ${safeTypography.fontWeight.normal};
+      --weight-medium: ${safeTypography.fontWeight.medium};
+      --weight-semibold: ${safeTypography.fontWeight.semibold};
+      --weight-bold: ${safeTypography.fontWeight.bold};
+
+      --max-width: ${safeLayout.maxWidth};
+      --spacing-xs: ${safeLayout.spacing.xs};
+      --spacing-sm: ${safeLayout.spacing.sm};
+      --spacing-md: ${safeLayout.spacing.md};
+      --spacing-lg: ${safeLayout.spacing.lg};
+      --spacing-xl: ${safeLayout.spacing.xl};
+
+      --radius-sm: ${safeLayout.borderRadius.sm};
+      --radius-md: ${safeLayout.borderRadius.md};
+      --radius-lg: ${safeLayout.borderRadius.lg};
+      --radius-xl: ${safeLayout.borderRadius.xl};
+
+      --shadow-sm: ${safeLayout.shadows.sm};
+      --shadow-md: ${safeLayout.shadows.md};
+      --shadow-lg: ${safeLayout.shadows.lg};
+      --shadow-xl: ${safeLayout.shadows.xl};
     }
 
     /* Reset y base */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: var(--font-primary);
@@ -138,20 +299,17 @@ const generateAdvancedTemplateCSS = (template: Template, config?: TemplateConfig
       padding: var(--spacing-md);
     }
 
-    /* Header - Replicando exactamente el portfolio real */
+    /* Header */
     .header {
       text-align: center;
       padding: var(--spacing-xl) var(--spacing-md);
-      ${colors.gradient ? `background: var(--gradient-primary);` : `background: var(--color-primary);`}
+      ${gradient ? `background: var(--gradient-primary);` : `background: var(--color-primary);`}
       color: white;
       margin-bottom: var(--spacing-lg);
       border-radius: var(--radius-lg);
     }
 
-    .header-content {
-      max-width: 800px;
-      margin: 0 auto;
-    }
+    .header-content { max-width: 800px; margin: 0 auto; }
 
     .header h1 {
       font-family: var(--font-heading);
@@ -161,379 +319,134 @@ const generateAdvancedTemplateCSS = (template: Template, config?: TemplateConfig
       line-height: 1.2;
     }
 
-    .header .title {
-      font-size: var(--text-xl);
-      font-weight: var(--weight-medium);
-      opacity: 0.9;
-      margin-bottom: var(--spacing-md);
-    }
+    .header .title { font-size: var(--text-xl); font-weight: var(--weight-medium); opacity: 0.9; margin-bottom: var(--spacing-md); }
+    .header .tagline { font-size: var(--text-lg); font-weight: var(--weight-medium); opacity: 0.8; margin-bottom: var(--spacing-sm); }
+    .header .summary { font-size: var(--text-lg); opacity: 0.95; max-width: 600px; margin: 0 auto var(--spacing-lg); line-height: 1.6; }
 
-    .header .tagline {
-      font-size: var(--text-lg);
-      font-weight: var(--weight-medium);
-      opacity: 0.8;
-      margin-bottom: var(--spacing-sm);
-    }
-
-    .header .summary {
-      font-size: var(--text-lg);
-      opacity: 0.95;
-      max-width: 600px;
-      margin: 0 auto var(--spacing-lg);
-      line-height: 1.6;
-    }
-
-    /* Enlaces de contacto en el header */
-    .contact-info {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: var(--spacing-md);
-      margin-top: var(--spacing-lg);
-    }
-
+    .contact-info { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--spacing-md); margin-top: var(--spacing-lg); }
     .contact-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      padding: 8px 16px;
-      border-radius: 25px;
-      text-decoration: none;
-      font-size: var(--text-sm);
-      font-weight: var(--weight-medium);
-      transition: all 0.2s ease;
-      backdrop-filter: blur(10px);
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.1); color: white; padding: 8px 16px;
+      border-radius: 25px; text-decoration: none; font-size: var(--text-sm);
+      font-weight: var(--weight-medium); transition: all 0.2s ease; backdrop-filter: blur(10px);
     }
+    .contact-link:hover { background: rgba(255,255,255,0.2); transform: translateY(-1px); }
 
-    .contact-link:hover {
-      background: rgba(255, 255, 255, 0.2);
-      transform: translateY(-1px);
-    }
-
-    /* Secciones */
-    .section {
-      margin-bottom: var(--spacing-xl);
-    }
-
+    .section { margin-bottom: var(--spacing-xl); }
     .section h2 {
-      font-family: var(--font-heading);
-      font-size: var(--text-3xl);
-      font-weight: var(--weight-bold);
-      color: var(--color-primary);
-      text-align: center;
-      margin-bottom: var(--spacing-lg);
+      font-family: var(--font-heading); font-size: var(--text-3xl); font-weight: var(--weight-bold);
+      color: var(--color-primary); text-align: center; margin-bottom: var(--spacing-lg);
     }
 
-    /* Grid de proyectos */
-    .projects-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      gap: var(--spacing-md);
-      margin-bottom: var(--spacing-lg);
-    }
+    .projects-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px,1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-lg); }
+    .project-card { background: var(--color-surface); border-radius: var(--radius-lg); padding: var(--spacing-md); box-shadow: var(--shadow-md); transition: all .3s ease; border: 1px solid rgba(0,0,0,.1); }
+    .project-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    .project-card h3 { font-family: var(--font-heading); font-size: var(--text-xl); font-weight: var(--weight-semibold); color: var(--color-primary); margin-bottom: var(--spacing-sm); }
+    .project-card p { color: var(--color-text-secondary); margin-bottom: var(--spacing-md); line-height: 1.6; }
 
-    .project-card {
-      background: var(--color-surface);
-      border-radius: var(--radius-lg);
-      padding: var(--spacing-md);
-      box-shadow: var(--shadow-md);
-      transition: all 0.3s ease;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-    }
+    .tech-tags { display: flex; flex-wrap: wrap; gap: var(--spacing-xs); margin-bottom: var(--spacing-md); }
+    .tech-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--color-primary); color: white; padding: 4px 8px; border-radius: var(--radius-sm); font-size: var(--text-sm); font-weight: var(--weight-medium); }
 
-    .project-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .project-card h3 {
-      font-family: var(--font-heading);
-      font-size: var(--text-xl);
-      font-weight: var(--weight-semibold);
-      color: var(--color-primary);
-      margin-bottom: var(--spacing-sm);
-    }
-
-    .project-card p {
-      color: var(--color-text-secondary);
-      margin-bottom: var(--spacing-md);
-      line-height: 1.6;
-    }
-
-    /* Tecnologías */
-    .tech-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--spacing-xs);
-      margin-bottom: var(--spacing-md);
-    }
-
-    .tech-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--color-primary);
-      color: white;
-      padding: 4px 8px;
-      border-radius: var(--radius-sm);
-      font-size: var(--text-sm);
-      font-weight: var(--weight-medium);
-    }
-
-    /* Enlaces de proyecto */
-    .project-links {
-      display: flex;
-      gap: var(--spacing-sm);
-      flex-wrap: wrap;
-    }
-
+    .project-links { display: flex; gap: var(--spacing-sm); flex-wrap: wrap; }
     .project-links a {
-      display: inline-flex;
-      align-items: center;
-      padding: 8px 16px;
-      background: var(--color-accent);
-      color: white;
-      text-decoration: none;
-      border-radius: var(--radius-md);
-      font-weight: var(--weight-medium);
-      transition: all 0.2s ease;
+      display: inline-flex; align-items: center; padding: 8px 16px;
+      background: var(--color-accent); color: white; text-decoration: none;
+      border-radius: var(--radius-md); font-weight: var(--weight-medium); transition: all .2s ease;
     }
+    .project-links a:hover { opacity: .8; transform: translateY(-1px); }
 
-    .project-links a:hover {
-      opacity: 0.8;
-      transform: translateY(-1px);
-    }
+    .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--spacing-md); }
+    .skill-category { background: var(--color-surface); border-radius: var(--radius-lg); padding: var(--spacing-md); box-shadow: var(--shadow-sm); }
+    .skill-category h3 { font-family: var(--font-heading); font-size: var(--text-xl); font-weight: var(--weight-semibold); color: var(--color-primary); margin-bottom: var(--spacing-md); text-align: center; }
+    .skill-items { display: flex; flex-wrap: wrap; gap: var(--spacing-xs); }
+    .skill-item { display: inline-flex; align-items: center; gap: 4px; background: var(--color-secondary); color: white; padding: 6px 12px; border-radius: var(--radius-md); font-size: var(--text-sm); font-weight: var(--weight-medium); }
 
-    /* Grid de habilidades */
-    .skills-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: var(--spacing-md);
-    }
+    .about-section { background: var(--color-surface); border-radius: var(--radius-lg); padding: var(--spacing-lg); margin-bottom: var(--spacing-xl); text-align: center; }
+    .about-section h2 { margin-bottom: var(--spacing-md); }
+    .about-section p { font-size: var(--text-lg); color: var(--color-text-secondary); max-width: 800px; margin: 0 auto; }
 
-    .skill-category {
-      background: var(--color-surface);
-      border-radius: var(--radius-lg);
-      padding: var(--spacing-md);
-      box-shadow: var(--shadow-sm);
-    }
+    .experience-section .experience-item { background: var(--color-surface); border-radius: var(--radius-lg); padding: var(--spacing-md); margin-bottom: var(--spacing-md); border-left: 4px solid var(--color-primary); }
+    .experience-item h3 { color: var(--color-primary); font-size: var(--text-xl); font-weight: var(--weight-semibold); margin-bottom: var(--spacing-xs); }
+    .experience-item .company { color: var(--color-text-secondary); font-weight: var(--weight-medium); margin-bottom: var(--spacing-xs); }
+    .experience-item .period { color: var(--color-accent); font-size: var(--text-sm); font-weight: var(--weight-medium); margin-bottom: var(--spacing-sm); }
 
-    .skill-category h3 {
-      font-family: var(--font-heading);
-      font-size: var(--text-xl);
-      font-weight: var(--weight-semibold);
-      color: var(--color-primary);
-      margin-bottom: var(--spacing-md);
-      text-align: center;
-    }
+    .contact-section { background: var(--color-surface); border-radius: var(--radius-lg); padding: var(--spacing-lg); text-align: center; }
+    .contact-links { display: flex; justify-content: center; gap: var(--spacing-md); flex-wrap: wrap; margin-top: var(--spacing-md); }
+    .contact-links a { display: inline-flex; align-items: center; gap: 8px; background: var(--color-primary); color: white; padding: 12px 20px; border-radius: var(--radius-md); text-decoration: none; font-weight: var(--weight-medium); transition: all .2s ease; }
+    .contact-links a:hover { background: var(--color-secondary); transform: translateY(-2px); }
 
-    .skill-items {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--spacing-xs);
-    }
+    .footer { text-align: center; padding: var(--spacing-lg) 0; margin-top: var(--spacing-xl); border-top: 1px solid rgba(0,0,0,.1); color: var(--color-text-secondary); }
 
-    .skill-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--color-secondary);
-      color: white;
-      padding: 6px 12px;
-      border-radius: var(--radius-md);
-      font-size: var(--text-sm);
-      font-weight: var(--weight-medium);
-    }
-
-    /* Sección Sobre Mí */
-    .about-section {
-      background: var(--color-surface);
-      border-radius: var(--radius-lg);
-      padding: var(--spacing-lg);
-      margin-bottom: var(--spacing-xl);
-      text-align: center;
-    }
-
-    .about-section h2 {
-      margin-bottom: var(--spacing-md);
-    }
-
-    .about-section p {
-      font-size: var(--text-lg);
-      color: var(--color-text-secondary);
-      max-width: 800px;
-      margin: 0 auto;
-    }
-
-    /* Sección Experiencia */
-    .experience-section .experience-item {
-      background: var(--color-surface);
-      border-radius: var(--radius-lg);
-      padding: var(--spacing-md);
-      margin-bottom: var(--spacing-md);
-      border-left: 4px solid var(--color-primary);
-    }
-
-    .experience-item h3 {
-      color: var(--color-primary);
-      font-size: var(--text-xl);
-      font-weight: var(--weight-semibold);
-      margin-bottom: var(--spacing-xs);
-    }
-
-    .experience-item .company {
-      color: var(--color-text-secondary);
-      font-weight: var(--weight-medium);
-      margin-bottom: var(--spacing-xs);
-    }
-
-    .experience-item .period {
-      color: var(--color-accent);
-      font-size: var(--text-sm);
-      font-weight: var(--weight-medium);
-      margin-bottom: var(--spacing-sm);
-    }
-
-    /* Sección Contacto */
-    .contact-section {
-      background: var(--color-surface);
-      border-radius: var(--radius-lg);
-      padding: var(--spacing-lg);
-      text-align: center;
-    }
-
-    .contact-links {
-      display: flex;
-      justify-content: center;
-      gap: var(--spacing-md);
-      flex-wrap: wrap;
-      margin-top: var(--spacing-md);
-    }
-
-    .contact-links a {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--color-primary);
-      color: white;
-      padding: 12px 20px;
-      border-radius: var(--radius-md);
-      text-decoration: none;
-      font-weight: var(--weight-medium);
-      transition: all 0.2s ease;
-    }
-
-    .contact-links a:hover {
-      background: var(--color-secondary);
-      transform: translateY(-2px);
-    }
-
-    /* Footer */
-    .footer {
-      text-align: center;
-      padding: var(--spacing-lg) 0;
-      margin-top: var(--spacing-xl);
-      border-top: 1px solid rgba(0, 0, 0, 0.1);
-      color: var(--color-text-secondary);
-    }
-
-    /* Responsive */
     @media (max-width: 768px) {
-      .container {
-        padding: var(--spacing-sm);
-      }
-      
-      .header {
-        padding: var(--spacing-lg) var(--spacing-sm);
-        margin-bottom: var(--spacing-md);
-      }
-      
-      .header h1 {
-        font-size: var(--text-3xl);
-      }
-
-      .header .title {
-        font-size: var(--text-lg);
-      }
-
-      .header .summary {
-        font-size: var(--text-base);
-      }
-
-      .contact-info {
-        gap: var(--spacing-sm);
-      }
-
-      .contact-link {
-        padding: 6px 12px;
-        font-size: 0.8rem;
-      }
-      
-      .projects-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .project-links {
-        flex-direction: column;
-      }
-
-      .contact-links {
-        flex-direction: column;
-        align-items: center;
-      }
+      .container { padding: var(--spacing-sm); }
+      .header { padding: var(--spacing-lg) var(--spacing-sm); margin-bottom: var(--spacing-md); }
+      .header h1 { font-size: var(--text-3xl); }
+      .header .title { font-size: var(--text-lg); }
+      .header .summary { font-size: var(--text-base); }
+      .contact-info { gap: var(--spacing-sm); }
+      .contact-link { padding: 6px 12px; font-size: 0.8rem; }
+      .projects-grid { grid-template-columns: 1fr; }
+      .project-links { flex-direction: column; }
+      .contact-links { flex-direction: column; align-items: center; }
     }
 
     /* CSS personalizado del usuario y la plantilla */
-    ${customizations.customCSS || template.customCSS || ''}
+    ${(customizations as any).customCSS || (template as any).customCSS || ''}
   `;
 };
 
-// ✅ FUNCIÓN CORREGIDA: Obtener secciones ordenadas y habilitadas
-const getEnabledSections = (template: Template, config?: TemplateConfig): TemplateSection[] => {
-  // PRIORIDAD: config personalizada > plantilla base
-  let sections: TemplateSection[];
-  
-  if (config?.customizations?.sections && Array.isArray(config.customizations.sections)) {
-    sections = config.customizations.sections;
+// Obtener secciones ordenadas y habilitadas (acepta simple o avanzada)
+const getEnabledSections = (
+  template: Template | AdvancedTemplate,
+  config?: TemplateConfig | AdvancedTemplateConfig
+): SectionLike[] => {
+  let sections: SectionLike[];
+
+  const customSections = (config as any)?.customizations?.sections;
+  if (customSections && Array.isArray(customSections)) {
+    sections = customSections as SectionLike[];
     console.log('🎯 Usando secciones personalizadas:', sections.map(s => `${s.id}:${s.enabled}`));
   } else {
-    sections = template.sections;
+    sections = ((template as any).sections || []) as SectionLike[];
     console.log('📋 Usando secciones de plantilla:', sections.map(s => `${s.id}:${s.enabled}`));
   }
-  
+
   const enabledSections = sections.filter(section => section.enabled === true);
   console.log('✅ Secciones habilitadas finales:', enabledSections.map(s => s.id));
-  
   return enabledSections.sort((a, b) => a.order - b.order);
 };
 
-const isAboutSectionEnabled = (template: Template, config?: TemplateConfig): boolean => {
-  const sections = config?.customizations?.sections || template.sections;
+const isAboutSectionEnabled = (
+  template: Template | AdvancedTemplate,
+  config?: TemplateConfig | AdvancedTemplateConfig
+): boolean => {
+  const sections: SectionLike[] =
+    (config as any)?.customizations?.sections ||
+    ((template as any).sections as SectionLike[]) ||
+    [];
   const aboutSection = sections.find(section => section.id === 'about');
   const aboutEnabled = aboutSection?.enabled ?? false;
   console.log('🔍 About section enabled?', aboutEnabled);
   return aboutEnabled;
 };
 
-// ✅ FUNCIÓN: Generar HTML para cada sección
+// =========================
+/** Secciones (HTML) */
+// =========================
+
 const generateSectionHTML = (
-  sectionId: string, 
+  sectionId: string,
   data: PortfolioData,
   isMultiPage: boolean = false,
-  template?: Template,
-  config?: TemplateConfig
+  template?: Template | AdvancedTemplate,
+  config?: TemplateConfig | AdvancedTemplateConfig
 ): string => {
   switch (sectionId) {
-    case 'header':
-      // Solo incluir summary en header si NO hay sección "about" habilitada
-      const includeAboutInHeader = data.personalInfo.summary && !isAboutSectionEnabled(template!, config);
-      console.log('📝 Header: includeAboutInHeader =', includeAboutInHeader);
-      
-      // Generar enlaces de contacto como en el portfolio real
-      const contactLinks = [];
-      
+    case 'header': {
+      const includeAboutInHeader =
+        data.personalInfo.summary && !isAboutSectionEnabled(template!, config);
+
+      const contactLinks: string[] = [];
       if (data.personalInfo.email) {
         contactLinks.push(`<a href="mailto:${data.personalInfo.email}" class="contact-link">✉️ ${data.personalInfo.email}</a>`);
       }
@@ -559,22 +472,18 @@ const generateSectionHTML = (
             <h1>${data.personalInfo.fullName || "Tu Nombre"}</h1>
             <p class="title">${data.personalInfo.title || "Tu Título"}</p>
             ${data.personalInfo.tagline ? `<p class="tagline">${data.personalInfo.tagline}</p>` : ''}
-            ${contactLinks.length > 0 ? `
-              <div class="contact-info">
-                ${contactLinks.join('')}
-              </div>
-            ` : ''}
+            ${includeAboutInHeader ? `<p class="summary">${data.personalInfo.summary}</p>` : ''}
+            ${contactLinks.length > 0 ? `<div class="contact-info">${contactLinks.join('')}</div>` : ''}
           </div>
         </header>
       `;
+    }
 
-    case 'about':
-      // Solo mostrar si NO está ya incluido en el header Y tiene contenido
+    case 'about': {
       if (!data.personalInfo.summary) {
         console.log('❌ About: No summary content');
         return '';
       }
-      
       console.log('✅ About: Section has content and is being rendered');
       return `
         <section class="section about-section">
@@ -582,8 +491,9 @@ const generateSectionHTML = (
           <p>${data.personalInfo.summary}</p>
         </section>
       `;
+    }
 
-    case 'projects':
+    case 'projects': {
       const projectsHTML = generateProjectsHTML(data.projects, isMultiPage);
       if (!projectsHTML) return '';
       return `
@@ -592,8 +502,9 @@ const generateSectionHTML = (
           <div class="projects-grid">${projectsHTML}</div>
         </section>
       `;
+    }
 
-    case 'skills':
+    case 'skills': {
       const skillsHTML = generateSkillsHTML(data.skills);
       if (!skillsHTML) return '';
       return `
@@ -602,8 +513,9 @@ const generateSectionHTML = (
           <div class="skills-grid">${skillsHTML}</div>
         </section>
       `;
+    }
 
-    case 'experience':
+    case 'experience': {
       const experienceHTML = generateExperienceHTML(data.experience);
       if (!experienceHTML) return '';
       return `
@@ -612,8 +524,9 @@ const generateSectionHTML = (
           ${experienceHTML}
         </section>
       `;
+    }
 
-    case 'contact':
+    case 'contact': {
       const contactHTML = generateContactHTML(data.personalInfo);
       if (!contactHTML) return '';
       return `
@@ -622,13 +535,17 @@ const generateSectionHTML = (
           ${contactHTML}
         </section>
       `;
+    }
 
     default:
       return '';
   }
 };
 
-// Función para generar HTML de proyectos
+// =========================
+// Generadores de bloques
+// =========================
+
 export const generateProjectsHTML = (projects: Project[], isMultiPage: boolean = false): string => {
   return projects
     .filter((p) => p.title.trim())
@@ -636,19 +553,28 @@ export const generateProjectsHTML = (projects: Project[], isMultiPage: boolean =
       const slug = generateSlug(project.title);
       return `
       <div class="project-card">
-        ${project.image ? 
-          `<img src="${project.image}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius-md);margin-bottom:var(--spacing-md);">` :
-          `<div style="width:100%;height:200px;background:var(--gradient-primary, var(--color-primary));border-radius:var(--radius-md);margin-bottom:var(--spacing-md);display:flex;align-items:center;justify-content:center;color:white;font-size:3rem;">🌐</div>`
+        ${
+          project.image
+            ? `<img src="${project.image}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius-md);margin-bottom:var(--spacing-md);">`
+            : `<div style="width:100%;height:200px;background:var(--gradient-primary, var(--color-primary));border-radius:var(--radius-md);margin-bottom:var(--spacing-md);display:flex;align-items:center;justify-content:center;color:white;font-size:3rem;">🌐</div>`
         }
         <h3>${project.title}</h3>
         <p>${project.description}</p>
-        ${project.technologies ? `
+        ${
+          project.technologies
+            ? `
           <div class="tech-tags">
-            ${project.technologies.split(',').map(tech => 
-              `<span class="tech-tag">${getTechIcon(tech.trim())} ${tech.trim()}</span>`
-            ).join('')}
+            ${project.technologies
+              .split(',')
+              .map(
+                (tech) =>
+                  `<span class="tech-tag">${getTechIcon(tech.trim())} ${tech.trim()}</span>`
+              )
+              .join('')}
           </div>
-        ` : ''}
+        `
+            : ''
+        }
         <div class="project-links">
           ${isMultiPage ? `<a href="projects-${slug}.html">Ver Detalles</a>` : ''}
           ${project.link ? `<a href="${project.link}" target="_blank">Ver Proyecto</a>` : ''}
@@ -660,11 +586,11 @@ export const generateProjectsHTML = (projects: Project[], isMultiPage: boolean =
     .join('');
 };
 
-// Función para generar HTML de habilidades
-export const generateSkillsHTML = (skills: Array<{category: string, items: string}>): string => {
+export const generateSkillsHTML = (skills: Array<{ category: string; items: string }>): string => {
   return skills
     .filter((s) => s.category.trim())
-    .map((skill) => `
+    .map(
+      (skill) => `
       <div class="skill-category">
         <h3>${skill.category}</h3>
         <div class="skill-items">
@@ -672,54 +598,42 @@ export const generateSkillsHTML = (skills: Array<{category: string, items: strin
             .split(',')
             .map((item) => {
               const skillName = item.trim();
-              return `<span class="skill-item">
-                ${getTechIcon(skillName)} ${skillName}
-              </span>`;
+              return `<span class="skill-item">${getTechIcon(skillName)} ${skillName}</span>`;
             })
             .join('')}
         </div>
       </div>
-    `)
+    `
+    )
     .join('');
 };
 
-// Función para generar HTML de experiencia
-const generateExperienceHTML = (experience: Array<{company: string, position: string, period: string, description: string}>): string => {
+const generateExperienceHTML = (
+  experience: Array<{ company: string; position: string; period: string; description: string }>
+): string => {
   return experience
     .filter((exp) => exp.company.trim() || exp.position.trim())
-    .map((exp) => `
+    .map(
+      (exp) => `
       <div class="experience-item">
         <h3>${exp.position}</h3>
         <div class="company">${exp.company}</div>
         <div class="period">${exp.period}</div>
         <p>${exp.description}</p>
       </div>
-    `)
+    `
+    )
     .join('');
 };
 
-// Función para generar HTML de contacto
 const generateContactHTML = (personalInfo: any): string => {
-  const contacts = [];
-  
-  if (personalInfo.email) {
-    contacts.push(`<a href="mailto:${personalInfo.email}">📧 ${personalInfo.email}</a>`);
-  }
-  if (personalInfo.phone) {
-    contacts.push(`<a href="tel:${personalInfo.phone}">📱 ${personalInfo.phone}</a>`);
-  }
-  if (personalInfo.linkedin) {
-    contacts.push(`<a href="${personalInfo.linkedin}" target="_blank">💼 LinkedIn</a>`);
-  }
-  if (personalInfo.github) {
-    contacts.push(`<a href="${personalInfo.github}" target="_blank">🔗 GitHub</a>`);
-  }
-  if (personalInfo.website) {
-    contacts.push(`<a href="${personalInfo.website}" target="_blank">🌐 Website</a>`);
-  }
-
+  const contacts: string[] = [];
+  if (personalInfo.email) contacts.push(`<a href="mailto:${personalInfo.email}">📧 ${personalInfo.email}</a>`);
+  if (personalInfo.phone) contacts.push(`<a href="tel:${personalInfo.phone}">📱 ${personalInfo.phone}</a>`);
+  if (personalInfo.linkedin) contacts.push(`<a href="${personalInfo.linkedin}" target="_blank">💼 LinkedIn</a>`);
+  if (personalInfo.github) contacts.push(`<a href="${personalInfo.github}" target="_blank">🔗 GitHub</a>`);
+  if (personalInfo.website) contacts.push(`<a href="${personalInfo.website}" target="_blank">🌐 Website</a>`);
   if (contacts.length === 0) return '';
-
   return `
     <p>¿Tienes un proyecto en mente? ¡Hablemos!</p>
     <div class="contact-links">
@@ -728,52 +642,48 @@ const generateContactHTML = (personalInfo: any): string => {
   `;
 };
 
-// ✅ EXPORTADOR MEJORADO: HTML simple con plantilla personalizada
+// =========================
+// Exportadores (clases)
+// =========================
+
 export class TemplateAwareSinglePageExporter {
   constructor(
-    private data: PortfolioData, 
-    private template: Template,
-    private config?: TemplateConfig
+    private data: PortfolioData,
+    private template: Template | AdvancedTemplate,
+    private config?: TemplateConfig | AdvancedTemplateConfig
   ) {}
 
-  generate(): string {
+  private generate(): string {
     console.log('🚀 Generando Single Page con config:', this.config);
-    
     const templateCSS = generateAdvancedTemplateCSS(this.template, this.config);
     const enabledSections = getEnabledSections(this.template, this.config);
-    
-    console.log('📝 CSS Variables generadas. Longitud:', templateCSS.length);
-    console.log('📋 Secciones habilitadas:', enabledSections.map(s => s.id));
-    
-    // Generar HTML de cada sección habilitada en el orden configurado
+
+    // Generar HTML de cada sección habilitada
     const sectionsHTML = enabledSections
-      .map(section => {
+      .map((section) => {
         const html = generateSectionHTML(section.id, this.data, false, this.template, this.config);
         console.log(`🔧 Sección ${section.id}: ${html.length > 0 ? 'Generada' : 'Vacía'}`);
         return html;
       })
-      .filter(html => html.trim())
+      .filter((html) => html.trim())
       .join('\n');
-
-    console.log('✅ HTML final generado. Secciones incluidas:', sectionsHTML.split('<section').length - 1);
 
     return `<!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${this.data.personalInfo.fullName || "Portfolio"}</title>
-    <meta name="description" content="Portfolio de ${this.data.personalInfo.fullName} - ${this.data.personalInfo.title}">
-    <style>${templateCSS}</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${this.data.personalInfo.fullName || 'Portfolio'}</title>
+  <meta name="description" content="Portfolio de ${this.data.personalInfo.fullName || ''} - ${this.data.personalInfo.title || ''}" />
+  <style>${templateCSS}</style>
 </head>
 <body>
-    <div class="container">
-        ${sectionsHTML}
-    </div>
-
-    <footer class="footer">
-        <p>&copy; ${new Date().getFullYear()} ${this.data.personalInfo.fullName || 'Tu Nombre'}. Portfolio generado con plantilla "${this.template.name}".</p>
-    </footer>
+  <div class="container">
+    ${sectionsHTML}
+  </div>
+  <footer class="footer">
+    <p>&copy; ${new Date().getFullYear()} ${this.data.personalInfo.fullName || 'Tu Nombre'}. Portfolio generado con plantilla "${(this.template as any).name || 'Plantilla'}".</p>
+  </footer>
 </body>
 </html>`;
   }
@@ -781,147 +691,152 @@ export class TemplateAwareSinglePageExporter {
   export(): { success: boolean; message: string } {
     try {
       const htmlContent = this.generate();
-      downloadFile(`${this.data.personalInfo.fullName || "portfolio"}.html`, htmlContent);
+      downloadFile(`${this.data.personalInfo.fullName?.replace(/\s+/g, '_') || 'portfolio'}.html`, htmlContent);
       return {
         success: true,
-        message: `Portfolio exportado exitosamente con plantilla "${this.template.name}"`
+        message: `Portfolio exportado exitosamente con plantilla "${(this.template as any).name || 'Plantilla'}"`,
       };
     } catch (error) {
       return {
         success: false,
-        message: `Error al exportar: ${error instanceof Error ? error.message : 'Error desconocido'}`
+        message: `Error al exportar: ${error instanceof Error ? error.message : 'Error desconocido'}`,
       };
     }
   }
 }
 
-// ✅ EXPORTADOR CORREGIDO: Sitio web completo con plantilla personalizada
 export class TemplateAwareMultiPageExporter {
   constructor(
-    private data: PortfolioData, 
-    private template: Template,
-    private config?: TemplateConfig
+    private data: PortfolioData,
+    private template: Template | AdvancedTemplate,
+    private config?: TemplateConfig | AdvancedTemplateConfig
   ) {}
 
   private generateProjectPage(project: Project): string {
     const templateCSS = generateAdvancedTemplateCSS(this.template, this.config);
-    
     return `<!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${project.title} - ${this.data.personalInfo.fullName}</title>
-    <meta name="description" content="${project.description}">
-    <style>${templateCSS}</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${project.title} - ${this.data.personalInfo.fullName || ''}</title>
+  <meta name="description" content="${project.description || ''}" />
+  <style>${templateCSS}</style>
 </head>
 <body>
-    <div class="container">
-        <a href="index.html" style="color:var(--color-primary);text-decoration:none;margin-bottom:var(--spacing-md);display:inline-block;font-weight:var(--weight-medium);">← Volver al Portfolio</a>
-        
-        <div class="header">
-            <h1>${project.title}</h1>
-            <p>${project.description}</p>
-        </div>
-
-        ${project.detailedDescription ? `
-            <section class="section">
-                <div class="project-card">
-                    <h3>Descripción Detallada</h3>
-                    <p>${project.detailedDescription}</p>
-                </div>
-            </section>
-        ` : ''}
-
-        ${project.features ? `
-            <section class="section">
-                <div class="project-card">
-                    <h3>Características Principales</h3>
-                    <ul style="list-style:none;padding:0;">
-                        ${project.features.split(',').map(feature => 
-                          `<li style="padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.1);">✓ ${feature.trim()}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-            </section>
-        ` : ''}
-
-        ${project.technologies ? `
-            <section class="section">
-                <div class="project-card">
-                    <h3>Tecnologías Utilizadas</h3>
-                    <div class="tech-tags">
-                        ${project.technologies.split(',').map(tech => 
-                          `<span class="tech-tag">${getTechIcon(tech.trim())} ${tech.trim()}</span>`
-                        ).join('')}
-                    </div>
-                </div>
-            </section>
-        ` : ''}
-
-        ${project.instructions ? `
-            <section class="section">
-                <div class="project-card">
-                    <h3>Instrucciones de Uso</h3>
-                    <pre style="white-space: pre-wrap; background: var(--color-surface); padding: var(--spacing-md); border-radius: var(--radius-md); overflow-x: auto; font-family: var(--font-code, monospace);">${project.instructions}</pre>
-                </div>
-            </section>
-        ` : ''}
-
-        <section class="section">
-            <div class="project-links" style="justify-content: center;">
-                ${project.link ? `<a href="${project.link}" target="_blank">🚀 Ver Proyecto Live</a>` : ''}
-                ${project.github ? `<a href="${project.github}" target="_blank">📝 Ver Código</a>` : ''}
-                <a href="index.html">🏠 Volver al Portfolio</a>
-            </div>
-        </section>
+  <div class="container">
+    <a href="index.html" style="color:var(--color-primary);text-decoration:none;margin-bottom:var(--spacing-md);display:inline-block;font-weight:var(--weight-medium);">← Volver al Portfolio</a>
+    <div class="header">
+      <h1>${project.title}</h1>
+      <p>${project.description || ''}</p>
     </div>
 
-    <footer class="footer">
-        <p>&copy; ${new Date().getFullYear()} ${this.data.personalInfo.fullName}. Portfolio con plantilla "${this.template.name}".</p>
-    </footer>
+    ${
+      project.detailedDescription
+        ? `
+      <section class="section">
+        <div class="project-card">
+          <h3>Descripción Detallada</h3>
+          <p>${project.detailedDescription}</p>
+        </div>
+      </section>`
+        : ''
+    }
+
+    ${
+      project.features
+        ? `
+      <section class="section">
+        <div class="project-card">
+          <h3>Características Principales</h3>
+          <ul style="list-style:none;padding:0;">
+            ${project.features
+              .split(',')
+              .map((feature) => `<li style="padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.1);">✓ ${feature.trim()}</li>`)
+              .join('')}
+          </ul>
+        </div>
+      </section>`
+        : ''
+    }
+
+    ${
+      project.technologies
+        ? `
+      <section class="section">
+        <div class="project-card">
+          <h3>Tecnologías Utilizadas</h3>
+          <div class="tech-tags">
+            ${project.technologies
+              .split(',')
+              .map((tech) => `<span class="tech-tag">${getTechIcon(tech.trim())} ${tech.trim()}</span>`)
+              .join('')}
+          </div>
+        </div>
+      </section>`
+        : ''
+    }
+
+    ${
+      project.instructions
+        ? `
+      <section class="section">
+        <div class="project-card">
+          <h3>Instrucciones de Uso</h3>
+          <pre style="white-space: pre-wrap; background: var(--color-surface); padding: var(--spacing-md); border-radius: var(--radius-md); overflow-x: auto; font-family: var(--font-code, monospace);">${project.instructions}</pre>
+        </div>
+      </section>`
+        : ''
+    }
+
+    <section class="section">
+      <div class="project-links" style="justify-content: center;">
+        ${project.link ? `<a href="${project.link}" target="_blank">🚀 Ver Proyecto Live</a>` : ''}
+        ${project.github ? `<a href="${project.github}" target="_blank">📝 Ver Código</a>` : ''}
+        <a href="index.html">🏠 Volver al Portfolio</a>
+      </div>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <p>&copy; ${new Date().getFullYear()} ${this.data.personalInfo.fullName || ''}. Portfolio con plantilla "${(this.template as any).name || 'Plantilla'}".</p>
+  </footer>
 </body>
 </html>`;
   }
 
   private generateIndexPage(): string {
     console.log('🚀 Generando Multi Page con config:', this.config);
-    
+
     const templateCSS = generateAdvancedTemplateCSS(this.template, this.config);
     const enabledSections = getEnabledSections(this.template, this.config);
-    
-    console.log('📝 CSS Variables generadas. Longitud:', templateCSS.length);
-    console.log('📋 Secciones habilitadas:', enabledSections.map(s => s.id));
-    
-    // Generar HTML de cada sección habilitada en el orden configurado
+
     const sectionsHTML = enabledSections
-      .map(section => {
+      .map((section) => {
         const html = generateSectionHTML(section.id, this.data, true, this.template, this.config);
         console.log(`🔧 Sección ${section.id}: ${html.length > 0 ? 'Generada' : 'Vacía'}`);
         return html;
       })
-      .filter(html => html.trim())
+      .filter((html) => html.trim())
       .join('\n');
-
-    console.log('✅ HTML final generado. Secciones incluidas:', sectionsHTML.split('<section').length - 1);
 
     return `<!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${this.data.personalInfo.fullName || "Portfolio"}</title>
-    <meta name="description" content="Portfolio de ${this.data.personalInfo.fullName} - ${this.data.personalInfo.title}">
-    <style>${templateCSS}</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${this.data.personalInfo.fullName || 'Portfolio'}</title>
+  <meta name="description" content="Portfolio de ${this.data.personalInfo.fullName || ''} - ${this.data.personalInfo.title || ''}" />
+  <style>${templateCSS}</style>
 </head>
 <body>
-    <div class="container">
-        ${sectionsHTML}
-    </div>
+  <div class="container">
+    ${sectionsHTML}
+  </div>
 
-    <footer class="footer">
-        <p>&copy; ${new Date().getFullYear()} ${this.data.personalInfo.fullName || 'Tu Nombre'}. Portfolio generado con plantilla "${this.template.name}".</p>
-    </footer>
+  <footer class="footer">
+    <p>&copy; ${new Date().getFullYear()} ${this.data.personalInfo.fullName || 'Tu Nombre'}. Portfolio generado con plantilla "${(this.template as any).name || 'Plantilla'}".</p>
+  </footer>
 </body>
 </html>`;
   }
@@ -933,15 +848,24 @@ export class TemplateAwareMultiPageExporter {
     files['index.html'] = this.generateIndexPage();
 
     // Páginas de proyectos
-    this.data.projects.filter(p => p.title.trim()).forEach(project => {
-      const slug = generateSlug(project.title);
-      files[`projects-${slug}.html`] = this.generateProjectPage(project);
-    });
+    this.data.projects
+      .filter((p) => p.title.trim())
+      .forEach((project) => {
+        const slug = generateSlug(project.title);
+        files[`projects-${slug}.html`] = this.generateProjectPage(project);
+      });
 
-    // README mejorado
+    // README mejorado (con fallbacks para evitar undefined)
+    const tplAny: any = this.template as any;
+    const readmePrimary = tplAny?.colors?.primary ?? DEFAULT_COLORS.primary;
+    const readmeSecondary = tplAny?.colors?.secondary ?? DEFAULT_COLORS.secondary;
+    const readmeFont = tplAny?.typography?.fontFamily?.primary ?? DEFAULT_TYPOGRAPHY.fontFamily.primary;
+    const readmeMaxWidth =
+      (this.config as any)?.customizations?.layout?.maxWidth ?? tplAny?.layout?.maxWidth ?? DEFAULT_LAYOUT.maxWidth;
+
     files['README.md'] = `# ${this.data.personalInfo.fullName || 'Portfolio'} - Portfolio Web
 
-Portfolio generado automáticamente con plantilla **${this.template.name}**.
+Portfolio generado automáticamente con plantilla **${tplAny?.name || 'Plantilla'}**.
 
 ## 🚀 Despliegue en GitHub Pages
 
@@ -957,17 +881,17 @@ Portfolio generado automáticamente con plantilla **${this.template.name}**.
 
 ## 📁 Archivos incluidos
 
-${Object.keys(files).map(file => `- \`${file}\``).join('\n')}
+${Object.keys(files).map((file) => `- \`${file}\``).join('\n')}
 
 ## 🎨 Plantilla utilizada
 
-**${this.template.name}** - ${this.template.description}
+**${tplAny?.name || 'Plantilla'}** - ${tplAny?.description || ''}
 
 ### Configuración personalizada:
-- **Colores**: ${this.template.colors.primary} (primario), ${this.template.colors.secondary} (secundario)
-- **Tipografía**: ${this.template.typography.fontFamily.primary}
-- **Ancho máximo**: ${this.config?.customizations?.layout?.maxWidth || this.template.layout.maxWidth}
-- **Estilo**: ${this.template.category}
+- **Colores**: ${readmePrimary} (primario), ${readmeSecondary} (secundario)
+- **Tipografía**: ${readmeFont}
+- **Ancho máximo**: ${readmeMaxWidth}
+- **Estilo**: ${tplAny?.category || ''}
 
 ## 📱 Características
 
@@ -984,12 +908,11 @@ ${Object.keys(files).map(file => `- \`${file}\``).join('\n')}
     return files;
   }
 
-  // ✅ FUNCIÓN EXPORT CORREGIDA - Evita descargas múltiples
   export(): { success: boolean; message: string; files?: { [filename: string]: string } } {
     try {
       const files = this.generateFiles();
-      
-      // Crear un archivo ZIP simulado en texto
+
+      // Archivo único con instrucciones + todos los contenidos (texto)
       const allFilesContent = Object.entries(files)
         .map(([filename, content]) => {
           return `
@@ -1003,52 +926,22 @@ ${content}
         })
         .join('\n');
 
-      // Instrucciones mejoradas
       const instructions = `# 🎯 INSTRUCCIONES PARA GITHUB PAGES
 
-¡Portfolio generado exitosamente con plantilla "${this.template.name}"!
+¡Portfolio generado exitosamente con plantilla "${(this.template as any).name || 'Plantilla'}"!
 
 ## 📦 ARCHIVOS GENERADOS (${Object.keys(files).length} archivos):
 
-${Object.keys(files).map((file, index) => `${index + 1}. ✓ ${file}`).join('\n')}
+${Object.keys(files)
+  .map((file, index) => `${index + 1}. ✓ ${file}`)
+  .join('\n')}
 
 ## 🚀 PASOS PARA PUBLICAR:
 
-### Opción 1: Descarga individual de archivos
-1. Ve al final de este archivo para ver todos los códigos
-2. Copia cada archivo y guárdalo con su nombre correspondiente
-3. Sube los archivos a tu repositorio de GitHub
-
-### Opción 2: GitHub Pages directo
-1. **Crear repositorio**: Ve a GitHub → New Repository
-2. **Configurar**: Nombre: "mi-portfolio" (público)
-3. **Subir**: Arrastra TODOS los archivos generados
-4. **Activar Pages**: Settings → Pages → Deploy from branch → main → / (root)
-5. **Acceder**: https://tu-usuario.github.io/mi-portfolio
-
-## 🎨 CONFIGURACIÓN APLICADA:
-
-- **Plantilla**: ${this.template.name}
-- **Descripción**: ${this.template.description}
-- **Colores principales**: ${this.template.colors.primary}
-- **Tipografía**: ${this.template.typography.fontFamily.primary}
-- **Ancho máximo**: ${this.config?.customizations?.layout?.maxWidth || this.template.layout.maxWidth}
-- **Categoría**: ${this.template.category}
-
-## 📞 SOPORTE:
-
-Si tienes problemas:
-- Revisa la documentación de GitHub Pages
-- Verifica que todos los archivos estén subidos
-- Asegúrate de que el repositorio sea público
-
-## ⚠️ IMPORTANTE:
-
-- Mantén la estructura de archivos tal como se muestra
-- No modifiques los nombres de archivo
-- El archivo index.html debe estar en la raíz
-
-¡Tu portfolio se verá increíble! 🌟
+1) Crea un repositorio en GitHub.
+2) Sube todos los archivos generados (o cópialos desde el bloque de archivos de más abajo).
+3) En Settings → Pages: "Deploy from a branch" → main → / (root).
+4) Abre la URL que te muestra GitHub Pages.
 
 ═══════════════════════════════════════════════════════════════
 📁 CÓDIGOS DE ARCHIVOS A CONTINUACIÓN:
@@ -1056,7 +949,6 @@ Si tienes problemas:
 
 ${allFilesContent}`;
 
-      // Descargar solo UN archivo con todo el contenido
       downloadFile(
         `🌟_PORTFOLIO_COMPLETO_${this.data.personalInfo.fullName?.replace(/\s+/g, '_') || 'PORTFOLIO'}.txt`,
         instructions
@@ -1064,25 +956,47 @@ ${allFilesContent}`;
 
       return {
         success: true,
-        message: `✅ Sitio web completo exportado con plantilla "${this.template.name}". Se descargó 1 archivo con todo el contenido y las instrucciones.`,
-        files
+        message: `✅ Sitio web completo exportado con plantilla "${(this.template as any).name || 'Plantilla'}". Se descargó 1 archivo con todo el contenido y las instrucciones.`,
+        files,
       };
     } catch (error) {
       return {
         success: false,
-        message: `❌ Error al exportar: ${error instanceof Error ? error.message : 'Error desconocido'}`
+        message: `❌ Error al exportar: ${error instanceof Error ? error.message : 'Error desconocido'}`,
       };
     }
   }
 }
 
-// ✅ FACTORY FUNCTION ACTUALIZADA para incluir configuración
-export const createTemplateAwareExporter = (
-  data: PortfolioData, 
-  template: Template, 
-  type: 'single' | 'multi',
+// =========================
+// Factory con sobrecargas
+// =========================
+
+type ExportMode = 'single' | 'multi';
+
+// Sobrecargas: simple
+export function createTemplateAwareExporter(
+  data: PortfolioData,
+  template: Template,
+  type: ExportMode,
   config?: TemplateConfig
-) => {
+): TemplateAwareSinglePageExporter | TemplateAwareMultiPageExporter;
+
+// Sobrecargas: avanzado
+export function createTemplateAwareExporter(
+  data: PortfolioData,
+  template: AdvancedTemplate,
+  type: ExportMode,
+  config?: AdvancedTemplateConfig
+): TemplateAwareSinglePageExporter | TemplateAwareMultiPageExporter;
+
+// Implementación única
+export function createTemplateAwareExporter(
+  data: PortfolioData,
+  template: Template | AdvancedTemplate,
+  type: ExportMode,
+  config?: TemplateConfig | AdvancedTemplateConfig
+) {
   switch (type) {
     case 'single':
       return new TemplateAwareSinglePageExporter(data, template, config);
@@ -1091,4 +1005,4 @@ export const createTemplateAwareExporter = (
     default:
       throw new Error(`Tipo de exportador no válido: ${type}`);
   }
-};
+}

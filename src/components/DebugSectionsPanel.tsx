@@ -1,6 +1,6 @@
 // src/components/DebugSectionsPanel.tsx
 import React, { useMemo, useState } from 'react';
-import { useTemplates } from './use-templates';
+import { useTemplates } from './use-templatesLegacy';
 import type { TemplateSection } from '../types/template-types';
 
 type SectionRow = Pick<TemplateSection, 'id' | 'name' | 'enabled' | 'order'> & {

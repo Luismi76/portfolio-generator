@@ -1,15 +1,9 @@
 // SkillTableForm.tsx - CORREGIDO PARA USAR portfolio-types.ts
 import React, { useState, useEffect } from "react";
-import { Skill } from "../types/portfolio-types";
+import { Skill, SkillTableFormProps } from "../types/portfolio-types";
 import { Icons } from "./portfolio-icons";
 import { Section } from "./Section";
 
-interface SkillTableFormProps {
-  skills: Skill[];
-  onUpdate: (index: number, field: keyof Skill, value: string) => void;
-  onAdd: () => void;
-  onRemove: (index: number) => void;
-}
 
 interface SkillModalProps {
   skill?: Skill;

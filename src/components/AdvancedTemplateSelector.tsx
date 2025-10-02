@@ -1,15 +1,7 @@
 // AdvancedTemplateSelector.tsx - VERSIÓN CORREGIDA con botón personalizar en tarjetas
 import React, { useState, useMemo } from "react";
 import { Search, Settings, Grid, List, Check } from 'lucide-react';
-import { AdvancedTemplate } from '../types/advanced-template-types';
-
-interface AdvancedTemplateSelectorProps {
-  templates: AdvancedTemplate[];
-  selectedTemplate?: AdvancedTemplate | null;
-  onTemplateSelect: (template: AdvancedTemplate) => void;
-  onCustomize?: (template: AdvancedTemplate) => void;
-  onPreview?: (template: AdvancedTemplate) => void;
-}
+import { AdvancedTemplate, AdvancedTemplateSelectorProps } from '../types/advanced-template-types';
 
 type ViewMode = "grid" | "list";
 type SortBy = "name" | "category" | "recent";

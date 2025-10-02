@@ -8,10 +8,8 @@ import AdvancedTemplateSelector from "./components/AdvancedTemplateSelector";
 import { AdvancedTemplateCustomizer } from "./components/AdvancedTemplateCustomizer";
 import { useAdvancedTemplates } from "./hooks/useAdvancedTemplates";
 import TemplatePreviewModal from "./components/preview";
-import { AdvancedTemplate } from '../src/types/advanced-template-types';
-
-// Tipos para el modo de la aplicación
-type AppMode = "editor" | "portfolio" | "templates" | "customize" | "preview";
+import { AdvancedTemplate } from './types/advanced-template-types';
+import { AppMode } from "./types/portfolio-types";
 
 interface AppState {
   mode: AppMode;
@@ -415,7 +413,7 @@ const App: React.FC = () => {
             <div className="max-w-7xl mx-auto px-6 py-8">
               <AdvancedTemplateSelector
                 templates={templates.templates}
-                selectedTemplate={templates.selectedTemplate}
+                selectedTemplate={templates.selectedTemplate ?? undefined}
                 onTemplateSelect={templates.selectTemplate}
                 onCustomize={() => switchMode("customize")}
                 onPreview={handleQuickPreview}

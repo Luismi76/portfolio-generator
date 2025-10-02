@@ -71,7 +71,7 @@ const AVAILABLE_SECTIONS: SectionType[] = [
 ];
 
 // 1. MODERN GRADIENT
-export const MODERN_GRADIENT_TEMPLATE: AdvancedTemplate = {
+const MODERN_GRADIENT_TEMPLATE: AdvancedTemplate = {
   id: "modern-gradient",
   name: "Modern Gradient",
   description: "Diseño contemporáneo con gradientes suaves y layout tradicional",
@@ -175,7 +175,7 @@ export const MODERN_GRADIENT_TEMPLATE: AdvancedTemplate = {
 };
 
 // 2. SIDEBAR LEFT
-export const SIDEBAR_LEFT_TEMPLATE: AdvancedTemplate = {
+const SIDEBAR_LEFT_TEMPLATE: AdvancedTemplate = {
   id: "sidebar-left",
   name: "Sidebar Left Pro",
   description: "Layout profesional con sidebar izquierda fija y navegación persistente",
@@ -284,7 +284,7 @@ export const SIDEBAR_LEFT_TEMPLATE: AdvancedTemplate = {
 };
 
 // 3. MINIMAL CLEAN
-export const MINIMAL_TEMPLATE: AdvancedTemplate = {
+const MINIMAL_TEMPLATE: AdvancedTemplate = {
   id: "minimal-clean",
   name: "Minimal Clean",
   description: "Diseño minimalista sin header, máxima simplicidad y elegancia",
@@ -384,7 +384,7 @@ export const MINIMAL_TEMPLATE: AdvancedTemplate = {
 };
 
 // 4. CREATIVE DUAL
-export const CREATIVE_DUAL_TEMPLATE: AdvancedTemplate = {
+const CREATIVE_DUAL_TEMPLATE: AdvancedTemplate = {
   id: "creative-dual",
   name: "Creative Dual Sidebar",
   description: "Diseño creativo con sidebars flotantes a ambos lados",
@@ -497,7 +497,7 @@ export const CREATIVE_DUAL_TEMPLATE: AdvancedTemplate = {
 };
 
 // 5. TECH DARK
-export const TECH_DARK_TEMPLATE: AdvancedTemplate = {
+const TECH_DARK_TEMPLATE: AdvancedTemplate = {
   id: "tech-dark",
   name: "Tech Dark",
   description: "Tema oscuro profesional ideal para desarrolladores y perfiles técnicos",
@@ -602,7 +602,7 @@ export const TECH_DARK_TEMPLATE: AdvancedTemplate = {
 // SECCIONES para Elegant Serif (escritores/creativos)
 
 // 6. ELEGANT SERIF
-export const ELEGANT_SERIF_TEMPLATE: AdvancedTemplate = {
+const ELEGANT_SERIF_TEMPLATE: AdvancedTemplate = {
   id: "elegant-serif",
   name: "Elegant Serif",
   description: "Diseño sofisticado con tipografía serif ideal para escritores y creativos",
@@ -705,7 +705,7 @@ export const ELEGANT_SERIF_TEMPLATE: AdvancedTemplate = {
 };
 
 // 7. VIBRANT CARDS
-export const VIBRANT_CARDS_TEMPLATE: AdvancedTemplate = {
+const VIBRANT_CARDS_TEMPLATE: AdvancedTemplate = {
   id: "vibrant-cards",
   name: "Vibrant Cards",
   description: "Diseño dinámico con tarjetas coloridas y layout de mosaico",
@@ -811,7 +811,7 @@ export const VIBRANT_CARDS_TEMPLATE: AdvancedTemplate = {
 };
 
 // 8. CORPORATE BLUE
-export const CORPORATE_BLUE_TEMPLATE: AdvancedTemplate = {
+const CORPORATE_BLUE_TEMPLATE: AdvancedTemplate = {
   id: "corporate-blue",
   name: "Corporate Blue",
   description: "Diseño profesional corporativo en tonos azules con sidebar derecha",
@@ -920,7 +920,7 @@ export const CORPORATE_BLUE_TEMPLATE: AdvancedTemplate = {
 };
 
 // 9. WARM SUNSET
-export const WARM_SUNSET_TEMPLATE: AdvancedTemplate = {
+const WARM_SUNSET_TEMPLATE: AdvancedTemplate = {
   id: "warm-sunset",
   name: "Warm Sunset",
   description: "Paleta de colores cálidos con gradientes tipo atardecer",
@@ -1024,7 +1024,7 @@ export const WARM_SUNSET_TEMPLATE: AdvancedTemplate = {
 };
 
 // 10. MONOCHROME GRID
-export const MONOCHROME_GRID_TEMPLATE: AdvancedTemplate = {
+const MONOCHROME_GRID_TEMPLATE: AdvancedTemplate = {
   id: "monochrome-grid",
   name: "Monochrome Grid",
   description: "Diseño minimalista en blanco y negro con layout de cuadrícula",

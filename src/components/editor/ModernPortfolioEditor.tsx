@@ -1,3 +1,4 @@
+// src/components/editor/ModernPortfolioEditor.tsx
 import React, { useState } from "react";
 import { Icons } from "../portfolio-icons";
 import { usePortfolioData, useDataExport } from "../portfolio-hooks";
@@ -5,9 +6,12 @@ import { downloadFile, createTemplateAwareExporter } from "../portfolio-export";
 import { PersonalInfoForm } from "../PersonalInfoForm";
 import ProjectTableForm from "../ProjectTableForm";
 import SkillTableForm from "../SkillTableForm";
-import { useTemplates } from "../use-templates";
+import { useAdvancedTemplates } from "../../hooks/useAdvancedTemplates";
 import { ADVANCED_BUILT_IN_TEMPLATES } from "../advanced-built-in-templates";
-//import { Section } from '../../types/advanced-template-types';
+import type {
+  AdvancedTemplate,
+  AdvancedTemplateConfig,
+} from "../../types/advanced-template-types";
 
 const ModernPortfolioEditor: React.FC = () => {
   const {
@@ -19,17 +23,21 @@ const ModernPortfolioEditor: React.FC = () => {
     removeItem,
     importData,
   } = usePortfolioData();
+
   const { exportToJSON, importFromJSON } = useDataExport();
+
   const [activeSection, setActiveSection] = useState<
     "personal" | "projects" | "skills" | "templates"
   >("personal");
   const [showExportMenu, setShowExportMenu] = useState(false);
 
-  // ✅ Obtener templates con mejor debugging
-  const { selectedTemplate, config } = useTemplates();
-  const activeTemplate: any =
-    selectedTemplate ?? ADVANCED_BUILT_IN_TEMPLATES[0];
-  // Convertir Template simple a AdvancedTemplate
+  // ✅ Sólo plantillas avanzadas
+  const { selectedTemplate, config } = useAdvancedTemplates();
+  const activeTemplate: AdvancedTemplate =
+    (selectedTemplate as AdvancedTemplate) ??
+    (ADVANCED_BUILT_IN_TEMPLATES[0] as AdvancedTemplate);
+  const advancedConfig: AdvancedTemplateConfig | undefined =
+    config as AdvancedTemplateConfig | undefined;
 
   const handleExportJSON = () => {
     exportToJSON(data);
@@ -55,20 +63,20 @@ const ModernPortfolioEditor: React.FC = () => {
     input.click();
   };
 
-  // ✅ FUNCIÓN CORREGIDA con debugging completo
+  // ✅ Exportar HTML (modo single) con avanzado
   const handleExportHTML = () => {
     console.log("🔍 DEBUG - Estado actual:");
     console.log("- selectedTemplate:", selectedTemplate?.name);
     console.log("- activeTemplate:", activeTemplate?.name);
-    console.log("- config:", config);
+    console.log("- config:", advancedConfig);
     console.log(
       "- config?.customizations?.sections:",
-      config?.customizations?.sections
+      advancedConfig?.customizations?.sections
     );
 
-    if (config?.customizations?.sections) {
+    if (advancedConfig?.customizations?.sections) {
       console.log("📋 Secciones personalizadas:");
-      config.customizations.sections.forEach((section) => {
+      advancedConfig.customizations.sections.forEach((section) => {
         console.log(
           `  ${section.id}: ${section.enabled ? "HABILITADA" : "DESHABILITADA"}`
         );
@@ -89,10 +97,10 @@ const ModernPortfolioEditor: React.FC = () => {
 
     try {
       const exporter = createTemplateAwareExporter(
-        data,
-        activeTemplate,
+        data,                // ← mantiene la firma original
+        activeTemplate,      // AdvancedTemplate
         "single",
-        config || undefined
+        advancedConfig       // AdvancedTemplateConfig | undefined
       );
       const res = exporter.export();
 
@@ -104,20 +112,20 @@ const ModernPortfolioEditor: React.FC = () => {
     }
   };
 
-  // ✅ FUNCIÓN CORREGIDA con debugging completo
+  // ✅ Exportar sitio (multi) con avanzado
   const handleExportWebsite = () => {
     console.log("🔍 DEBUG - Estado actual:");
     console.log("- selectedTemplate:", selectedTemplate?.name);
     console.log("- activeTemplate:", activeTemplate?.name);
-    console.log("- config:", config);
+    console.log("- config:", advancedConfig);
     console.log(
       "- config?.customizations?.sections:",
-      config?.customizations?.sections
+      advancedConfig?.customizations?.sections
     );
 
-    if (config?.customizations?.sections) {
+    if (advancedConfig?.customizations?.sections) {
       console.log("📋 Secciones personalizadas:");
-      config.customizations.sections.forEach((section) => {
+      advancedConfig.customizations.sections.forEach((section) => {
         console.log(
           `  ${section.id}: ${section.enabled ? "HABILITADA" : "DESHABILITADA"}`
         );
@@ -138,10 +146,10 @@ const ModernPortfolioEditor: React.FC = () => {
 
     try {
       const exporter = createTemplateAwareExporter(
-        data,
-        activeTemplate,
+        data,                // ← mantiene la firma original
+        activeTemplate,      // AdvancedTemplate
         "multi",
-        config || undefined
+        advancedConfig       // AdvancedTemplateConfig | undefined
       );
 
       const res = exporter.export();
@@ -177,14 +185,10 @@ const ModernPortfolioEditor: React.FC = () => {
     }
   };
 
-
-
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Editor de Portfolio
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900">Editor de Portfolio</h1>
         <div className="relative">
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
@@ -248,7 +252,6 @@ const ModernPortfolioEditor: React.FC = () => {
           { id: "personal" as const, label: "Personal", icon: Icons.User },
           { id: "projects" as const, label: "Proyectos", icon: Icons.Code },
           { id: "skills" as const, label: "Habilidades", icon: Icons.Award },
-          
         ].map((section) => (
           <button
             key={section.id}

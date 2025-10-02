@@ -6,24 +6,13 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import type { Section } from "../types/advanced-template-types";
+import type { Section, AreaConfig, LayoutArea } from "../types/advanced-template-types";
 
-// Types
-type LayoutArea =
-  | "header"
-  | "sidebar-left"
-  | "main"
-  | "sidebar-right"
-  | "footer"
-  | "floating";
+
 type SectionPlacement = "unplaced" | "placed";
 
 interface SectionWithPlacement extends Section {
   placement: SectionPlacement;
-}
-
-interface AreaConfig {
-  enabled: boolean;
 }
 
 interface DragConfig {

@@ -131,7 +131,7 @@ export const MODERN_TEMPLATE: Template = {
   isBuiltIn: true,
 };
 
-export const MINIMAL_TEMPLATE: Template = {
+export const MINIMAL_TEMPLATE_BAK: Template = {
   id: "minimal",
   name: "Minimal",
   description: "Diseño minimalista y elegante con espacios blancos",
@@ -277,7 +277,7 @@ export const CREATIVE_TEMPLATE: Template = {
 
 export const BUILT_IN_TEMPLATES: Template[] = [
   MODERN_TEMPLATE,
-  MINIMAL_TEMPLATE,
+  MINIMAL_TEMPLATE_BAK,
   CREATIVE_TEMPLATE,
 ];
 

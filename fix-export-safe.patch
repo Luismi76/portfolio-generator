@@ -1,0 +1,183 @@
+diff --git a/src/components/portfolio-export.ts b/src/components/portfolio-export.ts
+index 1111111..2222222 100644
+--- a/src/components/portfolio-export.ts
++++ b/src/components/portfolio-export.ts
+@@ -2,6 +2,83 @@
+ import { PortfolioData, Project } from '../types/portfolio-types';
+ import { Template, TemplateConfig, TemplateSection } from '../types/template-types';
+ 
++// ===== DEBUG & NORMALIZACIÓN =====
++type AnyObj = Record<string, any>;
++
++const pick = (o: AnyObj | undefined | null, k: string, dflt: any) =>
++  o && k in o ? o[k] : dflt;
++
++const safeTemplateColors = (colors: AnyObj | undefined) => {
++  const text = colors?.text ?? {};
++  return {
++    primary: colors?.primary ?? '#4F46E5',
++    secondary: colors?.secondary ?? '#64748B',
++    accent: colors?.accent ?? '#22C55E',
++    background: colors?.background ?? '#FFFFFF',
++    surface: colors?.surface ?? '#FFFFFF',
++    text: {
++      primary: text?.primary ?? '#1F2937',
++      secondary: text?.secondary ?? '#6B7280',
++    },
++    gradient: colors?.gradient ?? null,
++  };
++};
++
++const safeTypography = (typo: AnyObj | undefined) => ({
++  fontFamily: {
++    primary: typo?.fontFamily?.primary ?? 'Inter, system-ui, sans-serif',
++    heading: typo?.fontFamily?.heading ?? 'Inter, system-ui, sans-serif',
++  },
++  fontSize: {
++    xs: pick(typo?.fontSize, 'xs', '0.75rem'),
++    sm: pick(typo?.fontSize, 'sm', '0.875rem'),
++    base: pick(typo?.fontSize, 'base', '1rem'),
++    lg: pick(typo?.fontSize, 'lg', '1.125rem'),
++    xl: pick(typo?.fontSize, 'xl', '1.25rem'),
++    ['2xl']: pick(typo?.fontSize, '2xl', '1.5rem'),
++    ['3xl']: pick(typo?.fontSize, '3xl', '1.875rem'),
++    ['4xl']: pick(typo?.fontSize, '4xl', '2.25rem'),
++  },
++  fontWeight: {
++    normal: pick(typo?.fontWeight, 'normal', 400),
++    medium: pick(typo?.fontWeight, 'medium', 500),
++    semibold: pick(typo?.fontWeight, 'semibold', 600),
++    bold: pick(typo?.fontWeight, 'bold', 700),
++  },
++});
++
++const safeLayout = (layout: AnyObj | undefined) => ({
++  maxWidth: layout?.maxWidth ?? '1200px',
++  spacing: {
++    xs: pick(layout?.spacing, 'xs', '4px'),
++    sm: pick(layout?.spacing, 'sm', '8px'),
++    md: pick(layout?.spacing, 'md', '12px'),
++    lg: pick(layout?.spacing, 'lg', '16px'),
++    xl: pick(layout?.spacing, 'xl', '24px'),
++  },
++  borderRadius: {
++    sm: pick(layout?.borderRadius, 'sm', '6px'),
++    md: pick(layout?.borderRadius, 'md', '10px'),
++    lg: pick(layout?.borderRadius, 'lg', '14px'),
++    xl: pick(layout?.borderRadius, 'xl', '20px'),
++  },
++  shadows: {
++    sm: pick(layout?.shadows, 'sm', '0 1px 2px rgb(0 0 0 / 5%)'),
++    md: pick(layout?.shadows, 'md', '0 4px 6px -1px rgb(0 0 0 / 10%)'),
++    lg: pick(layout?.shadows, 'lg', '0 10px 15px -3px rgb(0 0 0 / 10%)'),
++    xl: pick(layout?.shadows, 'xl', '0 20px 25px -5px rgb(0 0 0 / 10%)'),
++  },
++});
++
++const normalizeTemplateForExport = (tpl: AnyObj) => {
++  const safe = {
++    ...tpl,
++    colors: safeTemplateColors(tpl?.colors),
++    typography: safeTypography(tpl?.typography),
++    layout: safeLayout(tpl?.layout),
++  };
++  console.log('[EXPORT] normalizeTemplateForExport', {
++    id: tpl?.id,
++    name: tpl?.name,
++    colors_in: tpl?.colors,
++    colors_out: safe.colors,
++  });
++  console.log('[EXPORT] colors.text.primary =', safe.colors.text.primary);
++  return safe as Template;
++};
++
+ export const downloadFile = (filename: string, content: string) => {
+   const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+   const url = URL.createObjectURL(blob);
+@@
+-export function generateHTMLFromTemplate(template: Template, data: PortfolioData, cfg?: TemplateConfig) {
+-  // …
+-  const cssVars = `
++export function generateHTMLFromTemplate(template: Template, data: PortfolioData, cfg?: TemplateConfig) {
++  try {
++    const tpl = normalizeTemplateForExport(template);
++    console.log('[EXPORT] cfg.customizations?.colors =', cfg?.customizations?.colors);
++    const cssVars = `
+ :root{
+-  --color-primary: ${template.colors.primary};
+-  --color-secondary: ${template.colors.secondary};
+-  --color-accent: ${template.colors.accent};
+-  --color-bg: ${template.colors.background};
+-  --color-surface: ${template.colors.surface};
+-  --text-primary: ${template.colors.text.primary};
+-  --text-secondary: ${template.colors.text.secondary};
+-  --font-primary: ${template.typography.fontFamily.primary};
+-  --font-heading: ${template.typography.fontFamily.heading};
+-  --fs-xs: ${template.typography.fontSize.xs};
+-  --fs-sm: ${template.typography.fontSize.sm};
+-  --fs-base: ${template.typography.fontSize.base};
+-  --fs-lg: ${template.typography.fontSize.lg};
+-  --fs-xl: ${template.typography.fontSize.xl};
+-  --fs-2xl: ${template.typography.fontSize["2xl"]};
+-  --fs-3xl: ${template.typography.fontSize["3xl"]};
+-  --fs-4xl: ${template.typography.fontSize["4xl"]};
+-  --fw-normal: ${template.typography.fontWeight.normal};
+-  --fw-medium: ${template.typography.fontWeight.medium};
+-  --fw-semibold: ${template.typography.fontWeight.semibold};
+-  --fw-bold: ${template.typography.fontWeight.bold};
+-  --sp-xs: ${template.layout.spacing.xs};
+-  --sp-sm: ${template.layout.spacing.sm};
+-  --sp-md: ${template.layout.spacing.md};
+-  --sp-lg: ${template.layout.spacing.lg};
+-  --sp-xl: ${template.layout.spacing.xl};
+-  --br-sm: ${template.layout.borderRadius.sm};
+-  --br-md: ${template.layout.borderRadius.md};
+-  --br-lg: ${template.layout.borderRadius.lg};
+-  --br-xl: ${template.layout.borderRadius.xl};
+-  --shadow-sm: ${template.layout.shadows.sm};
+-  --shadow-md: ${template.layout.shadows.md};
+-  --shadow-lg: ${template.layout.shadows.lg};
+-  --shadow-xl: ${template.layout.shadows.xl};
++  --color-primary: ${tpl.colors.primary};
++  --color-secondary: ${tpl.colors.secondary};
++  --color-accent: ${tpl.colors.accent};
++  --color-bg: ${tpl.colors.background};
++  --color-surface: ${tpl.colors.surface};
++  --text-primary: ${tpl.colors.text.primary};
++  --text-secondary: ${tpl.colors.text.secondary};
++  --font-primary: ${tpl.typography.fontFamily.primary};
++  --font-heading: ${tpl.typography.fontFamily.heading};
++  --fs-xs: ${tpl.typography.fontSize.xs};
++  --fs-sm: ${tpl.typography.fontSize.sm};
++  --fs-base: ${tpl.typography.fontSize.base};
++  --fs-lg: ${tpl.typography.fontSize.lg};
++  --fs-xl: ${tpl.typography.fontSize.xl};
++  --fs-2xl: ${tpl.typography.fontSize['2xl']};
++  --fs-3xl: ${tpl.typography.fontSize['3xl']};
++  --fs-4xl: ${tpl.typography.fontSize['4xl']};
++  --fw-normal: ${tpl.typography.fontWeight.normal};
++  --fw-medium: ${tpl.typography.fontWeight.medium};
++  --fw-semibold: ${tpl.typography.fontWeight.semibold};
++  --fw-bold: ${tpl.typography.fontWeight.bold};
++  --sp-xs: ${tpl.layout.spacing.xs};
++  --sp-sm: ${tpl.layout.spacing.sm};
++  --sp-md: ${tpl.layout.spacing.md};
++  --sp-lg: ${tpl.layout.spacing.lg};
++  --sp-xl: ${tpl.layout.spacing.xl};
++  --br-sm: ${tpl.layout.borderRadius.sm};
++  --br-md: ${tpl.layout.borderRadius.md};
++  --br-lg: ${tpl.layout.borderRadius.lg};
++  --br-xl: ${tpl.layout.borderRadius.xl};
++  --shadow-sm: ${tpl.layout.shadows.sm};
++  --shadow-md: ${tpl.layout.shadows.md};
++  --shadow-lg: ${tpl.layout.shadows.lg};
++  --shadow-xl: ${tpl.layout.shadows.xl};
+ }
+ `.trim();
+-  // … resto de la función
++    // … resto de la función
++  } catch (e: any) {
++    console.error('[EXPORT] ERROR al generar HTML:', e, e?.stack);
++    throw e;
++  }
+ }

@@ -1,12 +1,8 @@
 // PersonalInfoForm.tsx
 import React from "react";
-import { PersonalInfo, PersonalInfoKey } from "../types/portfolio-types";
+import { PersonalInfoFormProps } from "../types/portfolio-types";
 import { Icons } from "./portfolio-icons";
 
-interface PersonalInfoFormProps {
-  data: PersonalInfo;
-  onUpdate: (field: PersonalInfoKey, value: string) => void;
-}
 
 export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   data,

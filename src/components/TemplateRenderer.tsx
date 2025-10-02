@@ -16,7 +16,7 @@ import type {
   TemplateLayoutStructure,
 } from "../types/advanced-template-types";
 
-type Props = {
+type TemplateRendererProps = {
   data: PortfolioData;
   onOpenProject?: (p: Project) => void;
   template?: AdvancedTemplate;
@@ -171,7 +171,7 @@ function buildAdvancedCSSVars(
 
 /* ---------------- component ---------------- */
 
-export const TemplateRenderer: React.FC<Props> = ({
+export const TemplateRenderer: React.FC<TemplateRendererProps> = ({
   data,
   onOpenProject,
   template: effectiveTemplate,

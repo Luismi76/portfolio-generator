@@ -277,7 +277,7 @@ export interface AdvancedTemplateConfig {
 // Selector
 export interface AdvancedTemplateSelectorProps {
   templates: AdvancedTemplate[];
-  selectedTemplate?: AdvancedTemplate;
+  selectedTemplate?: AdvancedTemplate | null;
   onTemplateSelect: (template: AdvancedTemplate) => void;
   onCustomize?: (template: AdvancedTemplate) => void;
   onPreview?: (template: AdvancedTemplate) => void;
@@ -366,3 +366,11 @@ export interface UseAdvancedTemplatesReturn {
   hasUnsavedChanges: boolean;
   validationErrors: string[];
 }
+export const AREA_KEYS: LayoutArea[] = [
+  "header",
+  "sidebar-left",
+  "sidebar-right",
+  "main",
+  "footer",
+  "floating",
+];
