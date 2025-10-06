@@ -7,7 +7,7 @@ import { PersonalInfoForm } from "../PersonalInfoForm";
 import ProjectTableForm from "../ProjectTableForm";
 import SkillTableForm from "../SkillTableForm";
 import { useAdvancedTemplates } from "../../hooks/useAdvancedTemplates";
-import { ADVANCED_BUILT_IN_TEMPLATES } from "../advanced-built-in-templates";
+import { ADVANCED_BUILT_IN_TEMPLATES } from "../../templates/advanced";
 import type {
   AdvancedTemplate,
   AdvancedTemplateConfig,

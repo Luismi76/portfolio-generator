@@ -6,7 +6,7 @@ import type {
 } from "../../../types/advanced-template-types";
 import type { Template } from "../../../types/template-types";
 import { buildAdvancedCSSVars } from "../builders/cssVariablesBuilder";
-import { getDefaultAdvancedTemplate } from "../../advanced-built-in-templates";
+import { getDefaultAdvancedTemplate } from "../../../templates/advanced";
 
 export function useTemplateStyles(
   template?: AdvancedTemplate,

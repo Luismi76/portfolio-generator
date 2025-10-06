@@ -9,7 +9,7 @@ import {
   TemplateLayoutStructure,
   TemplateLayoutStructurePatch,
 } from '../types/advanced-template-types';
-import { ADVANCED_BUILT_IN_TEMPLATES } from '../components/advanced-built-in-templates';
+import { ADVANCED_BUILT_IN_TEMPLATES } from '../templates/advanced';
 
 // ---------- helpers ----------
 function mergeAnimations(
