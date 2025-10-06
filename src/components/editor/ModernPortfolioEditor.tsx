@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Icons } from "../portfolio-icons";
 import { usePortfolioData, useDataExport } from "../portfolio-hooks";
-import { downloadFile, createTemplateAwareExporter } from "../portfolio-export";
+import { createSSRExporter } from "../portfolio-export-ssr";
 import { PersonalInfoForm } from "../PersonalInfoForm";
 import ProjectTableForm from "../ProjectTableForm";
 import SkillTableForm from "../SkillTableForm";
@@ -12,6 +12,7 @@ import type {
   AdvancedTemplate,
   AdvancedTemplateConfig,
 } from "../../types/advanced-template-types";
+
 
 const ModernPortfolioEditor: React.FC = () => {
   const {
@@ -64,126 +65,39 @@ const ModernPortfolioEditor: React.FC = () => {
   };
 
   // ✅ Exportar HTML (modo single) con avanzado
-  const handleExportHTML = () => {
-    console.log("🔍 DEBUG - Estado actual:");
-    console.log("- selectedTemplate:", selectedTemplate?.name);
-    console.log("- activeTemplate:", activeTemplate?.name);
-    console.log("- config:", advancedConfig);
-    console.log(
-      "- config?.customizations?.sections:",
-      advancedConfig?.customizations?.sections
-    );
-
-    if (advancedConfig?.customizations?.sections) {
-      console.log("📋 Secciones personalizadas:");
-      advancedConfig.customizations.sections.forEach((section) => {
-        console.log(
-          `  ${section.id}: ${section.enabled ? "HABILITADA" : "DESHABILITADA"}`
-        );
-      });
+const handleExportHTML = async() => {
+  try {
+    const exporter = createSSRExporter(data, activeTemplate, advancedConfig);
+    const res = await exporter.export();
+    
+    if (res.success) {
+      alert('✅ Portfolio exportado correctamente');
     } else {
-      console.log("⚠️ No hay secciones personalizadas, usando plantilla base");
-      if (activeTemplate?.sections) {
-        console.log("📋 Secciones de plantilla base:");
-        activeTemplate.sections.forEach((section: any) => {
-          console.log(
-            `  ${section.id}: ${
-              section.enabled ? "HABILITADA" : "DESHABILITADA"
-            }`
-          );
-        });
-      }
+      alert('❌ Error: ' + res.message);
     }
-
-    try {
-      const exporter = createTemplateAwareExporter(
-        data,                // ← mantiene la firma original
-        activeTemplate,      // AdvancedTemplate
-        "single",
-        advancedConfig       // AdvancedTemplateConfig | undefined
-      );
-      const res = exporter.export();
-
-      console.log("✅ Resultado de exportación:", res);
-      alert(res.message);
-    } catch (e: any) {
-      console.error("❌ Error en exportación:", e);
-      alert("Error al exportar HTML: " + (e?.message || e));
-    }
-  };
+  } catch (e: any) {
+    console.error("❌ Error en exportación:", e);
+    alert("Error al exportar: " + (e?.message || e));
+  }
+};
 
   // ✅ Exportar sitio (multi) con avanzado
-  const handleExportWebsite = () => {
-    console.log("🔍 DEBUG - Estado actual:");
-    console.log("- selectedTemplate:", selectedTemplate?.name);
-    console.log("- activeTemplate:", activeTemplate?.name);
-    console.log("- config:", advancedConfig);
-    console.log(
-      "- config?.customizations?.sections:",
-      advancedConfig?.customizations?.sections
-    );
-
-    if (advancedConfig?.customizations?.sections) {
-      console.log("📋 Secciones personalizadas:");
-      advancedConfig.customizations.sections.forEach((section) => {
-        console.log(
-          `  ${section.id}: ${section.enabled ? "HABILITADA" : "DESHABILITADA"}`
-        );
-      });
+// Exportar sitio web con SSR
+const handleExportWebsite = async () => {
+  try {
+    const exporter = createSSRExporter(data, activeTemplate, advancedConfig);
+    const res = await exporter.export();
+    
+    if (res.success) {
+      alert('✅ Sitio web exportado correctamente!');
     } else {
-      console.log("⚠️ No hay secciones personalizadas, usando plantilla base");
-      if (activeTemplate?.sections) {
-        console.log("📋 Secciones de plantilla base:");
-        activeTemplate.sections.forEach((section: any) => {
-          console.log(
-            `  ${section.id}: ${
-              section.enabled ? "HABILITADA" : "DESHABILITADA"
-            }`
-          );
-        });
-      }
+      alert('❌ Error: ' + res.message);
     }
-
-    try {
-      const exporter = createTemplateAwareExporter(
-        data,                // ← mantiene la firma original
-        activeTemplate,      // AdvancedTemplate
-        "multi",
-        advancedConfig       // AdvancedTemplateConfig | undefined
-      );
-
-      const res = exporter.export();
-      console.log("✅ Resultado de exportación:", res);
-
-      if (!res.success) {
-        alert(res.message);
-        return;
-      }
-
-      if ("files" in res && (res as any).files) {
-        const files = (res as any).files as Record<string, string>;
-        const entries = Object.entries(files);
-
-        if (entries.length === 0) {
-          alert(`${res.message}\nNo se recibieron archivos para descargar.`);
-          return;
-        }
-
-        entries.forEach(([filename, content], idx) => {
-          setTimeout(() => downloadFile(filename, content), idx * 600);
-        });
-
-        alert(`${res.message}\nSe han generado ${entries.length} archivos.`);
-      } else {
-        alert(
-          `${res.message}\nEl exportador actual no expone 'files'. Usa "Exportar HTML" (single) o actualiza el exportador para devolver { files } en modo "multi".`
-        );
-      }
-    } catch (e: any) {
-      console.error("❌ Error en exportación:", e);
-      alert("Error al exportar sitio: " + (e?.message || e));
-    }
-  };
+  } catch (e: any) {
+    console.error("❌ Error en exportación:", e);
+    alert("Error al exportar sitio: " + (e?.message || e));
+  }
+};
 
   return (
     <div className="max-w-4xl mx-auto p-6">

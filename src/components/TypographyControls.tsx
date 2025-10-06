@@ -13,7 +13,7 @@ interface FontSelectorProps {
   value: string;
   onChange: (value: string) => void;
   type: 'primary' | 'heading';
-  fontFamilies: FontFamily[];
+  fontFamily: FontFamily[];
 }
 
 interface TypographyControlsProps {
@@ -37,10 +37,10 @@ const FontSelector: React.FC<FontSelectorProps> = ({
   value, 
   onChange, 
   type, 
-  fontFamilies 
+  fontFamily 
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
-  const selectedFont = fontFamilies.find(f => f.value === value);
+  const selectedFont = fontFamily.find(f => f.value === value);
   const previewText = type === 'heading' ? 'Título de ejemplo' : 'El veloz murciélago hindú';
 
   return (
@@ -83,7 +83,7 @@ const FontSelector: React.FC<FontSelectorProps> = ({
             onClick={() => setIsOpen(false)}
           />
           <div className="absolute z-20 w-full mt-2 bg-white border rounded-lg shadow-lg max-h-96 overflow-y-auto">
-            {fontFamilies.map((font) => (
+            {fontFamily.map((font) => (
               <button
                 key={font.value}
                 type="button"
@@ -129,7 +129,7 @@ const PreviewSection: React.FC<{ typography: AdvancedTemplateTypography }> = ({ 
   <div className="border-t pt-4">
     <h4 className="text-sm font-medium text-gray-700 mb-3">Vista Previa Completa</h4>
     <div className="bg-gray-50 rounded-lg p-6 space-y-4">
-      <div style={{ fontFamily: typography.fontFamilies.heading }}>
+      <div style={{ fontFamily: typography.fontFamily.heading }}>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Este es un título principal
         </h1>
@@ -137,7 +137,7 @@ const PreviewSection: React.FC<{ typography: AdvancedTemplateTypography }> = ({ 
           Este es un subtítulo
         </h2>
       </div>
-      <div style={{ fontFamily: typography.fontFamilies.primary }}>
+      <div style={{ fontFamily: typography.fontFamily.primary }}>
         <p className="text-base text-gray-700 mb-2">
           Este es un párrafo de ejemplo con texto regular. El diseño de la tipografía es fundamental para la legibilidad y la jerarquía visual de tu proyecto.
         </p>
@@ -154,7 +154,7 @@ const FontSizesSection: React.FC<{
   typography: AdvancedTemplateTypography;
   onChange: (typography: AdvancedTemplateTypography) => void;
 }> = ({ typography, onChange }) => {
-  const fontSizeKeys: (keyof AdvancedTemplateTypography['fontSizes'])[] = [
+  const fontSizeKeys: (keyof AdvancedTemplateTypography['fontSize'])[] = [
     'xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl'
   ];
 
@@ -167,12 +167,12 @@ const FontSizesSection: React.FC<{
             <label className="block text-xs text-gray-600 mb-1">{size}</label>
             <input
               type="text"
-              value={typography.fontSizes[size] || ""}
+              value={typography.fontSize[size] || ""}
               onChange={(e) =>
                 onChange({
                   ...typography,
-                  fontSizes: {
-                    ...typography.fontSizes,
+                  fontSize: {
+                    ...typography.fontSize,
                     [size]: e.target.value,
                   },
                 })
@@ -187,12 +187,12 @@ const FontSizesSection: React.FC<{
   );
 };
 
-// ===== FontWeightsSection Component =====
-const FontWeightsSection: React.FC<{
+// ===== fontWeightSection Component =====
+const FontWeightSection: React.FC<{
   typography: AdvancedTemplateTypography;
   onChange: (typography: AdvancedTemplateTypography) => void;
 }> = ({ typography, onChange }) => {
-  const fontWeightKeys: (keyof AdvancedTemplateTypography['fontWeights'])[] = [
+  const fontWeightKeys: (keyof AdvancedTemplateTypography['fontWeight'])[] = [
     'thin', 'light', 'normal', 'medium', 'semibold', 'bold', 'extrabold', 'black'
   ];
 
@@ -208,12 +208,12 @@ const FontWeightsSection: React.FC<{
               min="100"
               max="900"
               step="100"
-              value={typography.fontWeights[weight] || ""}
+              value={typography.fontWeight[weight] || ""}
               onChange={(e) =>
                 onChange({
                   ...typography,
-                  fontWeights: {
-                    ...typography.fontWeights,
+                  fontWeight: {
+                    ...typography.fontWeight,
                     [weight]: parseInt(e.target.value) || 400,
                   },
                 })
@@ -238,33 +238,33 @@ const TypographyControls: React.FC<TypographyControlsProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FontSelector
           label="Fuente Principal"
-          value={typography.fontFamilies.primary}
+          value={typography.fontFamily.primary}
           onChange={(value) =>
             onChange({
               ...typography,
-              fontFamilies: {
-                ...typography.fontFamilies,
+              fontFamily: {
+                ...typography.fontFamily,
                 primary: value,
               },
             })
           }
           type="primary"
-          fontFamilies={FONT_FAMILIES}
+          fontFamily={FONT_FAMILIES}
         />
         <FontSelector
           label="Fuente de Títulos"
-          value={typography.fontFamilies.heading}
+          value={typography.fontFamily.heading}
           onChange={(value) =>
             onChange({
               ...typography,
-              fontFamilies: {
-                ...typography.fontFamilies,
+              fontFamily: {
+                ...typography.fontFamily,
                 heading: value,
               },
             })
           }
           type="heading"
-          fontFamilies={FONT_FAMILIES}
+          fontFamily={FONT_FAMILIES}
         />
       </div>
 
@@ -272,7 +272,7 @@ const TypographyControls: React.FC<TypographyControlsProps> = ({
       
       <FontSizesSection typography={typography} onChange={onChange} />
       
-      <FontWeightsSection typography={typography} onChange={onChange} />
+      <FontWeightSection typography={typography} onChange={onChange} />
     </div>
   );
 };

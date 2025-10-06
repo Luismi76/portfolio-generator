@@ -154,13 +154,6 @@ export interface ExportOptions {
   format?: 'single' | 'multi-page';
 }
 
-// Resultado de operaciones de exportación
-export interface ExportResult {
-  success: boolean;
-  message: string;
-  files?: FileExport;
-}
-
 // Props para formularios de sección
 export interface PersonalInfoFormProps {
   data: PersonalInfo;
@@ -370,3 +363,9 @@ export const TECH_ICONS_CONFIG: TechIconConfig = {
   // Default
   'default': { emoji: '⚡', color: '#6366F1' },
 };
+export type ExportFiles = Record<string, string>;
+export type ExportResult = { success: boolean; message: string; files?: ExportFiles };
+
+export interface IExporter {
+  export(): Promise<ExportResult>;
+}

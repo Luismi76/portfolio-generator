@@ -1,4 +1,5 @@
 import { PortfolioData } from "./portfolio-types";
+import { Template } from "./template-types";
 
 // Áreas disponibles
 export type LayoutArea =
@@ -120,13 +121,13 @@ export interface AdvancedTemplateColors {
 
 // Tipografía
 export interface AdvancedTemplateTypography {
-  fontFamilies: {
+  fontFamily: {
     primary: string;
     heading: string;
     monospace?: string;
     display?: string;
   };
-  fontSizes: {
+  fontSize: {
     xs: string;
     sm: string;
     base: string;
@@ -138,7 +139,7 @@ export interface AdvancedTemplateTypography {
     "5xl": string;
     "6xl": string;
   };
-  fontWeights: {
+  fontWeight: {
     thin: number;
     light: number;
     normal: number;
@@ -148,7 +149,7 @@ export interface AdvancedTemplateTypography {
     extrabold: number;
     black: number;
   };
-  lineHeights: {
+  lineHeight: {
     tight: number;
     snug: number;
     normal: number;
@@ -206,7 +207,7 @@ export interface AdvancedTemplateLayout {
 }
 
 // Plantilla avanzada
-export interface AdvancedTemplate {
+export interface AdvancedTemplate extends Template {
   id: string;
   name: string;
   description: string;
@@ -221,7 +222,6 @@ export interface AdvancedTemplate {
   preview: string;
 
   colors: AdvancedTemplateColors;
-  typography: AdvancedTemplateTypography;
   layout: AdvancedTemplateLayout;
   layoutStructure: TemplateLayoutStructure;
 

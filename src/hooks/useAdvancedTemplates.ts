@@ -239,7 +239,7 @@ export const useAdvancedTemplates = (
               --surface: ${config.customizations.colors?.surface || selectedTemplate.colors.surface};
             }
             body {
-              font-family: ${config.customizations.typography?.fontFamilies?.primary || selectedTemplate.typography.fontFamilies.primary};
+              font-family: ${config.customizations.typography?.fontFamily?.primary || selectedTemplate.typography.fontFamily.primary};
               background: var(--background);
               color: ${config.customizations.colors?.text?.primary || selectedTemplate.colors.text.primary};
               margin: 0; padding: 0;
@@ -393,12 +393,12 @@ export function applyTemplateToDOM(tpl: AdvancedTemplate | null) {
   root.style.setProperty('--info', tpl.colors.info);
 
   // Tipografía principal
-  const ff = tpl.typography.fontFamilies;
+  const ff = tpl.typography.fontFamily;
   root.style.setProperty('--font-primary', ff.primary);
   root.style.setProperty('--font-heading', ff.heading);
-  if (ff.monospace) root.style.setProperty('--font-mono', ff.monospace);
+  if (ff.code) root.style.setProperty('--font-mono', ff.code);
 
-  const fs = tpl.typography.fontSizes;
+  const fs = tpl.typography.fontSize;
   Object.entries(fs).forEach(([k, v]) => root.style.setProperty(`--font-${k}`, v));
 
   // Layout básicos

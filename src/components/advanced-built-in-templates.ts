@@ -103,21 +103,21 @@ const MODERN_GRADIENT_TEMPLATE: AdvancedTemplate = {
   },
 
   typography: {
-    fontFamilies: {
+    fontFamily: {
       primary: "'Inter', -apple-system, sans-serif",
       heading: "'Inter', -apple-system, sans-serif",
-      monospace: "'JetBrains Mono', monospace",
+      code: "'JetBrains Mono', code",
     },
-    fontSizes: {
+    fontSize: {
       xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem",
       xl: "1.25rem", "2xl": "1.5rem", "3xl": "1.875rem", "4xl": "2.25rem",
       "5xl": "3rem", "6xl": "3.75rem",
     },
-    fontWeights: {
+    fontWeight: {
       thin: 100, light: 300, normal: 400, medium: 500,
       semibold: 600, bold: 700, extrabold: 800, black: 900,
     },
-    lineHeights: {
+    lineHeight: {
       tight: 1.25, snug: 1.375, normal: 1.5, relaxed: 1.625, loose: 2,
     },
     letterSpacing: {
@@ -206,21 +206,21 @@ const SIDEBAR_LEFT_TEMPLATE: AdvancedTemplate = {
   },
 
   typography: {
-    fontFamilies: {
+    fontFamily: {
       primary: "'Roboto', -apple-system, sans-serif",
       heading: "'Roboto Slab', Georgia, serif",
-      monospace: "'Fira Code', monospace",
+      code: "'Fira Code', code",
     },
-    fontSizes: {
+    fontSize: {
       xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem",
       xl: "1.25rem", "2xl": "1.5rem", "3xl": "1.875rem", "4xl": "2.25rem",
       "5xl": "3rem", "6xl": "3.75rem",
     },
-    fontWeights: {
+    fontWeight: {
       thin: 100, light: 300, normal: 400, medium: 500,
       semibold: 600, bold: 700, extrabold: 800, black: 900,
     },
-    lineHeights: {
+    lineHeight: {
       tight: 1.25, snug: 1.375, normal: 1.5, relaxed: 1.625, loose: 2,
     },
     letterSpacing: {
@@ -313,20 +313,20 @@ const MINIMAL_TEMPLATE: AdvancedTemplate = {
   },
 
   typography: {
-    fontFamilies: {
+    fontFamily: {
       primary: "'Helvetica Neue', Helvetica, Arial, sans-serif",
       heading: "'Helvetica Neue', Helvetica, Arial, sans-serif",
     },
-    fontSizes: {
+    fontSize: {
       xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem",
       xl: "1.25rem", "2xl": "1.5rem", "3xl": "2rem", "4xl": "3rem",
       "5xl": "4rem", "6xl": "5rem",
     },
-    fontWeights: {
+    fontWeight: {
       thin: 100, light: 300, normal: 400, medium: 400,
       semibold: 500, bold: 600, extrabold: 700, black: 800,
     },
-    lineHeights: {
+    lineHeight: {
       tight: 1.2, snug: 1.3, normal: 1.5, relaxed: 1.7, loose: 2,
     },
     letterSpacing: {
@@ -416,20 +416,20 @@ const CREATIVE_DUAL_TEMPLATE: AdvancedTemplate = {
   },
 
   typography: {
-    fontFamilies: {
+    fontFamily: {
       primary: "'Quicksand', -apple-system, sans-serif",
       heading: "'Playfair Display', Georgia, serif",
     },
-    fontSizes: {
+    fontSize: {
       xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem",
       xl: "1.25rem", "2xl": "1.5rem", "3xl": "2rem", "4xl": "2.5rem",
       "5xl": "3rem", "6xl": "4rem",
     },
-    fontWeights: {
+    fontWeight: {
       thin: 100, light: 300, normal: 400, medium: 500,
       semibold: 600, bold: 700, extrabold: 800, black: 900,
     },
-    lineHeights: {
+    lineHeight: {
       tight: 1.2, snug: 1.4, normal: 1.6, relaxed: 1.8, loose: 2,
     },
     letterSpacing: {
@@ -529,21 +529,21 @@ const TECH_DARK_TEMPLATE: AdvancedTemplate = {
   },
 
   typography: {
-    fontFamilies: {
-      primary: "'JetBrains Mono', 'Fira Code', monospace",
+    fontFamily: {
+      primary: "'JetBrains Mono', 'Fira Code', code",
       heading: "'Space Grotesk', system-ui, sans-serif",
-      monospace: "'JetBrains Mono', monospace",
+      code: "'JetBrains Mono', code",
     },
-    fontSizes: {
+    fontSize: {
       xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem",
       xl: "1.25rem", "2xl": "1.5rem", "3xl": "1.875rem", "4xl": "2.5rem",
       "5xl": "3rem", "6xl": "4rem",
     },
-    fontWeights: {
+    fontWeight: {
       thin: 100, light: 300, normal: 400, medium: 500,
       semibold: 600, bold: 700, extrabold: 800, black: 900,
     },
-    lineHeights: {
+    lineHeight: {
       tight: 1.3, snug: 1.4, normal: 1.6, relaxed: 1.75, loose: 2,
     },
     letterSpacing: {
@@ -633,21 +633,21 @@ const ELEGANT_SERIF_TEMPLATE: AdvancedTemplate = {
   },
 
   typography: {
-    fontFamilies: {
+    fontFamily: {
       primary: "'Crimson Text', Georgia, serif",
       heading: "'Playfair Display', Georgia, serif",
-      monospace: "'Courier Prime', monospace",
+      code: "'Courier Prime', code",
     },
-    fontSizes: {
+    fontSize: {
       xs: "0.875rem", sm: "1rem", base: "1.125rem", lg: "1.25rem",
       xl: "1.5rem", "2xl": "1.875rem", "3xl": "2.25rem", "4xl": "3rem",
       "5xl": "3.75rem", "6xl": "4.5rem",
     },
-    fontWeights: {
+    fontWeight: {
       thin: 200, light: 300, normal: 400, medium: 500,
       semibold: 600, bold: 700, extrabold: 800, black: 900,
     },
-    lineHeights: {
+    lineHeight: {
       tight: 1.3, snug: 1.5, normal: 1.7, relaxed: 1.9, loose: 2.2,
     },
     letterSpacing: {
@@ -739,21 +739,21 @@ const VIBRANT_CARDS_TEMPLATE: AdvancedTemplate = {
   },
 
   typography: {
-    fontFamilies: {
+    fontFamily: {
       primary: "'DM Sans', system-ui, sans-serif",
       heading: "'Outfit', system-ui, sans-serif",
-      monospace: "'IBM Plex Mono', monospace",
+      code: "'IBM Plex Mono', code",
     },
-    fontSizes: {
+    fontSize: {
       xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem",
       xl: "1.25rem", "2xl": "1.5rem", "3xl": "2rem", "4xl": "2.5rem",
       "5xl": "3.5rem", "6xl": "4.5rem",
     },
-    fontWeights: {
+    fontWeight: {
       thin: 100, light: 300, normal: 400, medium: 500,
       semibold: 600, bold: 700, extrabold: 800, black: 900,
     },
-    lineHeights: {
+    lineHeight: {
       tight: 1.25, snug: 1.4, normal: 1.6, relaxed: 1.75, loose: 2,
     },
     letterSpacing: {
@@ -842,21 +842,21 @@ const CORPORATE_BLUE_TEMPLATE: AdvancedTemplate = {
   },
 
   typography: {
-    fontFamilies: {
+    fontFamily: {
       primary: "'IBM Plex Sans', system-ui, sans-serif",
       heading: "'IBM Plex Sans', system-ui, sans-serif",
-      monospace: "'IBM Plex Mono', monospace",
+      code: "'IBM Plex Mono', code",
     },
-    fontSizes: {
+    fontSize: {
       xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem",
       xl: "1.25rem", "2xl": "1.5rem", "3xl": "1.875rem", "4xl": "2.25rem",
       "5xl": "3rem", "6xl": "3.75rem",
     },
-    fontWeights: {
+    fontWeight: {
       thin: 100, light: 300, normal: 400, medium: 500,
       semibold: 600, bold: 700, extrabold: 800, black: 900,
     },
-    lineHeights: {
+    lineHeight: {
       tight: 1.25, snug: 1.375, normal: 1.5, relaxed: 1.625, loose: 2,
     },
     letterSpacing: {
@@ -952,21 +952,21 @@ const WARM_SUNSET_TEMPLATE: AdvancedTemplate = {
   },
 
   typography: {
-    fontFamilies: {
+    fontFamily: {
       primary: "'Nunito', system-ui, sans-serif",
       heading: "'Poppins', system-ui, sans-serif",
-      monospace: "'Roboto Mono', monospace",
+      code: "'Roboto Mono', code",
     },
-    fontSizes: {
+    fontSize: {
       xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem",
       xl: "1.25rem", "2xl": "1.5rem", "3xl": "2rem", "4xl": "2.75rem",
       "5xl": "3.5rem", "6xl": "4.5rem",
     },
-    fontWeights: {
+    fontWeight: {
       thin: 200, light: 300, normal: 400, medium: 600,
       semibold: 700, bold: 800, extrabold: 900, black: 900,
     },
-    lineHeights: {
+    lineHeight: {
       tight: 1.2, snug: 1.4, normal: 1.6, relaxed: 1.8, loose: 2,
     },
     letterSpacing: {
@@ -1053,21 +1053,21 @@ const MONOCHROME_GRID_TEMPLATE: AdvancedTemplate = {
   },
 
   typography: {
-    fontFamilies: {
+    fontFamily: {
       primary: "'Inter', -apple-system, sans-serif",
       heading: "'Syne', system-ui, sans-serif",
-      monospace: "'Space Mono', monospace",
+      code: "'Space Mono', code",
     },
-    fontSizes: {
+    fontSize: {
       xs: "0.75rem", sm: "0.875rem", base: "1rem", lg: "1.125rem",
       xl: "1.375rem", "2xl": "1.75rem", "3xl": "2.25rem", "4xl": "3rem",
       "5xl": "4rem", "6xl": "5rem",
     },
-    fontWeights: {
+    fontWeight: {
       thin: 100, light: 300, normal: 400, medium: 500,
       semibold: 600, bold: 700, extrabold: 800, black: 900,
     },
-    lineHeights: {
+    lineHeight: {
       tight: 1.1, snug: 1.3, normal: 1.5, relaxed: 1.7, loose: 2,
     },
     letterSpacing: {

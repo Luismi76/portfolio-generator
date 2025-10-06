@@ -8,7 +8,7 @@ import AdvancedTemplateSelector from "./components/AdvancedTemplateSelector";
 import { AdvancedTemplateCustomizer } from "./components/AdvancedTemplateCustomizer";
 import { useAdvancedTemplates } from "./hooks/useAdvancedTemplates";
 import TemplatePreviewModal from "./components/preview";
-import { AdvancedTemplate } from './types/advanced-template-types';
+import { AdvancedTemplate, AdvancedTemplateConfig } from "./types/advanced-template-types";
 import { AppMode } from "./types/portfolio-types";
 
 interface AppState {
@@ -52,105 +52,98 @@ const AppHeader: React.FC<{
   };
 }> = ({ currentMode, onModeChange, hasUnsavedChanges, customizeActions }) => (
   <header className="bg-white shadow-sm border-b sticky top-0 z-40">
-  <div className="max-w-7xl mx-auto px-4 py-3">
-    <div className="flex items-center justify-between">
+    <div className="max-w-7xl mx-auto px-4 py-3">
+      <div className="flex items-center justify-between">
+        {/* LOGO + TÍTULO */}
+        <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
+          <h1 className="text-xl font-bold text-gray-800">Portfolio Generator</h1>
+        </div>
 
-      {/* LOGO + TÍTULO */}
-      <div className="flex items-center gap-2">
-        <img
-          src="/logo.png"
-          alt="Logo"
-          className="w-10 h-10 object-contain"
-        />
-        <h1 className="text-xl font-bold text-gray-800">Portfolio Generator</h1>
-      </div>
+        <div className="flex items-center gap-2">
+          {/* BOTONES PRINCIPALES - SIEMPRE VISIBLES */}
+          <button
+            onClick={() => onModeChange("editor")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+              currentMode === "editor"
+                ? "bg-blue-600 text-white shadow-md"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            <span>📝</span>
+            <span className="hidden sm:inline">Editor</span>
+          </button>
 
-      <div className="flex items-center gap-2">
-        {/* BOTONES PRINCIPALES - SIEMPRE VISIBLES */}
-        <button
-          onClick={() => onModeChange("editor")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-            currentMode === "editor"
-              ? "bg-blue-600 text-white shadow-md"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          <span>📝</span>
-          <span className="hidden sm:inline">Editor</span>
-        </button>
+          <button
+            onClick={() => onModeChange("templates")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+              currentMode === "templates"
+                ? "bg-purple-600 text-white shadow-md"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            <span>🎨</span>
+            <span className="hidden sm:inline">Plantillas</span>
+          </button>
 
-        <button
-          onClick={() => onModeChange("templates")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-            currentMode === "templates"
-              ? "bg-purple-600 text-white shadow-md"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          <span>🎨</span>
-          <span className="hidden sm:inline">Plantillas</span>
-        </button>
+          <button
+            onClick={() => onModeChange("portfolio")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+              currentMode === "portfolio"
+                ? "bg-green-600 text-white shadow-md"
+                : "text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            <span>👁️</span>
+            <span className="hidden sm:inline">Portfolio</span>
+          </button>
 
-        <button
-          onClick={() => onModeChange("portfolio")}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-            currentMode === "portfolio"
-              ? "bg-green-600 text-white shadow-md"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          <span>👁️</span>
-          <span className="hidden sm:inline">Portfolio</span>
-        </button>
+          {/* SEPARADOR cuando hay botones de customize */}
+          {currentMode === "customize" && customizeActions && (
+            <div className="w-px h-8 bg-gray-300 mx-2"></div>
+          )}
 
-        {/* SEPARADOR cuando hay botones de customize */}
-        {currentMode === "customize" && customizeActions && (
-          <div className="w-px h-8 bg-gray-300 mx-2"></div>
-        )}
+          {/* BOTONES DE CUSTOMIZE - SOLO CUANDO ESTÁS EN ESE MODO */}
+          {currentMode === "customize" && customizeActions && (
+            <>
+              {customizeActions.onReset && (
+                <button
+                  onClick={customizeActions.onReset}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
+                >
+                  Resetear
+                </button>
+              )}
+              {customizeActions.onPreview && (
+                <button
+                  onClick={customizeActions.onPreview}
+                  className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-sm flex items-center gap-2"
+                >
+                  👁️ Vista Previa
+                </button>
+              )}
+              {customizeActions.onSave && (
+                <button
+                  onClick={customizeActions.onSave}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                >
+                  ✓ Guardar
+                </button>
+              )}
+            </>
+          )}
 
-        {/* BOTONES DE CUSTOMIZE - SOLO CUANDO ESTÁS EN ESE MODO */}
-        {currentMode === "customize" && customizeActions && (
-          <>
-            {customizeActions.onReset && (
-              <button
-                onClick={customizeActions.onReset}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm"
-              >
-                Resetear
-              </button>
-            )}
-            {customizeActions.onPreview && (
-              <button
-                onClick={customizeActions.onPreview}
-                className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-sm flex items-center gap-2"
-              >
-                👁️ Vista Previa
-              </button>
-            )}
-            {customizeActions.onSave && (
-              <button
-                onClick={customizeActions.onSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-              >
-                ✓ Guardar
-              </button>
-            )}
-          </>
-        )}
-
-        {hasUnsavedChanges && (
-          <span className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full ml-2">
-            <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
-            <span className="hidden md:inline">Sin guardar</span>
-          </span>
-        )}
+          {hasUnsavedChanges && (
+            <span className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full ml-2">
+              <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
+              <span className="hidden md:inline">Sin guardar</span>
+            </span>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-</header>
-
+  </header>
 );
-
 
 const App: React.FC = () => {
   // Hook avanzado de plantillas
@@ -166,22 +159,14 @@ const App: React.FC = () => {
     // 2. Parámetro URL (?mode=editor|portfolio|templates|customize|preview)
     const urlParams = new URLSearchParams(window.location.search);
     const urlMode = urlParams.get("mode") as AppMode;
-    if (
-      ["editor", "portfolio", "templates", "customize", "preview"].includes(
-        urlMode
-      )
-    ) {
+    if (["editor", "portfolio", "templates", "customize", "preview"].includes(urlMode)) {
       return urlMode;
     }
 
     // 3. LocalStorage
     try {
       const savedMode = localStorage.getItem("app-mode") as AppMode;
-      if (
-        ["editor", "portfolio", "templates", "customize", "preview"].includes(
-          savedMode
-        )
-      ) {
+      if (["editor", "portfolio", "templates", "customize", "preview"].includes(savedMode)) {
         return savedMode;
       }
     } catch (error) {
@@ -201,9 +186,22 @@ const App: React.FC = () => {
 
   // Estado para vista previa rápida
   const [showPreview, setShowPreview] = useState(false);
-  // const [previewContent, setPreviewContent] = useState("");
-  const [previewTemplate, setPreviewTemplate] =
-    useState<AdvancedTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<AdvancedTemplate | null>(null);
+
+  // Fallback seguro para el modal de vista previa (cumple AdvancedTemplateConfig)
+  const previewFallbackConfig = React.useMemo<AdvancedTemplateConfig>(
+    () => ({
+      templateId: previewTemplate?.id ?? templates.selectedTemplate?.id ?? "preview-fallback",
+      lastModified: new Date().toISOString(),
+      customizations: {
+        colors: {},
+        typography: {},
+        layout: {},
+        sections: [],
+      },
+    }),
+    [previewTemplate?.id, templates.selectedTemplate?.id]
+  );
 
   // Cambiar modo - envuelto en useCallback
   const switchMode = useCallback(
@@ -252,10 +250,7 @@ const App: React.FC = () => {
         config: templates.config,
         timestamp: new Date().toISOString(),
       };
-      localStorage.setItem(
-        "saved-portfolio-config",
-        JSON.stringify(configToSave)
-      );
+      localStorage.setItem("saved-portfolio-config", JSON.stringify(configToSave));
       alert("✅ Configuración guardada correctamente");
     } catch (error) {
       console.error("Error guardando configuración:", error);
@@ -270,12 +265,7 @@ const App: React.FC = () => {
         switch (event.key.toLowerCase()) {
           case "m": {
             event.preventDefault();
-            const modes: AppMode[] = [
-              "editor",
-              "templates",
-              "customize",
-              "portfolio",
-            ];
+            const modes: AppMode[] = ["editor", "templates", "customize", "portfolio"];
             const currentIndex = modes.indexOf(appState.mode);
             const nextMode = modes[(currentIndex + 1) % modes.length];
             switchMode(nextMode);
@@ -309,13 +299,7 @@ const App: React.FC = () => {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [
-    appState.mode,
-    templates.hasUnsavedChanges,
-    switchMode,
-    handleQuickPreview,
-    handleSaveTemplate,
-  ]);
+  }, [appState.mode, templates.hasUnsavedChanges, switchMode, handleQuickPreview, handleSaveTemplate]);
 
   // Efecto para manejar la carga inicial
   useEffect(() => {
@@ -354,12 +338,8 @@ const App: React.FC = () => {
           <LoadingSpinner size="lg" />
 
           <div className="mt-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">
-              Portfolio Generator
-            </h2>
-            <p className="text-gray-600 text-lg">
-              Cargando tu editor de portfolios profesionales...
-            </p>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Portfolio Generator</h2>
+            <p className="text-gray-600 text-lg">Cargando tu editor de portfolios profesionales...</p>
           </div>
 
           <div className="mt-8 text-sm text-gray-500">
@@ -378,9 +358,7 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-lg w-full bg-white rounded-2xl shadow-2xl p-8 text-center border border-red-200">
           <div className="text-red-500 text-7xl mb-6">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-3">
-            ¡Oops! Algo salió mal
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-3">¡Oops! Algo salió mal</h2>
           <p className="text-gray-600 mb-8 leading-relaxed">{appState.error}</p>
           <div className="space-y-4">
             <button
@@ -437,12 +415,8 @@ const App: React.FC = () => {
           <div className="min-h-screen bg-gray-50 flex items-center justify-center">
             <div className="text-center bg-white rounded-2xl p-12 shadow-lg max-w-md">
               <div className="text-6xl mb-4">🎨</div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-3">
-                No hay plantilla seleccionada
-              </h2>
-              <p className="text-gray-600 mb-8">
-                Selecciona una plantilla para personalizar
-              </p>
+              <h2 className="text-2xl font-bold text-gray-800 mb-3">No hay plantilla seleccionada</h2>
+              <p className="text-gray-600 mb-8">Selecciona una plantilla para personalizar</p>
               <button
                 onClick={() => switchMode("templates")}
                 className="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 font-semibold"
@@ -459,9 +433,7 @@ const App: React.FC = () => {
             <div className="bg-white shadow-sm border-b">
               <div className="max-w-7xl mx-auto px-6 py-4">
                 <div className="flex items-center justify-between">
-                  <h1 className="text-xl font-semibold text-gray-800">
-                    Vista Previa
-                  </h1>
+                  <h1 className="text-xl font-semibold text-gray-800">Vista Previa</h1>
                   <button
                     onClick={() => switchMode("editor")}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
@@ -521,6 +493,7 @@ const App: React.FC = () => {
             setPreviewTemplate(null);
           }}
           template={previewTemplate}
+          config={templates.config ?? previewFallbackConfig}
         />
       )}
     </div>

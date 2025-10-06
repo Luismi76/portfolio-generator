@@ -39,15 +39,34 @@ export interface TemplateTypography {
     '2xl': string;
     '3xl': string;
     '4xl': string;
+    '5xl': string;
+    '6xl': string;
   };
   fontWeight: {
     normal: number;
     medium: number;
     semibold: number;
     bold: number;
+    thin: number;
+    light: number;
+    extrabold: number;
+    black: number;
   };
+  lineHeight: {
+    tight: number;
+    snug: number;
+    normal: number;
+    relaxed: number;
+    loose: number;
+  }
+  letterSpacing: {
+    tighter: string;
+    tight: string;
+    normal: string;
+    wide: string;
+    wider: string;
 }
-
+}
 // =====================
 // Layout y espaciado
 // =====================
@@ -89,7 +108,14 @@ export interface TemplateSection {
 // =====================
 // Plantilla completa
 // =====================
-export type TemplateCategory = 'modern' | 'classic' | 'creative' | 'minimal' | 'tech';
+export type TemplateCategory =
+  | 'modern'
+  | 'classic'
+  | 'creative'
+  | 'minimal'
+  | 'tech'
+  | 'business'
+  | 'portfolio';
 
 export interface Template {
   id: string;

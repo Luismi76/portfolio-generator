@@ -4,9 +4,10 @@ import type { PortfolioData, Project } from "../types/portfolio-types";
 import type { TemplateSection, Template } from "../types/template-types";
 import { TemplateTheme } from "./TemplateTheme";
 import { TechList } from "./TechIcons";
-import { getDefaultTemplate } from "./built-in-templates";
 import { Icons } from "./portfolio-icons";
 import ProjectDetailsModal from "./portfolio/ProjectDetailsModal";
+import { getDefaultAdvancedTemplate } from "./advanced-built-in-templates";
+import { generateSlug } from '../utils/export-utils';
 
 import type {
   AdvancedTemplate,
@@ -21,6 +22,7 @@ type TemplateRendererProps = {
   onOpenProject?: (p: Project) => void;
   template?: AdvancedTemplate;
   config?: AdvancedTemplateConfig;
+  isSSR?: boolean; // ← NUEVA PROP PARA SSR
 };
 
 /* ---------------- helpers ---------------- */
@@ -98,13 +100,36 @@ function buildAdvancedCSSVars(
   if (!t) return {};
 
   const cols = { ...t.colors, ...(c?.customizations?.colors || {}) };
-  const typo = { ...t.typography, ...(c?.customizations?.typography || {}) };
-  const layout = { ...t.layout, ...(c?.customizations?.layout || {}) };
 
-  const fs = typo.fontSizes || ({} as any);
-  const ff = typo.fontFamilies || ({} as any);
+  // Acepta singular (canónico) y plural (legacy)
+  const typRaw: any = {
+    ...(t.typography as any),
+    ...((c?.customizations as any)?.typography || {}),
+  };
+  const typo = {
+    fontFamily: typRaw.fontFamily ?? typRaw.fontFamilies ?? {},
+    fontSize: typRaw.fontSize ?? typRaw.fontSizes ?? {},
+    fontWeight: typRaw.fontWeight ?? typRaw.fontWeights ?? {},
+    lineHeight: typRaw.lineHeight ?? typRaw.lineHeights ?? {},
+    letterSpacing: typRaw.letterSpacing ?? {},
+  };
+
+  // Acepta alias en layout si existieran (opcional)
+  const layRaw: any = {
+    ...(t.layout as any),
+    ...((c?.customizations as any)?.layout || {}),
+  };
+  const layout = {
+    ...layRaw,
+    spacing: layRaw.spacing ?? layRaw.spacings ?? {},
+    borderRadius: layRaw.borderRadius ?? layRaw.radii ?? {},
+  };
+
+  const fs = typo.fontSize as any;
+  const ff = typo.fontFamily as any;
+
   const ls = typo.letterSpacing || ({} as any);
-  const lh = typo.lineHeights || ({} as any);
+  const lh = typo.lineHeight || ({} as any);
   const sp = layout.spacing || ({} as any);
   const br = layout.borderRadius || ({} as any);
 
@@ -176,10 +201,11 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({
   onOpenProject,
   template: effectiveTemplate,
   config,
+  isSSR = false, // ← VALOR POR DEFECTO
 }) => {
   // Template base que copia los colores activos (para que TemplateTheme calcule el header)
   const themeTemplate: Template = useMemo(() => {
-    const base = getDefaultTemplate();
+    const base = getDefaultAdvancedTemplate();
     if (!effectiveTemplate) return base;
     return {
       ...base,
@@ -257,236 +283,189 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({
 
   /* ===== Renderers de secciones ===== */
 
-const renderHeader = () => {
-  // Si no hay secciones en header, no pintamos cabecera
-  if (byArea.header.length === 0) return null;
+  const renderHeader = () => {
+    // Si no hay secciones en header, no pintamos cabecera
+    if (byArea.header.length === 0) return null;
 
-  const headerConfig = config?.customizations.headerConfig;
-  const showAvatar = headerConfig?.showAvatar && headerConfig?.avatarUrl;
-  const avatarPosition = headerConfig?.avatarPosition || "center";
-  const avatarSize = (headerConfig?.avatarSize || "md") as "sm" | "md" | "lg";
+    const headerConfig = config?.customizations.headerConfig;
+    const showAvatar = headerConfig?.showAvatar && headerConfig?.avatarUrl;
+    const avatarPosition = headerConfig?.avatarPosition || "center";
+    const avatarSize = (headerConfig?.avatarSize || "md") as "sm" | "md" | "lg";
 
-  const avatarSizes: Record<"sm" | "md" | "lg", string> = {
-    sm: "80px",
-    md: "120px",
-    lg: "160px",
-  };
+    const avatarSizes: Record<"sm" | "md" | "lg", string> = {
+      sm: "80px",
+      md: "120px",
+      lg: "160px",
+    };
 
-  // Scroll suave a proyectos
-  const handleProjectsClick: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
-    const el = document.getElementById("projects");
-    if (el) {
-      e.preventDefault();
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
+    // Scroll suave a proyectos
+    const handleProjectsClick: React.MouseEventHandler<HTMLAnchorElement> = (
+      e
+    ) => {
+      const el = document.getElementById("projects");
+      if (el) {
+        e.preventDefault();
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
 
-  // SIMPLIFICADO: Obtener background del header
-  const getHeaderBackground = (): string => {
-    // Intentar obtener gradiente configurado
-    const gradients = 
-      config?.customizations?.colors?.gradients ?? 
-      effectiveTemplate?.colors?.gradients;
-    
-    // Usar gradiente primary como fallback (es el más común para headers)
-    const gradient = gradients?.primary;
-    
-    if (gradient?.from && gradient?.to) {
-      const direction = gradient.direction || "135deg";
-      return `linear-gradient(${direction}, ${gradient.from}, ${gradient.to})`;
-    }
-    
-    // Fallback a color primario
-    return config?.customizations?.colors?.primary ?? 
-           effectiveTemplate?.colors?.primary ?? 
-           "var(--color-primary)";
-  };
+    // SIMPLIFICADO: Obtener background del header
+    const getHeaderBackground = (): string => {
+      // Intentar obtener gradiente configurado
+      const gradients =
+        config?.customizations?.colors?.gradients ??
+        effectiveTemplate?.colors?.gradients;
 
-  const headerBg = getHeaderBackground();
-  const name = data.personalInfo.fullName || "Tu Portfolio";
-  const subtitle = data.personalInfo.title?.trim() || "";
+      // Usar gradiente primary como fallback (es el más común para headers)
+      const gradient = gradients?.primary;
 
-  // Helper para validar URLs
-  const isValidUrl = (url?: string): boolean => {
-    if (!url) return false;
-    try {
-      new URL(url.startsWith('http') ? url : `https://${url}`);
-      return true;
-    } catch {
-      return false;
-    }
-  };
+      if (gradient?.from && gradient?.to) {
+        const direction = gradient.direction || "135deg";
+        return `linear-gradient(${direction}, ${gradient.from}, ${gradient.to})`;
+      }
 
-  // Redes sociales con validación
-  const socialLinks = [
-    { 
-      url: data.personalInfo.github, 
-      Icon: Icons.Github, 
-      label: "GitHub",
-      isValid: isValidUrl(data.personalInfo.github)
-    },
-    { 
-      url: data.personalInfo.linkedin, 
-      Icon: Icons.Linkedin, 
-      label: "LinkedIn",
-      isValid: isValidUrl(data.personalInfo.linkedin)
-    },
-    { 
-      url: data.personalInfo.website, 
-      Icon: Icons.Globe, 
-      label: "Sitio web",
-      isValid: isValidUrl(data.personalInfo.website)
-    },
-  ].filter(link => link.isValid);
+      // Fallback a color primario
+      return (
+        config?.customizations?.colors?.primary ??
+        effectiveTemplate?.colors?.primary ??
+        "var(--color-primary)"
+      );
+    };
 
-  return (
-    <header
-      className="tpl-header tpl-header-bg"
-      aria-label="Encabezado del portafolio"
-      style={{
-        position: "relative",
-        isolation: "isolate",
-        overflow: "hidden",
-        paddingTop: "clamp(2rem, 5vw, var(--sp-lg))",
-        paddingBottom: "clamp(2rem, 5vw, var(--sp-lg))",
-        marginBottom: "var(--sp-md)",
-        background: headerBg,
-        color: "var(--text-on-primary, #fff)",
-      }}
-    >
-      <div
-        className="tpl-container"
+    const headerBg = getHeaderBackground();
+    const name = data.personalInfo.fullName || "Tu Portfolio";
+    const subtitle = data.personalInfo.title?.trim() || "";
+
+    // Helper para validar URLs
+    const isValidUrl = (url?: string): boolean => {
+      if (!url) return false;
+      try {
+        new URL(url.startsWith("http") ? url : `https://${url}`);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    // Redes sociales con validación
+    const socialLinks = [
+      {
+        url: data.personalInfo.github,
+        Icon: Icons.Github,
+        label: "GitHub",
+        isValid: isValidUrl(data.personalInfo.github),
+      },
+      {
+        url: data.personalInfo.linkedin,
+        Icon: Icons.Linkedin,
+        label: "LinkedIn",
+        isValid: isValidUrl(data.personalInfo.linkedin),
+      },
+      {
+        url: data.personalInfo.website,
+        Icon: Icons.Globe,
+        label: "Sitio web",
+        isValid: isValidUrl(data.personalInfo.website),
+      },
+    ].filter((link) => link.isValid);
+
+    return (
+      <header
+        className="tpl-header tpl-header-bg"
+        aria-label="Encabezado del portafolio"
         style={{
           position: "relative",
-          zIndex: 1,
-          display: "flex",
-          flexDirection: avatarPosition === "center" ? "column" : "row",
-          alignItems: avatarPosition === "center" ? "center" : "flex-start",
-          gap: "var(--sp-md)",
-          ...(avatarPosition === "right" && { flexDirection: "row-reverse" }),
+          isolation: "isolate",
+          overflow: "hidden",
+          paddingTop: "clamp(2rem, 5vw, var(--sp-lg))",
+          paddingBottom: "clamp(2rem, 5vw, var(--sp-lg))",
+          marginBottom: "var(--sp-md)",
+          background: headerBg,
+          color: "var(--text-on-primary, #fff)",
         }}
       >
-        {/* Avatar */}
-        {showAvatar && (
-          <img
-            src={headerConfig.avatarUrl}
-            alt={`Foto de perfil de ${name}`}
-            style={{
-              width: avatarSizes[avatarSize],
-              height: avatarSizes[avatarSize],
-              borderRadius: "50%",
-              objectFit: "cover",
-              border: "4px solid rgba(255,255,255,0.3)",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-              flexShrink: 0,
-            }}
-          />
-        )}
-
-        {/* Contenido de texto */}
         <div
+          className="tpl-container"
           style={{
+            position: "relative",
+            zIndex: 1,
             display: "flex",
-            flexDirection: "column",
-            gap: "var(--sp-sm)",
-            alignItems:
-              avatarPosition === "center"
-                ? "center"
-                : avatarPosition === "right"
-                ? "flex-end"
-                : "flex-start",
-            flex: 1,
+            flexDirection: avatarPosition === "center" ? "column" : "row",
+            alignItems: avatarPosition === "center" ? "center" : "flex-start",
+            gap: "var(--sp-md)",
+            ...(avatarPosition === "right" && { flexDirection: "row-reverse" }),
           }}
         >
-          {/* Nombre */}
-          <h1
-            className="tpl-heading"
-            style={{
-              fontSize: "clamp(2rem, 5vw, var(--fs-3xl))",
-              fontWeight: 700,
-              lineHeight: 1.1,
-              letterSpacing: "var(--ls-tight, -0.02em)",
-              color: "var(--text-on-primary, #fff)",
-              textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-              margin: 0,
-            }}
-          >
-            {name}
-          </h1>
-
-          {/* Subtítulo */}
-          {subtitle && (
-            <p
-              className="tpl-subtext"
+          {/* Avatar */}
+          {showAvatar && (
+            <img
+              src={headerConfig.avatarUrl}
+              alt={`Foto de perfil de ${name}`}
               style={{
-                fontSize: "clamp(1rem, 2.5vw, var(--fs-lg))",
-                opacity: 0.95,
-                color: "var(--text-on-primary, #fff)",
-                margin: 0,
+                width: avatarSizes[avatarSize],
+                height: avatarSizes[avatarSize],
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "4px solid rgba(255,255,255,0.3)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                flexShrink: 0,
               }}
-            >
-              {subtitle}
-            </p>
+            />
           )}
 
-          {/* Botones de acción */}
+          {/* Contenido de texto */}
           <div
             style={{
               display: "flex",
-              gap: 12,
-              flexWrap: "wrap",
-              marginTop: "var(--sp-sm)",
-              justifyContent:
-                avatarPosition === "center" 
-                  ? "center" 
+              flexDirection: "column",
+              gap: "var(--sp-sm)",
+              alignItems:
+                avatarPosition === "center"
+                  ? "center"
                   : avatarPosition === "right"
                   ? "flex-end"
                   : "flex-start",
+              flex: 1,
             }}
           >
-            {data.personalInfo.email && (
-              <a
-                href={`mailto:${data.personalInfo.email}`}
-                className="tpl-btn-primary"
-                aria-label={`Enviar email a ${name}`}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                <Icons.Mail size={16} aria-hidden="true" />
-                <span>Contactar</span>
-              </a>
-            )}
-
-            <a
-              href="#projects"
-              onClick={handleProjectsClick}
-              className="tpl-btn-outline"
-              aria-label="Ver mis proyectos"
+            {/* Nombre */}
+            <h1
+              className="tpl-heading"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                borderColor: "rgba(255,255,255,0.4)",
+                fontSize: "clamp(2rem, 5vw, var(--fs-3xl))",
+                fontWeight: 700,
+                lineHeight: 1.1,
+                letterSpacing: "var(--ls-tight, -0.02em)",
                 color: "var(--text-on-primary, #fff)",
-                backgroundColor: "transparent",
+                textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+                margin: 0,
               }}
             >
-              <Icons.Code size={16} aria-hidden="true" />
-              <span>Ver proyectos</span>
-            </a>
-          </div>
+              {name}
+            </h1>
 
-          {/* Enlaces sociales */}
-          {socialLinks.length > 0 && (
+            {/* Subtítulo */}
+            {subtitle && (
+              <p
+                className="tpl-subtext"
+                style={{
+                  fontSize: "clamp(1rem, 2.5vw, var(--fs-lg))",
+                  opacity: 0.95,
+                  color: "var(--text-on-primary, #fff)",
+                  margin: 0,
+                }}
+              >
+                {subtitle}
+              </p>
+            )}
+
+            {/* Botones de acción */}
             <div
               style={{
                 display: "flex",
-                gap: 10,
+                gap: 12,
                 flexWrap: "wrap",
-                marginTop: "var(--sp-xs)",
+                marginTop: "var(--sp-sm)",
                 justifyContent:
                   avatarPosition === "center"
                     ? "center"
@@ -494,66 +473,117 @@ const renderHeader = () => {
                     ? "flex-end"
                     : "flex-start",
               }}
-              role="list"
-              aria-label="Enlaces a redes sociales"
             >
-              {socialLinks.map(({ url, Icon, label }) => (
+              {data.personalInfo.email && (
                 <a
-                  key={label}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="tpl-chip"
-                  aria-label={`Visitar mi ${label}`}
-                  title={label}
+                  href={`mailto:${data.personalInfo.email}`}
+                  className="tpl-btn-primary"
+                  aria-label={`Enviar email a ${name}`}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: 6,
-                    transition: "transform 0.2s, opacity 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.opacity = "0.9";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.opacity = "1";
+                    gap: 8,
                   }}
                 >
-                  <Icon size={14} aria-hidden="true" />
-                  <span>{label}</span>
+                  <Icons.Mail size={16} aria-hidden="true" />
+                  <span>Contactar</span>
                 </a>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+              )}
 
-      {/* SVG decorativo de onda */}
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 1440 120"
-        preserveAspectRatio="none"
-        style={{
-          position: "absolute",
-          left: 0,
-          bottom: 0,
-          width: "100%",
-          height: 32,
-          opacity: 0.15,
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      >
-        <path
-          d="M0,64 C240,128 480,0 720,32 C960,64 1200,176 1440,96 L1440,160 L0,160 Z"
-          fill="currentColor"
-        />
-      </svg>
-    </header>
-  );
-};
+              <a
+                href="#projects"
+                onClick={handleProjectsClick}
+                className="tpl-btn-outline"
+                aria-label="Ver mis proyectos"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  borderColor: "rgba(255,255,255,0.4)",
+                  color: "var(--text-on-primary, #fff)",
+                  backgroundColor: "transparent",
+                }}
+              >
+                <Icons.Code size={16} aria-hidden="true" />
+                <span>Ver proyectos</span>
+              </a>
+            </div>
+
+            {/* Enlaces sociales */}
+            {socialLinks.length > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  flexWrap: "wrap",
+                  marginTop: "var(--sp-xs)",
+                  justifyContent:
+                    avatarPosition === "center"
+                      ? "center"
+                      : avatarPosition === "right"
+                      ? "flex-end"
+                      : "flex-start",
+                }}
+                role="list"
+                aria-label="Enlaces a redes sociales"
+              >
+                {socialLinks.map(({ url, Icon, label }) => (
+                  <a
+                    key={label}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="tpl-chip"
+                    aria-label={`Visitar mi ${label}`}
+                    title={label}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      transition: "transform 0.2s, opacity 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.opacity = "0.9";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.opacity = "1";
+                    }}
+                  >
+                    <Icon size={14} aria-hidden="true" />
+                    <span>{label}</span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* SVG decorativo de onda */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 1440 120"
+          preserveAspectRatio="none"
+          style={{
+            position: "absolute",
+            left: 0,
+            bottom: 0,
+            width: "100%",
+            height: 32,
+            opacity: 0.15,
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        >
+          <path
+            d="M0,64 C240,128 480,0 720,32 C960,64 1200,176 1440,96 L1440,160 L0,160 Z"
+            fill="currentColor"
+          />
+        </svg>
+      </header>
+    );
+  };
 
   const renderAbout = () => {
     const { summary } = data.personalInfo;
@@ -726,10 +756,12 @@ const renderHeader = () => {
                         marginTop: "auto",
                       }}
                     >
-                      {onOpenProject && (
-                        <button
+                      {/* ← MODIFICACIÓN PRINCIPAL: SSR vs Interactivo */}
+                      {isSSR ? (
+                        // Modo SSR: Link a página estática
+                        <a
+                          href={`proyecto-${generateSlug(p.title)}.html`}
                           className="tpl-btn-primary"
-                          onClick={() => setSelected(p)}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
@@ -738,11 +770,32 @@ const renderHeader = () => {
                             borderRadius: 8,
                             fontWeight: 600,
                             lineHeight: 1.1,
+                            textDecoration: "none",
                           }}
                         >
                           <Icons.Code size={16} aria-hidden />
                           <span>Ver detalles</span>
-                        </button>
+                        </a>
+                      ) : (
+                        // Modo normal: Botón con modal
+                        onOpenProject && (
+                          <button
+                            className="tpl-btn-primary"
+                            onClick={() => setSelected(p)}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 8,
+                              padding: "8px 12px",
+                              borderRadius: 8,
+                              fontWeight: 600,
+                              lineHeight: 1.1,
+                            }}
+                          >
+                            <Icons.Code size={16} aria-hidden />
+                            <span>Ver detalles</span>
+                          </button>
+                        )
                       )}
 
                       {p.link && (
@@ -801,7 +854,6 @@ const renderHeader = () => {
   const renderSkills = () => {
     if (!data.skills.some((s) => s.category.trim())) return null;
 
-    // Obtener columnas configuradas (igual que en projects)
     const advSkills = advancedSections?.find(
       (s) => normalizeSectionId(s.id) === "skills"
     );
@@ -881,13 +933,10 @@ const renderHeader = () => {
       </div>
     </section>
   );
-  // REEMPLAZAR LA FUNCIÓN renderFooterLike() EN TemplateRenderer.tsx
-  // Busca la función renderFooterLike (línea ~770 aproximadamente) y reemplázala con esto:
 
   const renderFooterLike = () => {
     const { personalInfo } = data;
 
-    // Obtener colores de la plantilla actual
     const primary =
       config?.customizations?.colors?.primary ??
       effectiveTemplate?.colors?.primary ??
@@ -898,7 +947,6 @@ const renderHeader = () => {
       effectiveTemplate?.colors?.secondary ??
       "var(--color-secondary)";
 
-    // Crear gradiente con los colores de la plantilla
     const footerBackground = `linear-gradient(135deg, ${primary}, ${secondary})`;
 
     return (
@@ -917,7 +965,6 @@ const renderHeader = () => {
               gap: "var(--sp-md)",
             }}
           >
-            {/* Redes sociales */}
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               {personalInfo.github && (
                 <a
@@ -1012,7 +1059,6 @@ const renderHeader = () => {
               )}
             </div>
 
-            {/* Copyright */}
             <div style={{ textAlign: "center" }}>
               <p
                 style={{
@@ -1036,7 +1082,6 @@ const renderHeader = () => {
               </p>
             </div>
 
-            {/* Badge */}
             <div
               style={{
                 display: "flex",
@@ -1106,12 +1151,9 @@ const renderHeader = () => {
 
   return (
     <TemplateTheme template={themeTemplate}>
-      {/* Variables avanzadas que sobre-escriben dentro del scope */}
       <div style={cssVars as React.CSSProperties}>
-        {/* HEADER */}
         {renderHeader()}
 
-        {/* GRID de contenido (sidebars + main) */}
         <div
           className="tpl-container"
           style={{
@@ -1121,7 +1163,6 @@ const renderHeader = () => {
             alignItems: "start",
           }}
         >
-          {/* LEFT SIDEBAR */}
           {leftEnabled && (
             <aside style={{ display: "grid", gap: "var(--sp-md)" }}>
               {byArea["sidebar-left"]
@@ -1139,7 +1180,6 @@ const renderHeader = () => {
             </aside>
           )}
 
-          {/* MAIN */}
           <main style={{ display: "grid", gap: "var(--sp-lg)" }}>
             {byArea.main
               .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
@@ -1157,7 +1197,6 @@ const renderHeader = () => {
               })}
           </main>
 
-          {/* RIGHT SIDEBAR */}
           {rightEnabled && (
             <aside style={{ display: "grid", gap: "var(--sp-md)" }}>
               {byArea["sidebar-right"]
@@ -1176,7 +1215,6 @@ const renderHeader = () => {
           )}
         </div>
 
-        {/* FOOTER */}
         {byArea.footer.length > 0 && (
           <footer
             style={{
@@ -1199,11 +1237,13 @@ const renderHeader = () => {
           </footer>
         )}
 
-        {/* Modal de detalles del proyecto */}
-        <ProjectDetailsModal
-          project={selected}
-          onClose={() => setSelected(null)}
-        />
+        {/* Solo mostrar modal en modo NO SSR */}
+        {!isSSR && (
+          <ProjectDetailsModal
+            project={selected}
+            onClose={() => setSelected(null)}
+          />
+        )}
       </div>
     </TemplateTheme>
   );

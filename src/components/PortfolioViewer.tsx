@@ -21,13 +21,36 @@ function buildAdvancedCSSVars(
 ): React.CSSProperties {
   if (!t) return {};
   const cols = { ...t.colors, ...(c?.customizations?.colors || {}) };
-  const typo = { ...t.typography, ...(c?.customizations?.typography || {}) };
-  const layout = { ...t.layout, ...(c?.customizations?.layout || {}) };
 
-  const fs = typo.fontSizes || ({} as any);
-  const ff = typo.fontFamilies || ({} as any);
+  // Acepta singular (canónico) y plural (legacy)
+  const typRaw: any = {
+    ...(t.typography as any),
+    ...((c?.customizations as any)?.typography || {}),
+  };
+  const typo = {
+    fontFamily: typRaw.fontFamily ?? typRaw.fontFamilies ?? {},
+    fontSize: typRaw.fontSize ?? typRaw.fontSizes ?? {},
+    fontWeight: typRaw.fontWeight ?? typRaw.fontWeights ?? {},
+    lineHeight: typRaw.lineHeight ?? typRaw.lineHeights ?? {},
+    letterSpacing: typRaw.letterSpacing ?? {},
+  };
+
+  // Acepta alias en layout si existieran (opcional)
+  const layRaw: any = {
+    ...(t.layout as any),
+    ...((c?.customizations as any)?.layout || {}),
+  };
+  const layout = {
+    ...layRaw,
+    spacing: layRaw.spacing ?? layRaw.spacings ?? {},
+    borderRadius: layRaw.borderRadius ?? layRaw.radii ?? {},
+  };
+
+  const fs = typo.fontSize as any;
+  const ff = typo.fontFamily as any;
+
   const ls = typo.letterSpacing || ({} as any);
-  const lh = typo.lineHeights || ({} as any);
+  const lh = typo.lineHeight || ({} as any);
   const sp = layout.spacing || ({} as any);
   const br = layout.borderRadius || ({} as any);
 

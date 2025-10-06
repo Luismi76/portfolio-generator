@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Project } from "../types/portfolio-types";
 import { Icons } from "./portfolio-icons";
 import { Section } from "./Section";
-import { generateSlug } from "./portfolio-export";
+import { generateSlug } from "../utils/export-utils";
 import { ProjectTableFormProps } from "../types/portfolio-types";
 
 
