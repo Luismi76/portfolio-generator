@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import ModernPortfolioEditor from "./components/editor/ModernPortfolioEditor";
 import PortfolioViewer from "./components/PortfolioViewer";
 import AdvancedTemplateSelector from "./components/AdvancedTemplateSelector";
-import { AdvancedTemplateCustomizer } from "./components/AdvancedTemplateCustomizer";
+import { AdvancedTemplateCustomizer } from "./components/customizer/AdvancedTemplateCustomizer";
 import { useAdvancedTemplates } from "./hooks/useAdvancedTemplates";
 import TemplatePreviewModal from "./components/preview";
 import { AdvancedTemplate, AdvancedTemplateConfig } from "./types/advanced-template-types";
