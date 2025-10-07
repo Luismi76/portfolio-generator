@@ -4,7 +4,7 @@ import { Icons } from "../portfolio-icons";
 import { usePortfolioData, useDataExport } from "../portfolio-hooks";
 import { createSSRExporter } from "../portfolio-export-ssr";
 import { PersonalInfoForm } from "../PersonalInfoForm";
-import ProjectTableForm from "../ProjectTableForm";
+import ProjectTableForm from "../project-form/ProjectTableForm";
 import SkillTableForm from "../SkillTableForm";
 import { useAdvancedTemplates } from "../../hooks/useAdvancedTemplates";
 import { ADVANCED_BUILT_IN_TEMPLATES } from "../../templates/advanced";
