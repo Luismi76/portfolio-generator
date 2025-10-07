@@ -3,9 +3,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import type { Project, PortfolioData } from "../types/portfolio-types";
 import { DEFAULT_PORTFOLIO_DATA } from "../types/portfolio-types";
 import { TemplateRenderer } from "./TemplateRenderer";
-// import { DebugSectionsPanel } from "./DebugSectionsPanel";
-
-// ⬇️ hook avanzado
 import { useAdvancedTemplates } from "../hooks/useAdvancedTemplates";
 import type {
   AdvancedTemplate,

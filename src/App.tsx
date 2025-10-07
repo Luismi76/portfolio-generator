@@ -242,7 +242,6 @@ const App: React.FC = () => {
 
   // Handler para guardar configuración - envuelto en useCallback
   const handleSaveTemplate = useCallback(() => {
-    console.log("Guardando configuración de plantilla...");
 
     try {
       const configToSave = {
