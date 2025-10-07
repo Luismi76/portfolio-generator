@@ -6,8 +6,8 @@
  */
 
 // Exportadores
-export { TemplateAwareSinglePageExporter } from "./exporters/single-page-exporters";
-export { TemplateAwareMultiPageExporter } from "./exporters/multi-page-exporters";
+export { TemplateAwareSinglePageExporter } from "./exporters/single-page-exporter";
+export { TemplateAwareMultiPageExporter } from "./exporters/multi-page-exporter";
 
 // Factory
 export { createTemplateAwareExporter } from "./factory";

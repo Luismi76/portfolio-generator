@@ -1,15 +1,17 @@
 // src/components/TechIcons.tsx
 import React from "react";
-// Logos de marcas (Simple Icons)
-import {
-  SiAstro,
-  SiBluetooth,
-  SiEspressif,
-  SiReact,
-  SiTailwindcss,
-} from "react-icons/si";
-// Iconos genéricos (lucide-react)
-import { Link2, Feather, Lightbulb, BarChart2 } from "lucide-react";
+// Todos los iconos desde lucide-react
+import { 
+  Link2, 
+  Feather, 
+  Lightbulb, 
+  BarChart2,
+  Atom,        // Para React (equivalente a SiReact)
+  Waves,       // Para Tailwind (equivalente a SiTailwindcss)
+  Rocket,      // Para Astro (equivalente a SiAstro)
+  Bluetooth,   // Para Bluetooth (equivalente a SiBluetooth)
+  Cpu,         // Para Espressif (equivalente a SiEspressif)
+} from "lucide-react";
 
 /* --------------------------- Normalización ES5-safe --------------------------- */
 const DIACRITICS_RE = /[\u0300-\u036f]/g;
@@ -117,30 +119,34 @@ const TECH_EMOJI: Record<string, string> = {
 };
 
 /* ----------------------------- Adaptadores de icono ----------------------------- */
-// Tipo compatible con ambas librerías
+// Tipo compatible con lucide-react
 type IconComp = (props: { size?: number | string; className?: string }) => JSX.Element;
 
-// Envoltorio para un componente de icono cualquiera (lucide o react-icons)
+// Envoltorio para componentes de lucide-react
 const wrapIcon =
   (C: any): IconComp =>
   ({ size = 14, className }) =>
     <C size={size as any} className={className} />;
 
-/* ----------------------------- SVGs (si disponibles) ----------------------------- */
+/* ----------------------------- SVGs (lucide-react) ----------------------------- */
 const TECH_SVG: Record<string, IconComp> = {
-  astro: wrapIcon(SiAstro),
-  powerbi: wrapIcon(BarChart2), // fallback estable
-  restapi: wrapIcon(Link2),
+  astro: wrapIcon(Rocket),        // Astro
+  powerbi: wrapIcon(BarChart2),   // Power BI
+  restapi: wrapIcon(Link2),       // REST API
 
-  // marcas nuevas
-  bluetooth: wrapIcon(SiBluetooth),
-  espressif: wrapIcon(SiEspressif), // para esp32/espressif
-  esp32: wrapIcon(SiEspressif),
-  react: wrapIcon(SiReact),
-  tailwindcss: wrapIcon(SiTailwindcss),
-  lucide: wrapIcon(Feather),
-  ws2812: wrapIcon(Lightbulb),
-  // vl53l1x -> sin marca; dejará emoji 📡
+  // Hardware/IoT
+  bluetooth: wrapIcon(Bluetooth), // Bluetooth
+  espressif: wrapIcon(Cpu),       // Espressif/ESP32
+  esp32: wrapIcon(Cpu),           // ESP32
+  
+  // Frameworks populares
+  react: wrapIcon(Atom),          // React
+  tailwindcss: wrapIcon(Waves),   // Tailwind CSS
+  
+  // UI libraries
+  lucide: wrapIcon(Feather),      // Lucide
+  ws2812: wrapIcon(Lightbulb),    // WS2812 LEDs
+  // vl53l1x -> sin icono específico; usará emoji 📡
 };
 
 /* ------------------------------- API pública -------------------------------- */
@@ -166,7 +172,7 @@ export const renderTechList = (technologies: string): string => {
     .join(" ");
 };
 
-/* --------- (Opcional) habilidades “blandas” con emoji por nombre ---------- */
+/* --------- (Opcional) habilidades "blandas" con emoji por nombre ---------- */
 export const getSkillIcon = (skill: string): string => {
   const s = normalizeTech(skill);
   const skillIcons: Record<string, string> = {

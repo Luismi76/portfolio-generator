@@ -100,7 +100,7 @@ elif command -v open >/dev/null 2>&1; then open "$PAGES_URL" >/dev/null 2>&1 || 
 `;
 
 export const getPowerShellDeployScript = () => `# Script de deployment automatico a GitHub Pages con manejo de errores robusto
-# Uso: .\deploy-gh-pages.ps1 [-RepoName "mi-portfolio"] [-Visibility "public"] [-Owner "usuario"] [-CNAME "midominio.com"]
+# Uso: .\\deploy-gh-pages.ps1 [-RepoName "mi-portfolio"] [-Visibility "public"] [-Owner "usuario"] [-CNAME "midominio.com"]
 
 Param(
   [string]$RepoName = (Split-Path -Leaf (Get-Location)).ToLower().Replace(' ','-'),

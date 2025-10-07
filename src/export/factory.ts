@@ -1,8 +1,8 @@
 // src/export/factory.ts
 import { PortfolioData, IExporter } from "../types/portfolio-types";
 import { Template, TemplateConfig } from "../types/template-types";
-import { TemplateAwareSinglePageExporter } from "./exporters/single-page-exporters";
-import { TemplateAwareMultiPageExporter } from "./exporters/multi-page-exporters";
+import { TemplateAwareSinglePageExporter } from "./exporters/single-page-exporter";
+import { TemplateAwareMultiPageExporter } from "./exporters/multi-page-exporter";
 
 type ExportMode = "single" | "multi";
 
