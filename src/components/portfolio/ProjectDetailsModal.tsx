@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import type { Project } from "../../types/portfolio-types";
+import type { Project } from "@/types/portfolio-types";
 import { TechList } from "../TechIcons";
 import {
   X,

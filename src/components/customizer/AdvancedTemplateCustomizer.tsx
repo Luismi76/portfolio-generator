@@ -5,7 +5,7 @@ import {
   AdvancedTemplateConfig,
   Section,
   TemplateLayoutStructure,
-} from "../../types/advanced-template-types";
+} from "@/types/advanced-template-types";
 import { TabNavigation, TabId } from "../TabNavigation";
 import { mergeLayoutStructure } from "./utils/layout-utils";
 

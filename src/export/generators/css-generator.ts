@@ -1,9 +1,9 @@
 // src/export/generators/css-generator.ts
-import { Template, TemplateConfig } from "../../types/template-types";
+import { Template, TemplateConfig } from "@/types/template-types";
 import type {
   AdvancedTemplate,
   AdvancedTemplateConfig,
-} from "../../types/advanced-template-types";
+} from "@/types/advanced-template-types";
 import {
   DEFAULT_COLORS,
   DEFAULT_TYPOGRAPHY,

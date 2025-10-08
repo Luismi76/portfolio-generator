@@ -1,6 +1,6 @@
 // src/components/project-form/ProjectTable.tsx
 import React from "react";
-import { Project } from "../../types/portfolio-types";
+import { Project } from "@/types/portfolio-types";
 import { Icons } from "../portfolio-icons";
 import { getValidImageCount } from "./utils/imageHelpers";
 

@@ -2,14 +2,14 @@
 import React, { useState, useEffect, useCallback } from "react";
 
 // Componentes principales
-import ModernPortfolioEditor from "./components/editor/ModernPortfolioEditor";
-import PortfolioViewer from "./components/PortfolioViewer";
-import AdvancedTemplateSelector from "./components/AdvancedTemplateSelector";
-import { AdvancedTemplateCustomizer } from "./components/customizer/AdvancedTemplateCustomizer";
-import { useAdvancedTemplates } from "./hooks/useAdvancedTemplates";
-import TemplatePreviewModal from "./components/preview";
-import { AdvancedTemplate, AdvancedTemplateConfig } from "./types/advanced-template-types";
-import { AppMode } from "./types/portfolio-types";
+import ModernPortfolioEditor from "@/components/editor/ModernPortfolioEditor";
+import PortfolioViewer from "@/components/PortfolioViewer";
+import AdvancedTemplateSelector from "@/components/AdvancedTemplateSelector";
+import { AdvancedTemplateCustomizer } from "@/components/customizer";
+import { useAdvancedTemplates } from "@/hooks";
+import TemplatePreviewModal from "@/components/preview";
+import { AdvancedTemplate, AdvancedTemplateConfig } from "@/types/advanced-template-types";
+import { AppMode } from "@/types/portfolio-types";
 
 interface AppState {
   mode: AppMode;

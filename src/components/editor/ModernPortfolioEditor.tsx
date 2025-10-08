@@ -6,12 +6,12 @@ import { createSSRExporter } from "../portfolio-export-ssr";
 import { PersonalInfoForm } from "../PersonalInfoForm";
 import ProjectTableForm from "../project-form/ProjectTableForm";
 import SkillTableForm from "../SkillTableForm";
-import { useAdvancedTemplates } from "../../hooks/useAdvancedTemplates";
-import { ADVANCED_BUILT_IN_TEMPLATES } from "../../templates/advanced";
+import { useAdvancedTemplates } from "@/hooks";
+import { ADVANCED_BUILT_IN_TEMPLATES } from "@/templates/advanced";
 import type {
   AdvancedTemplate,
   AdvancedTemplateConfig,
-} from "../../types/advanced-template-types";
+} from "@/types/advanced-template-types";
 
 
 const ModernPortfolioEditor: React.FC = () => {

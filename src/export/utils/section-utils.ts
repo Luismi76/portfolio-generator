@@ -1,9 +1,9 @@
 // src/export/utils/section-utils.ts
-import { Template, TemplateConfig } from "../../types/template-types";
+import { Template, TemplateConfig } from "@/types/template-types";
 import type {
   AdvancedTemplate,
   AdvancedTemplateConfig,
-} from "../../types/advanced-template-types";
+} from "@/types/advanced-template-types";
 
 type SectionLike = { id: string; enabled: boolean; order: number };
 

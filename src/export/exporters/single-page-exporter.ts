@@ -3,12 +3,12 @@ import {
   PortfolioData,
   ExportResult,
   IExporter,
-} from "../../types/portfolio-types";
-import { Template, TemplateConfig } from "../../types/template-types";
+} from "@/types/portfolio-types";
+import { Template, TemplateConfig } from "@/types/template-types";
 import type {
   AdvancedTemplate,
   AdvancedTemplateConfig,
-} from "../../types/advanced-template-types";
+} from "@/types/advanced-template-types";
 import {
   getFontsHeadFromTemplate,
   downloadBlob,
@@ -16,7 +16,7 @@ import {
   getPowerShellDeployScript,
   makeDeploymentReadme,
   buildZip,
-} from "../../utils/export-utils";
+} from "@/utils/export-utils";
 import { generateAdvancedTemplateCSS } from "../generators/css-generator";
 import { generateSectionHTML } from "../generators/html-generator";
 import { getEnabledSections } from "../utils/section-utils";

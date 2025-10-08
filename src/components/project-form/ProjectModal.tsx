@@ -1,8 +1,8 @@
 // src/components/project-form/ProjectModal.tsx
 import React, { useState, useEffect } from "react";
-import { Project } from "../../types/portfolio-types";
+import { Project } from "@/types/portfolio-types";
 import { Icons } from "../portfolio-icons";
-import { generateSlug } from "../../utils/export-utils";
+import { generateSlug } from "@/utils/export-utils";
 import { MainImageUploader } from "./uploaders/MainImageUploader";
 import { MultiImageUploader } from "./uploaders/MultiImageUploader";
 

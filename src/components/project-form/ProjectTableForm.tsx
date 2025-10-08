@@ -1,6 +1,6 @@
 // src/components/project-form/ProjectTableForm.tsx
 import React, { useState } from "react";
-import { Project, ProjectTableFormProps } from "../../types/portfolio-types";
+import { Project, ProjectTableFormProps } from "@/types/portfolio-types";
 import { Section } from "../Section";
 import { Icons } from "../portfolio-icons";
 import { ProjectTable } from "./ProjectTable";

@@ -124,6 +124,7 @@ export interface FileExport {
 export interface UsePortfolioDataOptions {
   autoSave?: boolean;
   storageKey?: string;
+  autoSaveDelay?: number;
 }
 
 // ✅ AÑADIDO - Estado del hook de datos

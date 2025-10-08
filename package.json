@@ -10,6 +10,7 @@
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
@@ -21,13 +22,13 @@
     "typescript": "^4.9.5"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "craco start",
     "dev": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "craco build",
     "build:portfolio": "set \"REACT_APP_MODE=portfolio\" && react-scripts build",
     "build:editor": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "test": "craco test",
+    "eject": "craco eject",
     "preview:portfolio": "REACT_APP_MODE=portfolio npm start",
     "deploy:portfolio": "npm run build:portfolio && echo 'Portfolio built! Upload the build/ folder to your hosting service.'"
   },

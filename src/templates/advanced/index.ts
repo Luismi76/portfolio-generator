@@ -1,5 +1,5 @@
 // src/templates/advanced/index.ts
-import { AdvancedTemplate } from "../../types/advanced-template-types";
+import { AdvancedTemplate } from "@/types/advanced-template-types";
 
 // Import templates by category
 import { MODERN_GRADIENT_TEMPLATE } from "./modern/modern-gradient";

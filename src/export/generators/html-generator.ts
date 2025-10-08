@@ -1,10 +1,10 @@
 // src/export/generators/html-generator.ts
-import { PortfolioData } from "../../types/portfolio-types";
-import { Template, TemplateConfig } from "../../types/template-types";
+import { PortfolioData } from "@/types/portfolio-types";
+import { Template, TemplateConfig } from "@/types/template-types";
 import type {
   AdvancedTemplate,
   AdvancedTemplateConfig,
-} from "../../types/advanced-template-types";
+} from "@/types/advanced-template-types";
 import { isAboutSectionEnabled } from "../utils/section-utils";
 import { generateProjectsHTML } from "./blocks/projects-block";
 import { generateSkillsHTML } from "./blocks/skills-block";

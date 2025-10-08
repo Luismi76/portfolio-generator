@@ -7,7 +7,7 @@ import {
   TemplateLayoutStructure,
   TemplateLayoutStructurePatch,
 } from "../../../types/advanced-template-types";
-import { AdvancedLayoutBuilder } from "../../AdvancedLayoutBuilder";
+import { AdvancedLayoutBuilder } from "../../layout-builder";
 
 interface LayoutTabProps {
   template: AdvancedTemplate;
