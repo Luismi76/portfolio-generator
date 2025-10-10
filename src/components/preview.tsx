@@ -1,6 +1,9 @@
-import React from 'react';
-import { X } from 'lucide-react';
-import { AdvancedTemplate, AdvancedTemplateConfig } from '../types/advanced-template-types';
+import React from "react";
+import { X } from "lucide-react";
+import {
+  AdvancedTemplate,
+  AdvancedTemplateConfig,
+} from "../types/advanced-template-types";
 
 const DEFAULT_COLORS = {
   primary: "#2563eb",
@@ -16,6 +19,7 @@ interface TemplatePreviewModalProps {
   onClose: () => void;
   template: AdvancedTemplate | null;
   config?: AdvancedTemplateConfig | Partial<AdvancedTemplateConfig>;
+  onSelectTemplate?: (template: AdvancedTemplate) => void;
 }
 
 function resolvePreviewColors(
@@ -26,9 +30,16 @@ function resolvePreviewColors(
   const ccols = (config as any)?.customizations?.colors ?? {};
 
   const text = {
-    primary: ccols?.text?.primary ?? tcols?.text?.primary ?? DEFAULT_COLORS.text.primary,
-    secondary: ccols?.text?.secondary ?? tcols?.text?.secondary ?? DEFAULT_COLORS.text.secondary,
-    accent: ccols?.text?.accent ?? tcols?.text?.accent ?? DEFAULT_COLORS.text.accent,
+    primary:
+      ccols?.text?.primary ??
+      tcols?.text?.primary ??
+      DEFAULT_COLORS.text.primary,
+    secondary:
+      ccols?.text?.secondary ??
+      tcols?.text?.secondary ??
+      DEFAULT_COLORS.text.secondary,
+    accent:
+      ccols?.text?.accent ?? tcols?.text?.accent ?? DEFAULT_COLORS.text.accent,
   };
 
   const gradient =
@@ -39,15 +50,16 @@ function resolvePreviewColors(
     null;
 
   return {
-    primary:    ccols?.primary    ?? tcols?.primary    ?? DEFAULT_COLORS.primary,
-    secondary:  ccols?.secondary  ?? tcols?.secondary  ?? DEFAULT_COLORS.secondary,
-    accent:     ccols?.accent     ?? tcols?.accent     ?? DEFAULT_COLORS.accent,
-    background: ccols?.background ?? tcols?.background ?? DEFAULT_COLORS.background,
-    surface:    ccols?.surface    ?? tcols?.surface    ?? DEFAULT_COLORS.surface,
+    primary: ccols?.primary ?? tcols?.primary ?? DEFAULT_COLORS.primary,
+    secondary: ccols?.secondary ?? tcols?.secondary ?? DEFAULT_COLORS.secondary,
+    accent: ccols?.accent ?? tcols?.accent ?? DEFAULT_COLORS.accent,
+    background:
+      ccols?.background ?? tcols?.background ?? DEFAULT_COLORS.background,
+    surface: ccols?.surface ?? tcols?.surface ?? DEFAULT_COLORS.surface,
     text,
     gradient,
     // opcional: surfaceVariant si está en la plantilla
-    surfaceVariant: (tcols as any)?.surfaceVariant
+    surfaceVariant: (tcols as any)?.surfaceVariant,
   } as any;
 }
 
@@ -55,7 +67,8 @@ export default function TemplatePreviewModal({
   isOpen,
   onClose,
   template,
-  config
+  config,
+  onSelectTemplate,
 }: TemplatePreviewModalProps) {
   if (!isOpen || !template) return null;
 
@@ -63,7 +76,9 @@ export default function TemplatePreviewModal({
 
   const bannerBg =
     colors.gradient?.from && colors.gradient?.to
-      ? `linear-gradient(${colors.gradient.direction ?? '135deg'}, ${colors.gradient.from}, ${colors.gradient.to})`
+      ? `linear-gradient(${colors.gradient.direction ?? "135deg"}, ${
+          colors.gradient.from
+        }, ${colors.gradient.to})`
       : `linear-gradient(135deg, ${colors.background}, ${colors.surface})`;
 
   return (
@@ -102,7 +117,7 @@ export default function TemplatePreviewModal({
                     className="h-16 rounded-lg flex items-center justify-between px-6 shadow-lg"
                     style={{
                       background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-                      color: '#fff'
+                      color: "#fff",
                     }}
                   >
                     <div className="flex items-center gap-4">
@@ -113,7 +128,7 @@ export default function TemplatePreviewModal({
                       </div>
                     </div>
                     <div className="flex gap-6">
-                      {['Inicio', 'Proyectos', 'Contacto'].map((item, i) => (
+                      {["Inicio", "Proyectos", "Contacto"].map((item, i) => (
                         <div key={i} className="h-3 w-16 bg-white/70 rounded" />
                       ))}
                     </div>
@@ -123,7 +138,8 @@ export default function TemplatePreviewModal({
                 {/* Layout Principal */}
                 <div className="flex-1 flex gap-2">
                   {/* Sidebar Izquierda */}
-                  {template.layoutStructure?.areas?.['sidebar-left']?.enabled && (
+                  {template.layoutStructure?.areas?.["sidebar-left"]
+                    ?.enabled && (
                     <div
                       className="w-48 rounded-lg p-4 space-y-3 shadow-md"
                       style={{ backgroundColor: colors.surface }}
@@ -131,7 +147,10 @@ export default function TemplatePreviewModal({
                       <div className="h-2 bg-gray-300 rounded w-3/4" />
                       <div className="space-y-2">
                         {[1, 2, 3, 4].map((i) => (
-                          <div key={i} className="h-8 bg-white rounded flex items-center px-3">
+                          <div
+                            key={i}
+                            className="h-8 bg-white rounded flex items-center px-3"
+                          >
                             <div className="h-1.5 bg-gray-400 rounded w-full" />
                           </div>
                         ))}
@@ -193,18 +212,23 @@ export default function TemplatePreviewModal({
                   </div>
 
                   {/* Sidebar Derecha */}
-                  {template.layoutStructure?.areas?.['sidebar-right']?.enabled && (
+                  {template.layoutStructure?.areas?.["sidebar-right"]
+                    ?.enabled && (
                     <div
                       className="w-48 rounded-lg p-4 space-y-3 shadow-md"
                       style={{
                         backgroundColor:
-                          (template as any)?.colors?.surfaceVariant || colors.surface,
+                          (template as any)?.colors?.surfaceVariant ||
+                          colors.surface,
                       }}
                     >
                       <div className="h-2 bg-gray-300 rounded w-2/3" />
                       <div className="space-y-2">
                         {[1, 2, 3].map((i) => (
-                          <div key={i} className="bg-white rounded p-3 space-y-1">
+                          <div
+                            key={i}
+                            className="bg-white rounded p-3 space-y-1"
+                          >
                             <div className="h-1.5 bg-gray-400 rounded w-full" />
                             <div className="h-1 bg-gray-300 rounded w-3/4" />
                           </div>
@@ -252,7 +276,9 @@ export default function TemplatePreviewModal({
                           <div className="text-sm font-medium text-gray-700 capitalize">
                             {key.replace(/([A-Z])/g, " $1").trim()}
                           </div>
-                          <div className="text-xs text-gray-500 font-mono">{value}</div>
+                          <div className="text-xs text-gray-500 font-mono">
+                            {value}
+                          </div>
                         </div>
                       </div>
                     );
@@ -327,7 +353,15 @@ export default function TemplatePreviewModal({
           >
             Cerrar
           </button>
-          <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (template && onSelectTemplate) {
+                onSelectTemplate(template);
+              }
+              onClose();
+            }}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+          >
             ✓ Usar Esta Plantilla
           </button>
         </div>

@@ -11,6 +11,15 @@ import {
 } from '../types/advanced-template-types';
 import { ADVANCED_BUILT_IN_TEMPLATES } from '../templates/advanced';
 
+const DEFAULT_COMPACT_SPACING = {
+  xs: "0.17rem",
+  sm: "0.34rem",
+  md: "0.5rem",
+  lg: "0.67rem",
+  xl: "1rem",
+  "2xl": "1.34rem",
+};
+
 // ---------- helpers ----------
 function mergeAnimations(
   base: NonNullable<AdvancedTemplate['animations']> | undefined,
@@ -112,36 +121,75 @@ export const useAdvancedTemplates = (
     } catch {/* noop */}
   }, [storageKey]);
 
-  const selectTemplate = useCallback((template: AdvancedTemplate) => {
-    const newConfig: AdvancedTemplateConfig = {
-      templateId: template.id,
-      customizations: { sections: template.sections },
-      lastModified: new Date().toISOString(),
-    };
-    setSelectedTemplate(template);
-    setConfig(newConfig);
-    saveConfig(newConfig);
-    setHasUnsavedChanges(false);
-  }, [saveConfig]);
+const selectTemplate = useCallback((template: AdvancedTemplate) => {
+  const newConfig: AdvancedTemplateConfig = {
+    templateId: template.id,
+    customizations: { 
+      sections: template.sections,
+      // ✅ APLICAR SPACING POR DEFECTO EN MODO COMPACTO
+      layout: {
+        spacing: DEFAULT_COMPACT_SPACING
+      }
+    },
+    lastModified: new Date().toISOString(),
+  };
+  setSelectedTemplate(template);
+  setConfig(newConfig);
+  saveConfig(newConfig);
+  setHasUnsavedChanges(false);
+}, [saveConfig]);
 
   const updateConfig = useCallback((updates: Partial<AdvancedTemplateConfig>) => {
+    console.log('💾 Hook updateConfig - updates:', updates);
+  console.log('💾 Hook updateConfig - config actual:', config);
     if (!config) return;
 
-    const newConfig: AdvancedTemplateConfig = {
-      ...config,
-      ...updates,
-      customizations: {
-        ...config.customizations,
-        ...updates.customizations,
+  const newConfig: AdvancedTemplateConfig = {
+    ...config,
+    ...updates,
+    customizations: {
+      colors: {
+        ...(config.customizations.colors || {}),
+        ...(updates.customizations?.colors || {})
       },
-      lastModified: new Date().toISOString(),
-    };
+      typography: {
+        ...(config.customizations.typography || {}),
+        ...(updates.customizations?.typography || {})
+      },
+      layout: {
+        ...(config.customizations.layout || {}),
+        ...(updates.customizations?.layout || {})
+      },
+      sections: updates.customizations?.sections || config.customizations.sections,
+      layoutStructure: {
+        ...(config.customizations.layoutStructure || {}),
+        ...(updates.customizations?.layoutStructure || {})
+      },
+      animations: updates.customizations?.animations 
+        ? {
+            enabled: updates.customizations.animations.enabled ?? config.customizations.animations?.enabled ?? false,
+            type: updates.customizations.animations.type ?? config.customizations.animations?.type ?? 'none'
+          }
+        : config.customizations.animations,
+      darkMode: updates.customizations?.darkMode 
+        ? {
+            enabled: updates.customizations.darkMode.enabled ?? config.customizations.darkMode?.enabled ?? false,
+            auto: updates.customizations.darkMode.auto ?? config.customizations.darkMode?.auto
+          }
+        : config.customizations.darkMode,
+      headerConfig: {
+        ...(config.customizations.headerConfig || {}),
+        ...(updates.customizations?.headerConfig || {})
+      },
+      customCSS: updates.customizations?.customCSS ?? config.customizations.customCSS
+    },
+    lastModified: new Date().toISOString(),
+  };
 
-    setConfig(newConfig);
-    setHasUnsavedChanges(true);
-    const tid = setTimeout(() => saveConfig(newConfig), 2000);
-    return () => clearTimeout(tid);
-  }, [config, saveConfig]);
+  setConfig(newConfig);
+  setHasUnsavedChanges(true);
+  saveConfig(newConfig);
+}, [config, saveConfig]);
 
   const resetConfig = useCallback(() => {
     if (!selectedTemplate) return;

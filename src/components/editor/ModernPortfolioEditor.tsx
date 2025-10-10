@@ -1,7 +1,8 @@
 // src/components/editor/ModernPortfolioEditor.tsx
 import React, { useState } from "react";
 import { Icons } from "../portfolio-icons";
-import { usePortfolioData, useDataExport } from "../portfolio-hooks";
+import { usePortfolioData } from "@/hooks/usePortfolioData";
+import { useDataExport } from "@/hooks/useDataExport";
 import { createSSRExporter } from "../portfolio-export-ssr";
 import { PersonalInfoForm } from "../PersonalInfoForm";
 import ProjectTableForm from "../project-form/ProjectTableForm";
@@ -14,7 +15,14 @@ import type {
 } from "@/types/advanced-template-types";
 
 
-const ModernPortfolioEditor: React.FC = () => {
+interface ModernPortfolioEditorProps {
+  portfolioHook: ReturnType<typeof usePortfolioData>;
+}
+
+const ModernPortfolioEditor: React.FC<ModernPortfolioEditorProps> = ({ 
+  portfolioHook 
+}) => {
+  // Desestructurar del hook recibido
   const {
     data,
     updatePersonalInfo,
@@ -23,7 +31,7 @@ const ModernPortfolioEditor: React.FC = () => {
     addItem,
     removeItem,
     importData,
-  } = usePortfolioData();
+  } = portfolioHook;
 
   const { exportToJSON, importFromJSON } = useDataExport();
 

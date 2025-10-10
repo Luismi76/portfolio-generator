@@ -59,20 +59,23 @@ export const usePortfolioData = (
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   // Cargar datos desde localStorage al montar
-  useEffect(() => {
-    try {
-      const savedData = localStorage.getItem(storageKey);
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        setPortfolioData(parsed);
-      }
-    } catch (error) {
-      console.error('Error loading portfolio data:', error);
-      setSaveStatus('error');
-    } finally {
-      setIsLoaded(true);
+useEffect(() => {
+  try {
+    const savedData = localStorage.getItem(storageKey);
+    console.log('🔍 RAW localStorage:', savedData);
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      console.log('🔍 Parsed data:', parsed);
+      console.log('🔍 avatarUrl en parsed:', parsed.personalInfo?.avatarUrl);
+      setPortfolioData(parsed);
     }
-  }, [storageKey]);
+  } catch (error) {
+    console.error('Error loading portfolio data:', error);
+    setSaveStatus('error');
+  } finally {
+    setIsLoaded(true);
+  }
+}, [storageKey]);
 
   // Auto-guardado
   useAutoSave(storageKey, portfolioData, {

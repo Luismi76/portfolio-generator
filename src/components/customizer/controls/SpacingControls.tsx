@@ -15,14 +15,14 @@ export const SpacingControls: React.FC<SpacingControlsProps> = ({
   onChange,
 }) => {
   const getInitialLevel = () => {
-    const mdValue = spacing?.md || "1.5rem";
+    const mdValue = spacing?.md || "0.5rem"; // Cambiado de "1.5rem" a "0.5rem"
     const parsed = parseFloat(mdValue);
     if (mdValue.includes("rem")) {
       return parsed;
     } else if (mdValue.includes("px")) {
       return parsed / 16;
     }
-    return 1.5;
+    return 0.5; // Cambiado de 1.5 a 0.5 (modo compacto)
   };
 
   const [spacingLevel, setSpacingLevel] = useState(getInitialLevel);
@@ -52,11 +52,11 @@ export const SpacingControls: React.FC<SpacingControlsProps> = ({
   };
 
   const presets = [
-    { label: "Muy Compacto", value: 0.5 },
-    { label: "Compacto", value: 1 },
-    { label: "Normal", value: 1.5 },
-    { label: "Espaciado", value: 2 },
-    { label: "Muy Espaciado", value: 3 },
+    { label: "Muy Compacto", value: 0.25 },
+    { label: "Compacto", value: 0.5 },
+    { label: "Normal", value: 1 },
+    { label: "Espaciado", value: 1.5 },
+    { label: "Muy Espaciado", value: 2 },
   ];
 
   return (

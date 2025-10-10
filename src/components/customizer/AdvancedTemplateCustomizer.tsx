@@ -16,10 +16,12 @@ import { ColorsTab } from "./tabs/ColorsTab";
 import { TypographyTab } from "./tabs/TypographyTab";
 import { SectionsTab } from "./tabs/SectionsTab";
 import { AdvancedTab } from "./tabs/AdvancedTab";
+import { PortfolioData } from "@/types/portfolio-types";
 
 interface Props {
   template: AdvancedTemplate;
   config: AdvancedTemplateConfig;
+  portfolioData: PortfolioData;
   onConfigChange: (config: AdvancedTemplateConfig) => void;
   onPreview: () => void;
   onSave: () => void;
@@ -36,6 +38,7 @@ type CustomizerTab = TabId;
 export const AdvancedTemplateCustomizer: React.FC<Props> = ({
   template,
   config,
+  portfolioData,
   onConfigChange,
   onPreview,
   onSave,
@@ -72,20 +75,54 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
   );
 
   // Actualizar configuración
-  const updateConfig = useCallback(
-    (updates: Partial<AdvancedTemplateConfig["customizations"]>) => {
-      const newConfig: AdvancedTemplateConfig = {
-        ...currentConfig,
-        customizations: {
-          ...currentConfig.customizations,
-          ...updates,
+const updateConfig = useCallback(
+  (updates: Partial<AdvancedTemplateConfig["customizations"]>) => {
+        console.log('📤 Customizer updateConfig - updates:', updates);
+    console.log('📤 Customizer updateConfig - currentConfig antes:', currentConfig);
+    const newConfig: AdvancedTemplateConfig = {
+      ...currentConfig,
+      customizations: {
+        colors: {
+          ...(currentConfig.customizations.colors || {}),
+          ...(updates.colors || {})
         },
-        lastModified: new Date().toISOString(),
-      };
-      onConfigChange(newConfig);
-    },
-    [currentConfig, onConfigChange]
-  );
+        typography: {
+          ...(currentConfig.customizations.typography || {}),
+          ...(updates.typography || {})
+        },
+        layout: {
+          ...(currentConfig.customizations.layout || {}),
+          ...(updates.layout || {})
+        },
+        sections: updates.sections || currentConfig.customizations.sections,
+        layoutStructure: {
+          ...(currentConfig.customizations.layoutStructure || {}),
+          ...(updates.layoutStructure || {})
+        },
+        animations: updates.animations 
+          ? {
+              enabled: updates.animations.enabled ?? currentConfig.customizations.animations?.enabled ?? false,
+              type: updates.animations.type ?? currentConfig.customizations.animations?.type ?? 'none'
+            }
+          : currentConfig.customizations.animations,
+        darkMode: updates.darkMode 
+          ? {
+              enabled: updates.darkMode.enabled ?? currentConfig.customizations.darkMode?.enabled ?? false,
+              auto: updates.darkMode.auto ?? currentConfig.customizations.darkMode?.auto
+            }
+          : currentConfig.customizations.darkMode,
+        headerConfig: {
+          ...(currentConfig.customizations.headerConfig || {}),
+          ...(updates.headerConfig || {})
+        },
+        customCSS: updates.customCSS ?? currentConfig.customizations.customCSS
+      },
+      lastModified: new Date().toISOString(),
+    };
+    onConfigChange(newConfig);
+  },
+  [currentConfig, onConfigChange]
+);
 
   // Actualizar secciones
   const updateSections = useCallback(
@@ -116,10 +153,15 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
   const renderTabContent = () => {
     switch (activeTab) {
       case "avatar":
+        console.log("🔍 DEBUG Avatar:", {
+          avatarUrl: portfolioData.personalInfo.avatarUrl,
+          fullPersonalInfo: portfolioData.personalInfo,
+        });
         return (
           <AvatarTab
             currentConfig={currentConfig}
             updateConfig={updateConfig}
+            avatarUrl={portfolioData.personalInfo.avatarUrl}
           />
         );
 
@@ -179,9 +221,7 @@ export const AdvancedTemplateCustomizer: React.FC<Props> = ({
     <div className="min-h-screen bg-gray-50">
       <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        {renderTabContent()}
-      </div>
+      <div className="max-w-7xl mx-auto px-4 py-4">{renderTabContent()}</div>
     </div>
   );
 };

@@ -48,7 +48,11 @@ export const HeaderSection: React.FC<HeaderSectionProps> = ({
   template,
 }) => {
   const headerConfig = config?.customizations.headerConfig;
-  const showAvatar = headerConfig?.showAvatar && headerConfig?.avatarUrl;
+  
+  // ✅ CORRECCIÓN: Leer avatarUrl desde personalInfo, no desde headerConfig
+  const avatarUrl = data.personalInfo.avatarUrl;
+  const showAvatar = headerConfig?.showAvatar !== false && !!avatarUrl;
+  
   const avatarPosition = headerConfig?.avatarPosition || "center";
   const avatarSize = (headerConfig?.avatarSize || "md") as "sm" | "md" | "lg";
 
@@ -108,10 +112,10 @@ export const HeaderSection: React.FC<HeaderSectionProps> = ({
           ...(avatarPosition === "right" && { flexDirection: "row-reverse" }),
         }}
       >
-        {/* Avatar */}
+        {/* ✅ Avatar - Ahora usa avatarUrl desde personalInfo */}
         {showAvatar && (
           <img
-            src={headerConfig.avatarUrl}
+            src={avatarUrl}
             alt={`Foto de perfil de ${name}`}
             style={{
               width: avatarSizes[avatarSize],
@@ -121,6 +125,11 @@ export const HeaderSection: React.FC<HeaderSectionProps> = ({
               border: "4px solid rgba(255,255,255,0.3)",
               boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               flexShrink: 0,
+            }}
+            onError={(e) => {
+              // Ocultar si falla la carga
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
             }}
           />
         )}

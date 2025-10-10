@@ -11,7 +11,7 @@ export const SECTIONS_WITH_HEADER: Section[] = [
   createSection("about", "about", "Sobre mí", "main", 2),
   createSection("projects", "projects", "Proyectos", "main", 3),
   createSection("skills", "skills", "Habilidades", "main", 4),
-  createSection("experience", "experience", "Experiencia", "main", 5),
+  createSection("experience", "experience", "Experiencia", "main", 5, false),
   createSection("contact", "contact", "Contacto", "footer", 6),
 ];
 
@@ -23,7 +23,7 @@ export const SECTIONS_NO_HEADER: Section[] = [
   createSection("about", "about", "Sobre mí", "main", 1),
   createSection("projects", "projects", "Proyectos", "main", 2),
   createSection("skills", "skills", "Habilidades", "main", 3),
-  createSection("experience", "experience", "Experiencia", "main", 4),
+  createSection("experience", "experience", "Experiencia", "main", 4, false),
   createSection("contact", "contact", "Contacto", "footer", 5),
 ];
 
@@ -36,7 +36,7 @@ export const SECTIONS_SIDEBAR_LEFT: Section[] = [
   createSection("contact", "contact", "Contacto", "sidebar-left", 2),
   createSection("projects", "projects", "Proyectos", "main", 3),
   createSection("skills", "skills", "Habilidades", "main", 4),
-  createSection("experience", "experience", "Experiencia", "main", 5),
+  createSection("experience", "experience", "Experiencia", "main", 5, false),
 ];
 
 /**

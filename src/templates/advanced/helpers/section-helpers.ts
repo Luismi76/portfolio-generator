@@ -29,7 +29,7 @@ export const createSection = (
     variant: "default",
     showTitle: true,
     showDivider: false,
-    spacing: "normal",
+    spacing: "tight",
     columns: 1,
   },
 });

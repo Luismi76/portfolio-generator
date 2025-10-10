@@ -1,8 +1,7 @@
-// PersonalInfoForm.tsx
+// PersonalInfoForm.tsx - Versión simplificada solo con URL
 import React from "react";
 import { PersonalInfoFormProps } from "../types/portfolio-types";
 import { Icons } from "./portfolio-icons";
-
 
 export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   data,
@@ -22,6 +21,77 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
         Completa tu información básica de contacto y presentación
       </p>
 
+      {/* ✅ SECCIÓN DE AVATAR - SOLO URL */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+        <label className="text-sm font-medium text-gray-800 mb-3 flex items-center gap-2">
+          <span className="text-xl">📸</span>
+          Avatar / Foto de perfil
+        </label>
+
+        <div className="flex flex-col md:flex-row items-start gap-4">
+          {/* Preview del avatar */}
+          <div className="flex-shrink-0">
+            {data.avatarUrl ? (
+              <div className="relative group">
+                <img
+                  src={data.avatarUrl}
+                  alt="Avatar preview"
+                  className="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src =
+                      'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="gray" stroke-width="2"%3E%3Ccircle cx="12" cy="8" r="4"/%3E%3Cpath d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/%3E%3C/svg%3E';
+                  }}
+                />
+                <button
+                  onClick={() => onUpdate("avatarUrl", "")}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors shadow-md opacity-0 group-hover:opacity-100"
+                  title="Eliminar avatar"
+                >
+                  <Icons.X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="w-28 h-28 rounded-full bg-gray-100 flex items-center justify-center border-4 border-white shadow-lg">
+                <Icons.User size={40} className="text-gray-400" />
+              </div>
+            )}
+          </div>
+
+          {/* Campo URL */}
+          <div className="flex-1 w-full">
+            <input
+              type="url"
+              placeholder="https://ejemplo.com/mi-foto.jpg"
+              value={data.avatarUrl || ""}
+              onChange={(e) => onUpdate("avatarUrl", e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+            <p className="text-xs text-gray-600 mt-2">
+              💡 <strong>Tip:</strong> Sube tu imagen a{" "}
+              <a
+                href="https://imgbb.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                ImgBB
+              </a>
+              {" "}o{" "}
+              <a
+                href="https://imgur.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Imgur
+              </a>
+              {" "}y pega la URL aquí
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Campos principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
@@ -35,18 +105,6 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             onChange={(e) => onUpdate("fullName", e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
             required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Avatar/Foto (URL)
-          </label>
-          <input
-            type="text"
-            value={data.avatarUrl || ""}
-            onChange={(e) => onUpdate("avatarUrl", e.target.value)}
-            placeholder="https://ejemplo.com/foto.jpg"
-            className="w-full px-3 py-2 border rounded-lg"
           />
         </div>
 
@@ -173,9 +231,9 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             className="text-blue-600 mt-0.5 flex-shrink-0"
           />
           <div className="text-sm text-blue-800">
-            <strong>Consejo:</strong> El nombre y título son obligatorios para
-            generar tu portfolio. El resumen aparecerá en la página principal
-            para presentarte a los visitantes.
+            <strong>💡 Consejo:</strong> El avatar se mostrará en todas las plantillas. 
+            Para configurar cómo se muestra (posición, tamaño), ve a{" "}
+            <strong>Plantillas → Personalizar → Avatar</strong>.
           </div>
         </div>
       </div>
