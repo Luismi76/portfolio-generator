@@ -1,5 +1,5 @@
 // hooks/usePortfolioData.ts
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import type {
   PortfolioData,
   PortfolioDataActions,
@@ -11,30 +11,32 @@ import type {
   Education,
   Achievement,
   SectionKey,
-} from '../types/portfolio-types';
-import { useAutoSave } from './useAppState';
-import { DEFAULT_PORTFOLIO_DATA } from '../types/portfolio-types';
+} from "../types/portfolio-types";
+import { useAutoSave } from "./useAppState";
+import { DEFAULT_PORTFOLIO_DATA } from "../types/portfolio-types";
 /**
  * Estado del hook usePortfolioData
  */
 export interface UsePortfolioDataState {
   data: PortfolioData;
   isLoaded: boolean;
-  saveStatus: 'idle' | 'saving' | 'saved' | 'error';
+  saveStatus: "idle" | "saving" | "saved" | "error";
 }
 
 /**
  * Retorno completo del hook usePortfolioData
  */
-export interface UsePortfolioDataReturn extends UsePortfolioDataState, PortfolioDataActions {}
+export interface UsePortfolioDataReturn
+  extends UsePortfolioDataState,
+    PortfolioDataActions {}
 
 /**
  * Hook principal para manejo de datos del portfolio
  * Incluye persistencia en localStorage y auto-guardado
- * 
+ *
  * @param options - Opciones de configuración
  * @returns Estado y acciones para manipular datos del portfolio
- * 
+ *
  * @example
  * const {
  *   data,
@@ -48,114 +50,136 @@ export const usePortfolioData = (
   options: UsePortfolioDataOptions = {}
 ): UsePortfolioDataReturn => {
   const {
-    storageKey = 'portfolioData',
+    storageKey = "portfolioData",
     autoSave = true,
     autoSaveDelay = 1000,
   } = options;
 
   // Estado principal
-  const [portfolioData, setPortfolioData] = useState<PortfolioData>(DEFAULT_PORTFOLIO_DATA);
+  const [portfolioData, setPortfolioData] = useState<PortfolioData>(
+    DEFAULT_PORTFOLIO_DATA
+  );
   const [isLoaded, setIsLoaded] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
 
   // Cargar datos desde localStorage al montar
-useEffect(() => {
-  try {
-    const savedData = localStorage.getItem(storageKey);
-    console.log('🔍 RAW localStorage:', savedData);
-    if (savedData) {
-      const parsed = JSON.parse(savedData);
-      console.log('🔍 Parsed data:', parsed);
-      console.log('🔍 avatarUrl en parsed:', parsed.personalInfo?.avatarUrl);
-      setPortfolioData(parsed);
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem(storageKey);
+      console.log("🔍 RAW localStorage:", savedData);
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        console.log("🔍 Parsed data:", parsed);
+        console.log("🔍 avatarUrl en parsed:", parsed.personalInfo?.avatarUrl);
+        setPortfolioData(parsed);
+      }
+    } catch (error) {
+      console.error("Error loading portfolio data:", error);
+      setSaveStatus("error");
+    } finally {
+      setIsLoaded(true);
     }
-  } catch (error) {
-    console.error('Error loading portfolio data:', error);
-    setSaveStatus('error');
-  } finally {
-    setIsLoaded(true);
-  }
-}, [storageKey]);
+  }, [storageKey]);
 
   // Auto-guardado
   useAutoSave(storageKey, portfolioData, {
     delay: autoSaveDelay,
     enabled: autoSave && isLoaded,
-    onSave: () => setSaveStatus('saved'),
-    onError: () => setSaveStatus('error'),
+    onSave: () => setSaveStatus("saved"),
+    onError: () => setSaveStatus("error"),
   });
 
   // Función para actualizar información personal
-  const updatePersonalInfo = useCallback((field: PersonalInfoKey, value: string) => {
-    setSaveStatus('saving');
-    setPortfolioData(prev => ({
-      ...prev,
-      personalInfo: {
-        ...prev.personalInfo,
-        [field]: value,
-      },
-    }));
-  }, []);
+  const updatePersonalInfo = useCallback(
+    (field: PersonalInfoKey, value: string) => {
+      setSaveStatus("saving");
+      setPortfolioData((prev) => ({
+        ...prev,
+        personalInfo: {
+          ...prev.personalInfo,
+          [field]: value,
+        },
+      }));
+    },
+    []
+  );
 
   // Función para actualizar proyectos
-  const updateProject = useCallback((index: number, field: keyof Project, value: string | number) => {
-    setSaveStatus('saving');
-    setPortfolioData(prev => ({
-      ...prev,
-      projects: prev.projects.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      ),
-    }));
-  }, []);
+  const updateProject = useCallback(
+    (index: number, field: keyof Project, value: string | number) => {
+      setSaveStatus("saving");
+      setPortfolioData((prev) => ({
+        ...prev,
+        projects: prev.projects.map((item, i) =>
+          i === index ? { ...item, [field]: value } : item
+        ),
+      }));
+    },
+    []
+  );
 
   // Función para actualizar habilidades
-  const updateSkill = useCallback((index: number, field: keyof Skill, value: string) => {
-    setSaveStatus('saving');
-    setPortfolioData(prev => ({
-      ...prev,
-      skills: prev.skills.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      ),
-    }));
-  }, []);
+  const updateSkill = useCallback(
+    (index: number, field: keyof Skill, value: string) => {
+      setSaveStatus("saving");
+      setPortfolioData((prev) => ({
+        ...prev,
+        skills: prev.skills.map((item, i) =>
+          i === index ? { ...item, [field]: value } : item
+        ),
+      }));
+    },
+    []
+  );
 
   // Función para actualizar experiencia
-  const updateExperience = useCallback((index: number, field: keyof Experience, value: string) => {
-    setSaveStatus('saving');
-    setPortfolioData(prev => ({
-      ...prev,
-      experience: prev.experience.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      ),
-    }));
-  }, []);
+  const updateExperience = useCallback(
+    (index: number, field: keyof Experience, value: string) => {
+      setSaveStatus("saving");
+      setPortfolioData((prev) => ({
+        ...prev,
+        experience: prev.experience.map((item, i) =>
+          i === index ? { ...item, [field]: value } : item
+        ),
+      }));
+    },
+    []
+  );
 
   // Función para actualizar educación
-  const updateEducation = useCallback((index: number, field: keyof Education, value: string) => {
-    setSaveStatus('saving');
-    setPortfolioData(prev => ({
-      ...prev,
-      education: prev.education.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      ),
-    }));
-  }, []);
+  const updateEducation = useCallback(
+    (index: number, field: keyof Education, value: string) => {
+      setSaveStatus("saving");
+      setPortfolioData((prev) => ({
+        ...prev,
+        education: prev.education.map((item, i) =>
+          i === index ? { ...item, [field]: value } : item
+        ),
+      }));
+    },
+    []
+  );
 
   // Función para actualizar logros
-  const updateAchievement = useCallback((index: number, field: keyof Achievement, value: string) => {
-    setSaveStatus('saving');
-    setPortfolioData(prev => ({
-      ...prev,
-      achievements: prev.achievements.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      ),
-    }));
-  }, []);
+  const updateAchievement = useCallback(
+    (index: number, field: keyof Achievement, value: string) => {
+      setSaveStatus("saving");
+      setPortfolioData((prev) => ({
+        ...prev,
+        achievements: prev.achievements.map((item, i) =>
+          i === index ? { ...item, [field]: value } : item
+        ),
+      }));
+    },
+    []
+  );
 
   // Función para agregar elementos a secciones
   const addItem = useCallback((section: SectionKey) => {
-    setSaveStatus('saving');
-    
+    setSaveStatus("saving");
+
     const newItems = {
       projects: {
         title: "",
@@ -171,7 +195,7 @@ useEffect(() => {
         features: "",
         challenges: "",
         slug: "",
-        mainImageIndex: 0
+        mainImageIndex: 0,
       },
       skills: { category: "", items: "" },
       experience: { company: "", position: "", period: "", description: "" },
@@ -179,7 +203,7 @@ useEffect(() => {
       achievements: { title: "", description: "", date: "" },
     };
 
-    setPortfolioData(prev => ({
+    setPortfolioData((prev) => ({
       ...prev,
       [section]: [...prev[section], newItems[section]],
     }));
@@ -187,9 +211,9 @@ useEffect(() => {
 
   // Función para remover elementos de secciones
   const removeItem = useCallback((section: SectionKey, index: number) => {
-    setSaveStatus('saving');
-    
-    setPortfolioData(prev => {
+    setSaveStatus("saving");
+
+    setPortfolioData((prev) => {
       const newData = { ...prev };
       switch (section) {
         case "projects":
@@ -205,7 +229,9 @@ useEffect(() => {
           newData.education = newData.education.filter((_, i) => i !== index);
           break;
         case "achievements":
-          newData.achievements = newData.achievements.filter((_, i) => i !== index);
+          newData.achievements = newData.achievements.filter(
+            (_, i) => i !== index
+          );
           break;
       }
       return newData;
@@ -213,14 +239,21 @@ useEffect(() => {
   }, []);
 
   // Función para importar datos
-  const importData = useCallback((data: PortfolioData) => {
-    setSaveStatus('saving');
-    setPortfolioData(data);
-  }, []);
+  // Función para importar datos
+  const importData = useCallback(
+    (data: PortfolioData) => {
+      setSaveStatus("saving");
+      setPortfolioData(data);
+      // Guardar inmediatamente en localStorage
+      localStorage.setItem(storageKey, JSON.stringify(data));
+      setSaveStatus("saved");
+    },
+    [storageKey]
+  );
 
   // Función para limpiar todos los datos
   const clearAllData = useCallback(() => {
-    setSaveStatus('saving');
+    setSaveStatus("saving");
     setPortfolioData(DEFAULT_PORTFOLIO_DATA);
     localStorage.removeItem(storageKey);
   }, [storageKey]);
