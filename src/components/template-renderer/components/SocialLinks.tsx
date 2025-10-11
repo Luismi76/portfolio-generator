@@ -17,12 +17,9 @@ interface SocialLinksProps {
   variant?: "chips" | "circles";
   className?: string;
   style?: React.CSSProperties;
+  onDark?: boolean;
 }
 
-/**
- * Componente de enlaces sociales reutilizable
- * Puede mostrarse como chips (con texto) o círculos (solo iconos)
- */
 export const SocialLinks: React.FC<SocialLinksProps> = ({
   github,
   linkedin,
@@ -30,8 +27,9 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({
   email,
   variant = "chips",
   className = "",
+  style,
+  onDark = false,
 }) => {
-  // Construir array de links válidos
   const socialLinks: SocialLink[] = [
     {
       url: github,
@@ -50,7 +48,6 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({
     },
   ].filter((link) => isValidUrl(link.url));
 
-  // Agregar email si existe
   if (email) {
     socialLinks.push({
       url: `mailto:${email}`,
@@ -65,7 +62,7 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({
     return (
       <div
         className={className}
-        style={{ display: "flex", gap: 16, flexWrap: "wrap" }}
+        style={{ display: "flex", gap: 16, flexWrap: "wrap", ...style }}
       >
         {socialLinks.map(({ url, Icon, label }) => (
           <a
@@ -77,19 +74,22 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({
               width: 48,
               height: 48,
               borderRadius: "50%",
-              backgroundColor: "rgba(255, 255, 255, 0.1)",
+              backgroundColor: onDark ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.05)",
+              border: onDark ? "1px solid rgba(255, 255, 255, 0.3)" : "1px solid rgba(0, 0, 0, 0.1)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               transition: "all 0.2s",
               cursor: "pointer",
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.2)";
+            onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              e.currentTarget.style.backgroundColor = onDark ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.1)";
+              e.currentTarget.style.borderColor = onDark ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, 0.2)";
               e.currentTarget.style.transform = "scale(1.1)";
             }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+            onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              e.currentTarget.style.backgroundColor = onDark ? "rgba(255, 255, 255, 0.2)" : "rgba(0, 0, 0, 0.05)";
+              e.currentTarget.style.borderColor = onDark ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.1)";
               e.currentTarget.style.transform = "scale(1)";
             }}
             aria-label={label}
@@ -101,7 +101,6 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({
     );
   }
 
-  // Variant: chips
   return (
     <div
       className={className}
@@ -109,6 +108,7 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({
         display: "flex",
         gap: 10,
         flexWrap: "wrap",
+        ...style,
       }}
       role="list"
       aria-label="Enlaces a redes sociales"
@@ -126,15 +126,23 @@ export const SocialLinks: React.FC<SocialLinksProps> = ({
             display: "inline-flex",
             alignItems: "center",
             gap: 6,
-            transition: "transform 0.2s, opacity 0.2s",
+            backgroundColor: onDark ? "rgba(255, 255, 255, 0.2)" : undefined,
+            border: onDark ? "1px solid rgba(255, 255, 255, 0.3)" : undefined,
+            transition: "all 0.2s ease",
           }}
-          onMouseEnter={(e) => {
+          onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
             e.currentTarget.style.transform = "translateY(-2px)";
-            e.currentTarget.style.opacity = "0.9";
+            if (onDark) {
+              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.5)";
+            }
           }}
-          onMouseLeave={(e) => {
+          onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
             e.currentTarget.style.transform = "translateY(0)";
-            e.currentTarget.style.opacity = "1";
+            if (onDark) {
+              e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.2)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+            }
           }}
         >
           <Icon size={14} aria-hidden="true" />

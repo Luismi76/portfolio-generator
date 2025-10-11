@@ -175,16 +175,18 @@ export const HeaderSection: React.FC<HeaderSectionProps> = ({
             </p>
           )}
 
-          {/* Botones de acción */}
+          {/* Botones de acción + Enlaces sociales - TODO EN UNA LÍNEA */}
           <div
             style={{
               display: "flex",
               gap: 12,
               flexWrap: "wrap",
+              alignItems: "center",
               marginTop: "var(--sp-sm)",
               justifyContent: contentAlignment,
             }}
           >
+            {/* Botones principales */}
             {data.personalInfo.email && (
               <a
                 href={`mailto:${data.personalInfo.email}`}
@@ -218,20 +220,29 @@ export const HeaderSection: React.FC<HeaderSectionProps> = ({
               <Icons.Code size={16} aria-hidden="true" />
               <span>Ver proyectos</span>
             </a>
-          </div>
 
-          {/* Enlaces sociales usando componente reutilizable */}
-          <SocialLinks
-            github={data.personalInfo.github}
-            linkedin={data.personalInfo.linkedin}
-            website={data.personalInfo.website}
-            variant="chips"
-            className=""
-            style={{
-              marginTop: "var(--sp-xs)",
-              justifyContent: contentAlignment,
-            }}
-          />
+            {/* Separador visual */}
+            <div
+              style={{
+                width: "1px",
+                height: "24px",
+                backgroundColor: "rgba(255, 255, 255, 0.3)",
+              }}
+            />
+
+            {/* Enlaces sociales en la misma línea */}
+            <SocialLinks
+              github={data.personalInfo.github}
+              linkedin={data.personalInfo.linkedin}
+              website={data.personalInfo.website}
+              variant="circles"
+              onDark={true}
+              style={{
+                display: "flex",
+                gap: 12,
+              }}
+            />
+          </div>
         </div>
       </div>
 
